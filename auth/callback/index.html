@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1648 Alliance Portal</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    color:white;
+    font-family:sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    text-align:center;
+}
+
+.card{
+    max-width:500px;
+    padding:30px;
+}
+
+.loader{
+    width:40px;
+    height:40px;
+    border:4px solid #444;
+    border-top:4px solid #f7b500;
+    border-radius:50%;
+    margin:20px auto;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+    <h1>1648 Alliance Portal</h1>
+
+    <div class="loader"></div>
+
+    <p>Discord認証を確認しています...</p>
+
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+
+const code = params.get("code");
+
+if (!code) {
+
+    document.body.innerHTML = `
+        <div class="card">
+            <h2>認証失敗</h2>
+            <p>Discord認証コードが見つかりません。</p>
+            <a href="/">ホームへ戻る</a>
+        </div>
+    `;
+
+} else {
+
+    console.log("Discord Code:", code);
+
+    localStorage.setItem("discord_auth_code", code);
+
+    window.location.href = "/1648-portal/";
+
+}
+
+</script>
+
+</body>
+</html>
