@@ -181,9 +181,63 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 #yoyakuOpening.fade-out{
   animation:fadeOut .6s ease forwards;
 }
+
+/* ===== ログインユーザー表示 ===== */
+#userBadge{
+  position:fixed;
+  top:12px;
+  right:12px;
+  z-index:80;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+  font-size:12px;
+  font-weight:800;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
+}
+#welcomeName{
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#logoutBtn{
+  border:none;
+  border-radius:999px;
+  padding:5px 8px;
+  background:rgba(255,255,255,.16);
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+#logoutBtn:active{transform:scale(.96);}
+@media(max-width:480px){
+  #userBadge{
+    top:8px;
+    right:8px;
+    font-size:11px;
+    padding:7px 8px;
+  }
+  #welcomeName{max-width:110px;}
+}
+
 </style>
 </head>
 <body>
+<!-- ログインユーザー表示 -->
+<div id="userBadge">
+  <span id="welcomeName">ようこそ</span>
+  <button id="logoutBtn" type="button">ログアウト</button>
+</div>
+
 
 <!-- 官職予約モーションオーバーレイ -->
 <div id="yoyakuOpening">
@@ -314,6 +368,45 @@ document.querySelectorAll('.tap-area').forEach(el=>{
     if(url) goLink(url, null);
   });
 });
+
+// ===== ログインユーザー表示 =====
+function getPortalUserName(){
+  try{
+    const raw = localStorage.getItem("discord_user");
+    if(!raw) return "";
+    const data = JSON.parse(raw);
+    const name =
+      data?.user?.playerName ||
+      data?.discord?.globalName ||
+      data?.discord?.username ||
+      data?.user?.discordName ||
+      data?.globalName ||
+      data?.discordName ||
+      "メンバー";
+    return name;
+  }catch(e){
+    return "メンバー";
+  }
+}
+
+function initUserBadge(){
+  const welcomeName = document.getElementById("welcomeName");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const name = getPortalUserName();
+  if(welcomeName){
+    welcomeName.textContent = `ようこそ ${name}さん`;
+  }
+  if(logoutBtn){
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("discord_user");
+      localStorage.removeItem("discord_auth_code");
+      location.href = "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initUserBadge);
+
 </script>
 </body>
 </html>
