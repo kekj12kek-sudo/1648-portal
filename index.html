@@ -25,6 +25,17 @@
       window.location.replace(LOGIN_URL);
       return;
     }
+
+    if (data.status === "pending_profile") {
+      window.location.replace("/1648-portal/profile-setup/");
+      return;
+    }
+
+    if (data.status !== "active") {
+      localStorage.removeItem("discord_user");
+      window.location.replace(LOGIN_URL);
+      return;
+    }
   } catch (e) {
     localStorage.removeItem("discord_user");
     window.location.replace(LOGIN_URL);
