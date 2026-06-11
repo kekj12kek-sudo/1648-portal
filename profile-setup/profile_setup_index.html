@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>1648 Portal 初回登録</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%;background:#080b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:420px;background:linear-gradient(180deg,rgba(18,24,38,.96),rgba(8,11,18,.96));border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:28px 22px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+h1{font-size:22px;margin-bottom:8px;color:#facc15;text-align:center}
+.lead{font-size:13px;opacity:.8;line-height:1.7;text-align:center;margin-bottom:24px}
+.user-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px;font-size:13px;margin-bottom:18px;line-height:1.6}
+label{display:block;font-size:13px;font-weight:800;margin:14px 0 6px}
+input,select{width:100%;height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:0 14px;outline:none}
+select option{color:#000}
+button{width:100%;height:52px;margin-top:22px;border:none;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#facc15);color:#111827;font-size:16px;font-weight:900;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.msg{margin-top:14px;font-size:13px;line-height:1.6;text-align:center}.error{color:#fca5a5}.ok{color:#86efac}.small{margin-top:18px;text-align:center;font-size:12px;opacity:.65}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>1648 Portal 初回登録</h1>
+  <p class="lead">Discord認証が完了しました。<br>ゲーム内情報を登録してください。</p>
+  <div class="user-box" id="discordInfo">Discord情報を確認中...</div>
+  <form id="profileForm">
+    <label for="gameId">ゲームID</label>
+    <input id="gameId" name="gameId" type="text" inputmode="numeric" placeholder="例：12345678" required>
+    <label for="playerName">プレイヤー名</label>
+    <input id="playerName" name="playerName" type="text" placeholder="例：やっすー" required>
+    <label for="alliance">同盟名</label>
+    <select id="alliance" name="alliance" required>
+      <option value="LEO" selected>LEO</option>
+      <option value="その他">その他</option>
+    </select>
+    <button id="submitBtn" type="submit">登録してPortalへ進む</button>
+  </form>
+  <div id="message" class="msg"></div>
+  <p class="small">登録後は「ようこそ ○○さん」の表示名に反映されます。</p>
+</div>
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const UPDATE_PROFILE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/updateUserProfile";
+const PORTAL_URL="/1648-portal/";
+const raw=localStorage.getItem("discord_user");
+if(!raw){window.location.replace(LOGIN_URL)}
+let session;
+try{session=JSON.parse(raw)}catch(e){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL)}
+if(!session||!session.ok){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL)}
+if(session.status==="active"){window.location.replace(PORTAL_URL)}
+const user=session.user||{};
+const discord=session.discord||{};
+const discordId=user.discordId||discord.id;
+const discordName=user.discordName||discord.username||"";
+const globalName=user.globalName||discord.globalName||"";
+if(!discordId){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL)}
+document.getElementById("discordInfo").innerHTML=`<strong>Discord認証済み</strong><br>表示名：${escapeHtml(globalName||discordName||"未取得")}<br>Discord ID：${escapeHtml(discordId)}`;
+document.getElementById("profileForm").addEventListener("submit",async(e)=>{e.preventDefault();const submitBtn=document.getElementById("submitBtn");const msg=document.getElementById("message");const gameId=document.getElementById("gameId").value.trim();const playerName=document.getElementById("playerName").value.trim();const alliance=document.getElementById("alliance").value.trim();if(!gameId||!playerName||!alliance){msg.className="msg error";msg.textContent="未入力の項目があります。";return}submitBtn.disabled=true;submitBtn.textContent="登録中...";msg.className="msg";msg.textContent="";try{const res=await fetch(UPDATE_PROFILE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId,gameId,playerName,alliance})});const data=await res.json();if(!res.ok||!data.ok){throw new Error(data.error||"profile_update_failed")}localStorage.setItem("discord_user",JSON.stringify(data));msg.className="msg ok";msg.textContent="登録完了。Portalへ移動します。";setTimeout(()=>{window.location.href=PORTAL_URL},700)}catch(err){msg.className="msg error";msg.textContent="登録に失敗しました: "+err.message;submitBtn.disabled=false;submitBtn.textContent="登録してPortalへ進む"}});
+function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+</script>
+</body>
+</html>
