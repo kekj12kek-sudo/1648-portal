@@ -346,7 +346,7 @@ async function renderList(){
     document.getElementById("app").innerHTML =
       renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
       + renderUserBox()
-      + `<div class="empty error">読み込み失敗：${escapeHtml(err.message)}</div>`;
+      + `<div class="empty error">読み込み失敗：${escapeHtml(errorLabel(err.message))}</div>`;
   }
 }
 
@@ -408,7 +408,7 @@ async function renderAnswer(){
   }catch(err){
     document.getElementById("app").innerHTML =
       renderHeader("アンケート", "読み込み失敗", "/1648-portal/survey/")
-      + `<div class="empty error">${escapeHtml(err.message)}</div>`;
+      + `<div class="empty error">${escapeHtml(errorLabel(err.message))}</div>`;
   }
 }
 
@@ -491,10 +491,21 @@ async function saveAnswer(){
 
   }catch(err){
     msg.className = "msg error";
-    msg.textContent = "保存失敗：" + err.message;
+    msg.textContent = "保存失敗：" + errorLabel(err.message);
   }finally{
     saveBtn.disabled = false;
   }
+}
+
+
+function errorLabel(code){
+  return {
+    survey_not_open:"このアンケートは現在公開されていません。",
+    survey_before_open:"このアンケートはまだ公開開始前です。",
+    survey_closed:"このアンケートは締切済みです。",
+    survey_not_found:"アンケートが見つかりません。",
+    user_not_found:"ユーザー情報が見つかりません。再ログインしてください。"
+  }[code] || code;
 }
 
 function cssEscape(value){
