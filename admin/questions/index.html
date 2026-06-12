@@ -1,1 +1,220 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>質問カード管理</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}body{padding:16px;padding-bottom:32px}.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}h1{font-size:20px;color:#c084fc}.sub{margin-top:4px;font-size:12px;opacity:.72;line-height:1.6}.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}.panel-title{font-size:15px;font-weight:900;margin-bottom:10px;color:#e9d5ff}label{display:block;font-size:12px;font-weight:900;margin:12px 0 6px;color:#cbd5e1}input,select,textarea{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:15px;padding:11px 12px;outline:none;font-family:inherit}select option{color:#000}textarea{min-height:82px;resize:vertical;line-height:1.5}.row{display:grid;grid-template-columns:1fr;gap:10px}.checkline{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13px;font-weight:800;color:#e5e7eb}.checkline input{width:18px;height:18px}.btn{width:100%;height:50px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;font-size:15px;font-weight:900;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}.btn-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e5e7eb}.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}.ok{color:#86efac}.error{color:#fca5a5}.card-list{display:flex;flex-direction:column;gap:10px}.q-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:13px}.q-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.q-title{font-size:15px;font-weight:900;line-height:1.4}.q-meta{font-size:10px;opacity:.65;margin-top:4px}.q-desc{font-size:12px;line-height:1.6;opacity:.75;margin-top:8px}.q-options{font-size:11px;line-height:1.6;margin-top:8px;color:#bfdbfe}.q-actions{display:flex;gap:8px;margin-top:10px}.small-btn{border:none;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;cursor:pointer}.edit{background:rgba(59,130,246,.18);color:#bfdbfe}.delete{background:rgba(248,113,113,.16);color:#fecaca}.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1);color:#e5e7eb}.empty{font-size:13px;line-height:1.7;opacity:.7;text-align:center;padding:20px 8px}.preview-img{width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-top:10px;border:1px solid rgba(255,255,255,.12)}@media(min-width:700px){.row{grid-template-columns:1fr 1fr}}</style></head><body><div id="app"></div><script>const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";const ADMIN_URL="/1648-portal/admin/";const SAVE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveQuestionCard";const LIST_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";const DELETE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/deleteQuestionCard";let session=null;let editingId="";function getSession(){const raw=localStorage.getItem("discord_user");if(!raw){window.location.replace(LOGIN_URL);return null}try{const data=JSON.parse(raw);if(!data.ok){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}if(data.status==="pending_profile"){window.location.replace("/1648-portal/profile-setup/");return null}if(data.status!=="active"){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}return data}catch(e){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}}function getDiscordId(){return session?.user?.discordId||session?.discord?.id||session?.discordId||""}function getPermissionLevel(data){const discordId=data?.user?.discordId||data?.discord?.id||data?.discordId||"";if(discordId==="795152243883114527")return 3;const role=data?.role||data?.user?.role||"member";const levelMap={developer:3,manager:2,technical:1,member:0};return levelMap[role]??0}function render(){document.getElementById("app").innerHTML=`<div class="header"><h1>質問カード管理</h1><div class="sub">アンケートで使い回す質問カードを登録します。画像URLも任意で設定できます。</div><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div><div class="panel"><div class="panel-title">質問カード追加</div><div class="row"><div><label for="cardId">カードID</label><input id="cardId" placeholder="例：t12_status"></div><div><label for="category">カテゴリ</label><input id="category" placeholder="例：power / event / office" value="power"></div></div><label for="title">タイトル</label><input id="title" placeholder="例：T12状況"><label for="description">説明文</label><textarea id="description" placeholder="例：現在のT12研究状況を選択してください"></textarea><div class="row"><div><label for="type">回答タイプ</label><select id="type"><option value="single_select">単一選択</option><option value="multi_select">複数選択</option><option value="number">数値入力</option><option value="text">自由記述</option></select></div><div><label for="profileField">保存先フィールド</label><input id="profileField" placeholder="例：t12Status"></div></div><label for="options">選択肢</label><textarea id="options" placeholder="1行に1つ入力&#10;例：&#10;未開放&#10;兵のみ&#10;スキルまで&#10;カンスト"></textarea><label for="imageUrl">画像URL（任意）</label><input id="imageUrl" placeholder="Discord資料館URL / GitHub画像URL / Firebase画像URL"><label class="checkline"><input id="saveToProfile" type="checkbox">戦力DB / usersへ反映する</label><button class="btn" id="saveBtn">保存</button><button class="btn btn-secondary" id="resetBtn" type="button">入力をリセット</button><div id="msg" class="msg"></div></div><div class="panel"><div class="panel-title">登録済み質問カード</div><div id="cardList" class="card-list"><div class="empty">読み込み中...</div></div></div>`;document.getElementById("saveBtn").addEventListener("click",saveCard);document.getElementById("resetBtn").addEventListener("click",resetForm);loadCards()}async function loadCards(){const list=document.getElementById("cardList");list.innerHTML=`<div class="empty">読み込み中...</div>`;try{const res=await fetch(LIST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");if(!data.cards.length){list.innerHTML=`<div class="empty">まだ質問カードがありません。</div>`;return}list.innerHTML=data.cards.map(cardTemplate).join("");document.querySelectorAll("[data-edit]").forEach(btn=>btn.addEventListener("click",()=>fillForm(JSON.parse(decodeURIComponent(btn.dataset.edit)))));document.querySelectorAll("[data-delete]").forEach(btn=>btn.addEventListener("click",()=>deleteCard(btn.dataset.delete)))}catch(err){list.innerHTML=`<div class="empty error">読み込み失敗：${escapeHtml(err.message)}</div>`}}function cardTemplate(card){const options=(card.options||[]).join(" / ");const image=card.imageUrl?`<img class="preview-img" src="${escapeAttr(card.imageUrl)}" alt="">`:"";return`<div class="q-card"><div class="q-top"><div><div class="q-title">${escapeHtml(card.title||"無題")}</div><div class="q-meta">ID：${escapeHtml(card.id)} / ${escapeHtml(card.category||"general")} / ${typeLabel(card.type)}</div></div><span class="badge">${card.saveToProfile?"DB反映":"回答のみ"}</span></div>${card.description?`<div class="q-desc">${escapeHtml(card.description)}</div>`:""}${options?`<div class="q-options">選択肢：${escapeHtml(options)}</div>`:""}${image}<div class="q-actions"><button class="small-btn edit" data-edit="${encodeURIComponent(JSON.stringify(card))}">編集</button><button class="small-btn delete" data-delete="${escapeAttr(card.id)}">削除</button></div></div>`}async function saveCard(){const msg=document.getElementById("msg");const saveBtn=document.getElementById("saveBtn");msg.className="msg";msg.textContent="";saveBtn.disabled=true;saveBtn.textContent="保存中...";const card={id:document.getElementById("cardId").value.trim(),title:document.getElementById("title").value.trim(),description:document.getElementById("description").value.trim(),type:document.getElementById("type").value,options:document.getElementById("options").value.split("\n").map(v=>v.trim()).filter(Boolean),imageUrl:document.getElementById("imageUrl").value.trim(),saveToProfile:document.getElementById("saveToProfile").checked,profileField:document.getElementById("profileField").value.trim(),category:document.getElementById("category").value.trim()||"general",enabled:true};if(!card.title){msg.className="msg error";msg.textContent="タイトルは必須です。";saveBtn.disabled=false;saveBtn.textContent="保存";return}try{const res=await fetch(SAVE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),card})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"save_failed");msg.className="msg ok";msg.textContent="保存しました。";resetForm(false);await loadCards()}catch(err){msg.className="msg error";msg.textContent="保存失敗："+err.message}finally{saveBtn.disabled=false;saveBtn.textContent="保存"}}function fillForm(card){editingId=card.id||"";document.getElementById("cardId").value=card.id||"";document.getElementById("category").value=card.category||"general";document.getElementById("title").value=card.title||"";document.getElementById("description").value=card.description||"";document.getElementById("type").value=card.type||"text";document.getElementById("options").value=(card.options||[]).join("\n");document.getElementById("imageUrl").value=card.imageUrl||"";document.getElementById("saveToProfile").checked=!!card.saveToProfile;document.getElementById("profileField").value=card.profileField||"";document.querySelector(".panel-title").textContent="質問カード編集";window.scrollTo({top:0,behavior:"smooth"})}function resetForm(clearMsg=true){editingId="";document.getElementById("cardId").value="";document.getElementById("category").value="power";document.getElementById("title").value="";document.getElementById("description").value="";document.getElementById("type").value="single_select";document.getElementById("options").value="";document.getElementById("imageUrl").value="";document.getElementById("saveToProfile").checked=false;document.getElementById("profileField").value="";document.querySelector(".panel-title").textContent="質問カード追加";if(clearMsg)document.getElementById("msg").textContent=""}async function deleteCard(id){if(!confirm(`${id} を削除しますか？`))return;try{const res=await fetch(DELETE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),id})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"delete_failed");await loadCards()}catch(err){alert("削除失敗："+err.message)}}function typeLabel(type){return({single_select:"単一選択",multi_select:"複数選択",number:"数値入力",text:"自由記述"})[type]||type}function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function escapeAttr(str){return escapeHtml(str)}session=getSession();if(session){const level=getPermissionLevel(session);if(level<1){document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">質問カード管理はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`}else{render()}}</script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>質問カード管理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:16px;padding-bottom:32px}
+.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:20px;color:#c084fc;line-height:1.3}
+.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}
+.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}
+.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}
+.panel-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#e9d5ff}
+.help-box{border:1px solid rgba(96,165,250,.25);background:rgba(59,130,246,.08);color:#bfdbfe;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:900;margin:14px 0 7px;color:#e5e7eb}
+input,textarea{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit}
+textarea{min-height:96px;resize:vertical;line-height:1.6}
+.type-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.type-btn{display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);border-radius:14px;padding:12px;cursor:pointer}
+.type-btn input{width:18px;height:18px;flex-shrink:0}
+.type-name{font-size:14px;font-weight:900}
+.type-desc{font-size:11px;opacity:.68;margin-top:2px}
+.option-hint{font-size:11px;opacity:.65;line-height:1.6;margin-top:6px}
+.image-placeholder{border:1px dashed rgba(255,255,255,.25);background:rgba(255,255,255,.04);border-radius:14px;padding:14px;font-size:12px;line-height:1.7;color:#cbd5e1}
+.btn{width:100%;min-height:52px;margin-top:14px;border:none;border-radius:15px;background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;font-size:16px;font-weight:900;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e5e7eb}
+.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}.ok{color:#86efac}.error{color:#fca5a5}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.q-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:13px}
+.q-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.q-title{font-size:15px;font-weight:900;line-height:1.4}
+.q-meta{font-size:10px;opacity:.65;margin-top:4px}
+.q-desc{font-size:12px;line-height:1.6;opacity:.75;margin-top:8px}
+.q-options{font-size:11px;line-height:1.6;margin-top:8px;color:#bfdbfe}
+.q-actions{display:flex;gap:8px;margin-top:10px}
+.small-btn{border:none;border-radius:999px;padding:8px 11px;font-size:11px;font-weight:900;cursor:pointer}
+.edit{background:rgba(59,130,246,.18);color:#bfdbfe}.delete{background:rgba(248,113,113,.16);color:#fecaca}
+.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1);color:#e5e7eb;white-space:nowrap}
+.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:20px 8px}
+@media(min-width:700px){.type-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const ADMIN_URL="/1648-portal/admin/";
+const SAVE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveQuestionCard";
+const LIST_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";
+const DELETE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/deleteQuestionCard";
+
+let session=null;
+let editingCardId="";
+
+function getSession(){
+  const raw=localStorage.getItem("discord_user");
+  if(!raw){window.location.replace(LOGIN_URL);return null}
+  try{
+    const data=JSON.parse(raw);
+    if(!data.ok){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+    if(data.status==="pending_profile"){window.location.replace("/1648-portal/profile-setup/");return null}
+    if(data.status!=="active"){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+    return data;
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    window.location.replace(LOGIN_URL);
+    return null;
+  }
+}
+function getDiscordId(){return session?.user?.discordId||session?.discord?.id||session?.discordId||""}
+function getPermissionLevel(data){
+  const discordId=data?.user?.discordId||data?.discord?.id||data?.discordId||"";
+  if(discordId==="795152243883114527") return 3;
+  const role=data?.role||data?.user?.role||"member";
+  const levelMap={developer:3,manager:2,technical:1,member:0};
+  return levelMap[role]??0;
+}
+function render(){
+  document.getElementById("app").innerHTML=`
+    <div class="header">
+      <h1>質問カード管理</h1>
+      <div class="sub">よく使う質問をストックします。<br>アンケート作成時に、この一覧から選んで使えます。</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+    </div>
+    <div class="panel">
+      <div class="panel-title" id="formTitle">新しい質問を作る</div>
+      <div class="help-box">管理者は「質問文」と「回答方式」だけ考えればOKです。<br>カードID・保存先・内部カテゴリなどは自動で処理されます。</div>
+      <label for="title">質問名</label>
+      <input id="title" placeholder="例：T12状況">
+      <label for="description">説明文</label>
+      <textarea id="description" placeholder="例：現在のT12研究状況を選択してください"></textarea>
+      <label>回答方式</label>
+      <div class="type-grid">
+        ${typeRadio("single_select","1つだけ選択","例：未開放 / 兵のみ / カンスト から1つ")}
+        ${typeRadio("multi_select","複数選択","例：参加できる時間を複数選ぶ")}
+        ${typeRadio("number","数字で入力","例：最大出征数・集結容量")}
+        ${typeRadio("text","文章で入力","例：補足・コメント")}
+      </div>
+      <label for="options">選択肢</label>
+      <textarea id="options" placeholder="1行に1つ入力&#10;例：&#10;未開放&#10;兵のみ&#10;スキルまで&#10;カンスト"></textarea>
+      <div class="option-hint">「1つだけ選択」「複数選択」の時だけ使います。数字入力・文章入力では空欄でOKです。</div>
+      <label>画像</label>
+      <div class="image-placeholder">画像アップロードは次の工程で追加します。<br>今後はスマホ/PCのライブラリから画像を選ぶだけで登録できるようにします。</div>
+      <button class="btn" id="saveBtn">保存する</button>
+      <button class="btn btn-secondary" id="resetBtn" type="button">入力をリセット</button>
+      <div id="msg" class="msg"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">質問ストック</div>
+      <div id="cardList" class="card-list"><div class="empty">読み込み中...</div></div>
+    </div>
+  `;
+  document.getElementById("saveBtn").addEventListener("click",saveCard);
+  document.getElementById("resetBtn").addEventListener("click",resetForm);
+  loadCards();
+}
+function typeRadio(value,title,desc){
+  return `<label class="type-btn"><input type="radio" name="answerType" value="${value}" ${value==="single_select"?"checked":""}><div><div class="type-name">${title}</div><div class="type-desc">${desc}</div></div></label>`;
+}
+async function loadCards(){
+  const list=document.getElementById("cardList");
+  list.innerHTML=`<div class="empty">読み込み中...</div>`;
+  try{
+    const res=await fetch(LIST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});
+    const data=await res.json();
+    if(!res.ok||!data.ok) throw new Error(data.error||"load_failed");
+    if(!data.cards.length){list.innerHTML=`<div class="empty">まだ質問カードがありません。</div>`;return}
+    list.innerHTML=data.cards.map(cardTemplate).join("");
+    document.querySelectorAll("[data-edit]").forEach(btn=>btn.addEventListener("click",()=>fillForm(JSON.parse(decodeURIComponent(btn.dataset.edit)))));
+    document.querySelectorAll("[data-delete]").forEach(btn=>btn.addEventListener("click",()=>deleteCard(btn.dataset.delete)));
+  }catch(err){
+    list.innerHTML=`<div class="empty error">読み込み失敗：${escapeHtml(err.message)}</div>`;
+  }
+}
+function cardTemplate(card){
+  const options=(card.options||[]).join(" / ");
+  return `<div class="q-card"><div class="q-top"><div><div class="q-title">${escapeHtml(card.title||"無題")}</div><div class="q-meta">${typeLabel(card.type)}</div></div><span class="badge">ストック済み</span></div>${card.description?`<div class="q-desc">${escapeHtml(card.description)}</div>`:""}${options?`<div class="q-options">選択肢：${escapeHtml(options)}</div>`:""}<div class="q-actions"><button class="small-btn edit" data-edit="${encodeURIComponent(JSON.stringify(card))}">編集</button><button class="small-btn delete" data-delete="${escapeAttr(card.id)}">削除</button></div></div>`;
+}
+async function saveCard(){
+  const msg=document.getElementById("msg");
+  const saveBtn=document.getElementById("saveBtn");
+  msg.className="msg";msg.textContent="";
+  saveBtn.disabled=true;saveBtn.textContent="保存中...";
+  const type=document.querySelector("input[name='answerType']:checked")?.value||"text";
+  const card={
+    id:editingCardId,
+    title:document.getElementById("title").value.trim(),
+    description:document.getElementById("description").value.trim(),
+    type,
+    options:document.getElementById("options").value.split("\n").map(v=>v.trim()).filter(Boolean),
+    imageUrl:"",
+    saveToProfile:false,
+    profileField:"",
+    category:"general",
+    enabled:true
+  };
+  if(!card.title){msg.className="msg error";msg.textContent="質問名を入力してください。";saveBtn.disabled=false;saveBtn.textContent="保存する";return}
+  if((type==="single_select"||type==="multi_select")&&card.options.length===0){msg.className="msg error";msg.textContent="選択式の場合は、選択肢を1つ以上入力してください。";saveBtn.disabled=false;saveBtn.textContent="保存する";return}
+  try{
+    const res=await fetch(SAVE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),card})});
+    const data=await res.json();
+    if(!res.ok||!data.ok) throw new Error(data.error||"save_failed");
+    msg.className="msg ok";msg.textContent="保存しました。質問ストックに追加されています。";
+    resetForm(false);
+    await loadCards();
+  }catch(err){
+    msg.className="msg error";msg.textContent="保存失敗："+err.message;
+  }finally{
+    saveBtn.disabled=false;saveBtn.textContent="保存する";
+  }
+}
+function fillForm(card){
+  editingCardId=card.id||"";
+  document.getElementById("formTitle").textContent="質問を編集する";
+  document.getElementById("title").value=card.title||"";
+  document.getElementById("description").value=card.description||"";
+  document.getElementById("options").value=(card.options||[]).join("\n");
+  const radio=document.querySelector(`input[name='answerType'][value='${card.type||"text"}']`);
+  if(radio) radio.checked=true;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function resetForm(clearMsg=true){
+  editingCardId="";
+  document.getElementById("formTitle").textContent="新しい質問を作る";
+  document.getElementById("title").value="";
+  document.getElementById("description").value="";
+  document.getElementById("options").value="";
+  const radio=document.querySelector("input[name='answerType'][value='single_select']");
+  if(radio) radio.checked=true;
+  if(clearMsg) document.getElementById("msg").textContent="";
+}
+async function deleteCard(id){
+  if(!confirm("この質問を削除しますか？")) return;
+  try{
+    const res=await fetch(DELETE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),id})});
+    const data=await res.json();
+    if(!res.ok||!data.ok) throw new Error(data.error||"delete_failed");
+    await loadCards();
+  }catch(err){alert("削除失敗："+err.message)}
+}
+function typeLabel(type){return {single_select:"1つだけ選択",multi_select:"複数選択",number:"数字で入力",text:"文章で入力"}[type]||type}
+function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttr(str){return escapeHtml(str)}
+session=getSession();
+if(session){
+  const level=getPermissionLevel(session);
+  if(level<1){
+    document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">質問カード管理はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`;
+  }else{
+    render();
+  }
+}
+</script>
+</body>
+</html>
