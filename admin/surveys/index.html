@@ -277,10 +277,37 @@ async function loadSurveys(){
   }catch(err){list.innerHTML=`<div class="empty error">アンケート読み込み失敗：${escapeHtml(err.message)}</div>`}
 }
 function surveyCard(s){
-  const status=s.status||"draft";
-  const qCount=(s.questionCards||[]).length+(s.freeQuestions||[]).length;
-  return `<div class="survey-card"><div class="survey-title">${escapeHtml(s.title||"無題")}</div>${s.note?`<div class="survey-note">${escapeHtml(s.note)}</div>`:""}<div class="survey-meta">質問数：${qCount}<br>回答数：${s.answerCount||0}${s.closeAt?`<br>締切：${escapeHtml(s.closeAt)}`:""}</div><span class="status ${escapeAttr(status)}">${statusLabel(status)}</span><div class="quick-actions"><button class="open-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="open">公開</button><button class="draft-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="draft">下書き</button><button class="close-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="closed">締切</button></div>${status==="open"?`<a class="back" href="${SURVEY_URL}" target="_blank">回答画面を開く</a>`:""}</div>`;
+  const status = s.status || "draft";
+  const openState = s.openState || status;
+  const qCount = (s.questionCards || []).length + (s.freeQuestions || []).length;
+  const answered = s.answeredUserCount || s.answerCount || 0;
+
+  return `
+    <div class="survey-card">
+      <div class="survey-title">${escapeHtml(s.title || "無題")}</div>
+      ${s.note ? `<div class="survey-note">${escapeHtml(s.note)}</div>` : ""}
+      <div class="survey-meta">
+        質問数：${qCount}<br>
+        回答数：${answered}<br>
+        状態：${openStateLabel(openState)}
+        ${s.openAt ? `<br>公開開始：${escapeHtml(formatDateTime(s.openAt))}` : ""}
+        ${s.closeAt ? `<br>締切：${escapeHtml(formatDateTime(s.closeAt))}` : ""}
+        ${s.lastAnswerAt ? `<br>最終回答：${escapeHtml(formatTimestamp(s.lastAnswerAt))}` : ""}
+      </div>
+      <span class="status ${escapeAttr(status)}">${statusLabel(status)}</span>
+      <span class="status">${openStateLabel(openState)}</span>
+
+      <div class="quick-actions">
+        <button class="open-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="open">公開</button>
+        <button class="draft-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="draft">下書き</button>
+        <button class="close-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="closed">締切</button>
+      </div>
+
+      ${status === "open" ? `<a class="back" href="${SURVEY_URL}" target="_blank">回答画面を開く</a>` : ""}
+    </div>
+  `;
 }
+
 async function updateStatus(id,status){
   try{
     const res=await fetch(UPDATE_STATUS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),id,status})});
@@ -289,6 +316,33 @@ async function updateStatus(id,status){
     await loadSurveys();
   }catch(err){alert("状態変更に失敗しました："+err.message)}
 }
+
+function openStateLabel(state){
+  return {
+    draft:"下書き",
+    waiting:"公開待ち",
+    open:"公開中",
+    closed:"締切済み"
+  }[state] || state;
+}
+
+function formatDateTime(value){
+  if(!value) return "";
+  return String(value).replace("T", " ");
+}
+
+function formatTimestamp(value){
+  if(!value) return "";
+  if(typeof value === "string") return value;
+  if(value._seconds){
+    return new Date(value._seconds * 1000).toLocaleString("ja-JP");
+  }
+  if(value.seconds){
+    return new Date(value.seconds * 1000).toLocaleString("ja-JP");
+  }
+  return "";
+}
+
 function typeLabel(type){return {single_select:"1つだけ選択",multi_select:"複数選択",number:"数字入力",text:"文章入力"}[type]||type}
 function statusLabel(status){return {draft:"下書き",open:"公開中",closed:"締切"}[status]||status}
 function cssEscape(value){if(window.CSS&&CSS.escape)return CSS.escape(value);return String(value).replace(/"/g,'\\"')}
