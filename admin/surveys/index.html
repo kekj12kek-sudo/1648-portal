@@ -6,411 +6,99 @@
 <title>アンケート作成</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  width:100%;
-  min-height:100%;
-  background:#070b12;
-  color:#fff;
-  font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
-}
-body{
-  padding:16px;
-  padding-bottom:34px;
-}
-.header{
-  position:sticky;
-  top:0;
-  z-index:20;
-  margin:-16px -16px 16px;
-  padding:14px 16px;
-  background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));
-  border-bottom:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(10px);
-}
-h1{
-  font-size:20px;
-  color:#60a5fa;
-  line-height:1.3;
-}
-.sub{
-  margin-top:4px;
-  font-size:12px;
-  opacity:.75;
-  line-height:1.7;
-}
-.back{
-  display:inline-flex;
-  margin-top:12px;
-  color:#93c5fd;
-  text-decoration:none;
-  font-size:12px;
-  font-weight:800;
-}
-.panel{
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  border-radius:18px;
-  padding:14px;
-  margin-bottom:14px;
-}
-.panel-title{
-  font-size:16px;
-  font-weight:900;
-  margin-bottom:10px;
-  color:#bfdbfe;
-}
-.help{
-  border:1px solid rgba(96,165,250,.25);
-  background:rgba(59,130,246,.08);
-  color:#bfdbfe;
-  border-radius:14px;
-  padding:11px 12px;
-  font-size:12px;
-  line-height:1.7;
-  margin-bottom:14px;
-}
-label{
-  display:block;
-  font-size:13px;
-  font-weight:900;
-  margin:14px 0 7px;
-  color:#e5e7eb;
-}
-input,textarea{
-  width:100%;
-  border-radius:13px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-size:16px;
-  padding:12px;
-  outline:none;
-  font-family:inherit;
-}
-textarea{
-  min-height:72px;
-  resize:vertical;
-  line-height:1.6;
-}
-.section-mini{
-  margin-top:16px;
-  font-size:13px;
-  font-weight:900;
-  color:#e5e7eb;
-}
-.stock-list,.selected-list,.survey-list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.stock-item{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  border:1px solid rgba(255,255,255,.13);
-  background:rgba(255,255,255,.06);
-  border-radius:14px;
-  padding:11px;
-  cursor:pointer;
-}
-.stock-item.active{
-  border-color:rgba(96,165,250,.65);
-  background:rgba(37,99,235,.18);
-}
-.stock-item input{
-  width:19px;
-  height:19px;
-  flex-shrink:0;
-  margin-top:2px;
-}
-.stock-title{
-  font-size:14px;
-  font-weight:900;
-  line-height:1.4;
-}
-.stock-desc{
-  font-size:11px;
-  opacity:.68;
-  line-height:1.6;
-  margin-top:3px;
-}
-.badge{
-  display:inline-block;
-  margin-top:6px;
-  border-radius:999px;
-  padding:3px 7px;
-  font-size:10px;
-  font-weight:900;
-  background:rgba(255,255,255,.1);
-  color:#e5e7eb;
-}
-.selected-box{
-  border:1px solid rgba(34,197,94,.24);
-  background:rgba(34,197,94,.06);
-  border-radius:16px;
-  padding:12px;
-  margin-top:12px;
-}
-.selected-title{
-  font-size:13px;
-  font-weight:900;
-  color:#86efac;
-  margin-bottom:8px;
-}
-.selected-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.18);
-  border-radius:12px;
-  padding:9px;
-  font-size:13px;
-}
-.selected-name{
-  font-weight:900;
-  line-height:1.4;
-}
-.move-btns{
-  display:flex;
-  gap:5px;
-  flex-shrink:0;
-}
-.move-btns button{
-  border:none;
-  border-radius:9px;
-  background:rgba(255,255,255,.12);
-  color:#fff;
-  font-weight:900;
-  padding:6px 8px;
-  cursor:pointer;
-}
-.btn{
-  width:100%;
-  min-height:52px;
-  margin-top:14px;
-  border:none;
-  border-radius:15px;
-  background:linear-gradient(135deg,#2563eb,#60a5fa);
-  color:#fff;
-  font-size:16px;
-  font-weight:900;
-  cursor:pointer;
-}
-.btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-.btn-secondary{
-  background:rgba(255,255,255,.1);
-  border:1px solid rgba(255,255,255,.15);
-  color:#e5e7eb;
-}
-.msg{
-  font-size:12px;
-  line-height:1.7;
-  margin-top:10px;
-  text-align:center;
-}
-.ok{color:#86efac}
-.error{color:#fca5a5}
-.empty{
-  font-size:13px;
-  line-height:1.7;
-  opacity:.72;
-  text-align:center;
-  padding:20px 8px;
-}
-.survey-card{
-  border:1px solid rgba(255,255,255,.13);
-  background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));
-  border-radius:16px;
-  padding:13px;
-}
-.survey-title{
-  font-size:15px;
-  font-weight:900;
-  line-height:1.4;
-}
-.survey-note{
-  font-size:11px;
-  opacity:.65;
-  line-height:1.6;
-  margin-top:5px;
-}
-.survey-meta{
-  font-size:11px;
-  opacity:.66;
-  line-height:1.6;
-  margin-top:7px;
-}
-.status{
-  display:inline-block;
-  margin-top:8px;
-  border-radius:999px;
-  padding:4px 8px;
-  font-size:10px;
-  font-weight:900;
-  background:rgba(255,255,255,.1);
-}
-.status.open{background:rgba(34,197,94,.18);color:#bbf7d0}
-.status.draft{background:rgba(250,204,21,.16);color:#fde68a}
-.status.closed{background:rgba(248,113,113,.16);color:#fecaca}
-.quick-actions{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-.quick-actions button{
-  flex:1;
-  min-height:38px;
-  border:none;
-  border-radius:12px;
-  font-size:12px;
-  font-weight:900;
-  cursor:pointer;
-}
-.open-btn{background:rgba(34,197,94,.18);color:#bbf7d0}
-.close-btn{background:rgba(248,113,113,.16);color:#fecaca}
-.draft-btn{background:rgba(250,204,21,.16);color:#fde68a}
-.preview-box{
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.18);
-  border-radius:16px;
-  padding:12px;
-  margin-top:12px;
-}
-.preview-title{
-  font-size:13px;
-  font-weight:900;
-  color:#c4b5fd;
-  margin-bottom:8px;
-}
-.preview-q{
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:12px;
-  padding:9px;
-  margin-top:8px;
-  background:rgba(255,255,255,.045);
-}
-.preview-q-title{
-  font-size:13px;
-  font-weight:900;
-}
-.preview-q-body{
-  font-size:11px;
-  opacity:.7;
-  line-height:1.6;
-  margin-top:4px;
-}
+html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:16px;padding-bottom:34px}
+.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:20px;color:#60a5fa;line-height:1.3}
+.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}
+.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}
+.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}
+.panel-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#bfdbfe}
+.help{border:1px solid rgba(96,165,250,.25);background:rgba(59,130,246,.08);color:#bfdbfe;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:900;margin:14px 0 7px;color:#e5e7eb}
+input,textarea{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit}
+textarea{min-height:72px;resize:vertical;line-height:1.6}
+.two{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:720px){.two{grid-template-columns:1fr 1fr}}
+.section-mini{margin-top:16px;font-size:13px;font-weight:900;color:#e5e7eb}
+.stock-list,.selected-list,.survey-list,.free-list{display:flex;flex-direction:column;gap:8px}
+.stock-item{display:flex;align-items:flex-start;gap:10px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);border-radius:14px;padding:11px;cursor:pointer}
+.stock-item.active{border-color:rgba(96,165,250,.65);background:rgba(37,99,235,.18)}
+.stock-item input{width:19px;height:19px;flex-shrink:0;margin-top:2px}
+.stock-title{font-size:14px;font-weight:900;line-height:1.4}
+.stock-desc{font-size:11px;opacity:.68;line-height:1.6;margin-top:3px}
+.badge{display:inline-block;margin-top:6px;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1);color:#e5e7eb}
+.selected-box{border:1px solid rgba(34,197,94,.24);background:rgba(34,197,94,.06);border-radius:16px;padding:12px;margin-top:12px}
+.selected-title{font-size:13px;font-weight:900;color:#86efac;margin-bottom:8px}
+.selected-row,.free-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);border-radius:12px;padding:9px;font-size:13px}
+.selected-name{font-weight:900;line-height:1.4}
+.move-btns{display:flex;gap:5px;flex-shrink:0}
+.move-btns button{border:none;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;font-weight:900;padding:6px 8px;cursor:pointer}
+.btn{width:100%;min-height:52px;margin-top:14px;border:none;border-radius:15px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;font-size:16px;font-weight:900;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e5e7eb}
+.btn-small{width:100%;min-height:44px;margin-top:10px;border:none;border-radius:13px;background:rgba(59,130,246,.18);color:#bfdbfe;font-size:13px;font-weight:900;cursor:pointer}
+.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}
+.ok{color:#86efac}.error{color:#fca5a5}
+.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:20px 8px}
+.survey-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:13px}
+.survey-title{font-size:15px;font-weight:900;line-height:1.4}
+.survey-note{font-size:11px;opacity:.65;line-height:1.6;margin-top:5px}
+.survey-meta{font-size:11px;opacity:.66;line-height:1.6;margin-top:7px}
+.status{display:inline-block;margin-top:8px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1)}
+.status.open{background:rgba(34,197,94,.18);color:#bbf7d0}.status.draft{background:rgba(250,204,21,.16);color:#fde68a}.status.closed{background:rgba(248,113,113,.16);color:#fecaca}
+.quick-actions{display:flex;gap:8px;margin-top:10px}
+.quick-actions button{flex:1;min-height:38px;border:none;border-radius:12px;font-size:12px;font-weight:900;cursor:pointer}
+.open-btn{background:rgba(34,197,94,.18);color:#bbf7d0}.close-btn{background:rgba(248,113,113,.16);color:#fecaca}.draft-btn{background:rgba(250,204,21,.16);color:#fde68a}
+.preview-box{border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);border-radius:16px;padding:12px;margin-top:12px}
+.preview-title{font-size:13px;font-weight:900;color:#c4b5fd;margin-bottom:8px}
+.preview-q{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:9px;margin-top:8px;background:rgba(255,255,255,.045)}
+.preview-q-title{font-size:13px;font-weight:900}.preview-q-body{font-size:11px;opacity:.7;line-height:1.6;margin-top:4px}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
-const LOGIN_URL =
-  "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
-
-const ADMIN_URL = "/1648-portal/admin/";
-const SURVEY_URL = "/1648-portal/survey/";
-
-const LIST_Q_URL =
-  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";
-const SAVE_SURVEY_URL =
-  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyRoom";
-const LIST_SURVEY_URL =
-  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listSurveyRooms";
-const UPDATE_STATUS_URL =
-  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/updateSurveyStatus";
-
-let session = null;
-let questionCards = [];
-let selectedQuestions = [];
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const ADMIN_URL="/1648-portal/admin/";
+const SURVEY_URL="/1648-portal/survey/";
+const LIST_Q_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";
+const SAVE_SURVEY_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyRoom";
+const LIST_SURVEY_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listSurveyRooms";
+const UPDATE_STATUS_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/updateSurveyStatus";
+let session=null;
+let questionCards=[];
+let selectedQuestions=[];
+let freeQuestions=[];
 
 function getSession(){
-  const raw = localStorage.getItem("discord_user");
-
-  if(!raw){
-    window.location.replace(LOGIN_URL);
-    return null;
-  }
-
+  const raw=localStorage.getItem("discord_user");
+  if(!raw){window.location.replace(LOGIN_URL);return null}
   try{
-    const data = JSON.parse(raw);
-
-    if(!data.ok){
-      localStorage.removeItem("discord_user");
-      window.location.replace(LOGIN_URL);
-      return null;
-    }
-
-    if(data.status === "pending_profile"){
-      window.location.replace("/1648-portal/profile-setup/");
-      return null;
-    }
-
-    if(data.status !== "active"){
-      localStorage.removeItem("discord_user");
-      window.location.replace(LOGIN_URL);
-      return null;
-    }
-
+    const data=JSON.parse(raw);
+    if(!data.ok){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+    if(data.status==="pending_profile"){window.location.replace("/1648-portal/profile-setup/");return null}
+    if(data.status!=="active"){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
     return data;
-  }catch(e){
-    localStorage.removeItem("discord_user");
-    window.location.replace(LOGIN_URL);
-    return null;
-  }
+  }catch(e){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
 }
-
-function getDiscordId(){
-  return (
-    session?.user?.discordId ||
-    session?.discord?.id ||
-    session?.discordId ||
-    ""
-  );
-}
-
+function getDiscordId(){return session?.user?.discordId||session?.discord?.id||session?.discordId||""}
 function getPermissionLevel(data){
-  const discordId =
-    data?.user?.discordId ||
-    data?.discord?.id ||
-    data?.discordId ||
-    "";
-
-  if(discordId === "795152243883114527"){
-    return 3;
-  }
-
-  const role = data?.role || data?.user?.role || "member";
-  const levelMap = {
-    developer: 3,
-    manager: 2,
-    technical: 1,
-    member: 0
-  };
-
-  return levelMap[role] ?? 0;
+  const discordId=data?.user?.discordId||data?.discord?.id||data?.discordId||"";
+  if(discordId==="795152243883114527")return 3;
+  const role=data?.role||data?.user?.role||"member";
+  return {developer:3,manager:2,technical:1,member:0}[role]??0;
 }
-
 function render(){
-  document.getElementById("app").innerHTML = `
+  document.getElementById("app").innerHTML=`
     <div class="header">
       <h1>アンケート作成</h1>
-      <div class="sub">質問ストックから選んで、回答者向けアンケートを作ります。</div>
+      <div class="sub">質問ストックと自由質問を組み合わせてアンケートを作ります。</div>
       <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
     </div>
-
     <div class="panel">
       <div class="panel-title">新しいアンケート</div>
-
-      <div class="help">
-        ここでは「何を聞くか」だけ決めます。<br>
-        回答データは自動で保存されます。抽出や分析は後の拡張機能です。
-      </div>
+      <div class="help">ここでは「何を聞くか」だけ決めます。回答データは自動で保存されます。</div>
 
       <label for="surveyTitle">アンケート名</label>
       <input id="surveyTitle" placeholder="例：SVS戦力調査">
@@ -418,23 +106,37 @@ function render(){
       <label for="surveyNote">メモ・補足</label>
       <textarea id="surveyNote" placeholder="例：次回SVSに向けた確認です"></textarea>
 
-      <div class="section-mini">質問ストックから選ぶ</div>
-      <div id="stockList" class="stock-list">
-        <div class="empty">読み込み中...</div>
+      <div class="two">
+        <div>
+          <label for="openAt">公開開始日時（任意）</label>
+          <input id="openAt" type="datetime-local">
+        </div>
+        <div>
+          <label for="closeAt">締切日時（任意）</label>
+          <input id="closeAt" type="datetime-local">
+        </div>
       </div>
+
+      <div class="section-mini">質問ストックから選ぶ</div>
+      <div id="stockList" class="stock-list"><div class="empty">読み込み中...</div></div>
 
       <div class="selected-box">
         <div class="selected-title">このアンケートに入れる質問</div>
-        <div id="selectedList" class="selected-list">
-          <div class="empty">まだ選択されていません。</div>
-        </div>
+        <div id="selectedList" class="selected-list"><div class="empty">まだ選択されていません。</div></div>
       </div>
+
+      <div class="section-mini">自由質問</div>
+      <div class="help">今回だけ聞きたい内容を追加できます。回答方式は文章入力になります。</div>
+      <label for="freeTitle">自由質問タイトル</label>
+      <input id="freeTitle" placeholder="例：連絡事項">
+      <label for="freeDesc">自由質問内容</label>
+      <textarea id="freeDesc" placeholder="例：補足があれば記入してください"></textarea>
+      <button class="btn-small" id="addFreeBtn" type="button">＋ 自由質問を追加</button>
+      <div id="freeList" class="free-list"><div class="empty">自由質問はまだありません。</div></div>
 
       <div class="preview-box">
         <div class="preview-title">回答者プレビュー</div>
-        <div id="previewArea">
-          <div class="empty">質問を選ぶと、ここに表示イメージが出ます。</div>
-        </div>
+        <div id="previewArea"><div class="empty">質問を選ぶと、ここに表示イメージが出ます。</div></div>
       </div>
 
       <button class="btn" id="saveDraftBtn">下書き保存</button>
@@ -444,400 +146,159 @@ function render(){
 
     <div class="panel">
       <div class="panel-title">作成済みアンケート</div>
-      <div id="surveyList" class="survey-list">
-        <div class="empty">読み込み中...</div>
-      </div>
+      <div id="surveyList" class="survey-list"><div class="empty">読み込み中...</div></div>
     </div>
   `;
-
-  document.getElementById("surveyTitle").addEventListener("input", renderPreview);
-  document.getElementById("surveyNote").addEventListener("input", renderPreview);
-  document.getElementById("saveDraftBtn").addEventListener("click", () => saveSurvey("draft"));
-  document.getElementById("saveOpenBtn").addEventListener("click", () => saveSurvey("open"));
-
+  document.getElementById("surveyTitle").addEventListener("input",renderPreview);
+  document.getElementById("surveyNote").addEventListener("input",renderPreview);
+  document.getElementById("addFreeBtn").addEventListener("click",addFreeQuestion);
+  document.getElementById("saveDraftBtn").addEventListener("click",()=>saveSurvey("draft"));
+  document.getElementById("saveOpenBtn").addEventListener("click",()=>saveSurvey("open"));
   loadQuestions();
   loadSurveys();
   renderPreview();
 }
-
 async function loadQuestions(){
-  const stock = document.getElementById("stockList");
-  stock.innerHTML = `<div class="empty">読み込み中...</div>`;
-
+  const stock=document.getElementById("stockList");
+  stock.innerHTML=`<div class="empty">読み込み中...</div>`;
   try{
-    const res = await fetch(LIST_Q_URL, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId:getDiscordId()})
-    });
-
-    const data = await res.json();
-
-    if(!res.ok || !data.ok){
-      throw new Error(data.error || "load_failed");
-    }
-
-    questionCards = (data.cards || []).filter(c => c.enabled !== false);
-
-    if(!questionCards.length){
-      stock.innerHTML = `<div class="empty">質問カードがありません。先に質問カード管理で作成してください。</div>`;
-      return;
-    }
-
-    stock.innerHTML = questionCards.map(card => `
+    const res=await fetch(LIST_Q_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");
+    questionCards=(data.cards||[]).filter(c=>c.enabled!==false);
+    if(!questionCards.length){stock.innerHTML=`<div class="empty">質問カードがありません。先に質問カード管理で作成してください。</div>`;return}
+    stock.innerHTML=questionCards.map(card=>`
       <label class="stock-item" data-stock-wrap="${escapeAttr(card.id)}">
         <input type="checkbox" data-qid="${escapeAttr(card.id)}">
         <div>
           <div class="stock-title">${escapeHtml(card.title)}</div>
-          ${card.description ? `<div class="stock-desc">${escapeHtml(card.description)}</div>` : ""}
+          ${card.description?`<div class="stock-desc">${escapeHtml(card.description)}</div>`:""}
           <span class="badge">${typeLabel(card.type)}</span>
         </div>
       </label>
     `).join("");
-
-    document.querySelectorAll("[data-qid]").forEach(ch => {
-      ch.addEventListener("change", () => toggleQuestion(ch.dataset.qid, ch.checked));
-    });
-
-  }catch(err){
-    stock.innerHTML = `<div class="empty error">質問カード読み込み失敗：${escapeHtml(err.message)}</div>`;
-  }
+    document.querySelectorAll("[data-qid]").forEach(ch=>ch.addEventListener("change",()=>toggleQuestion(ch.dataset.qid,ch.checked)));
+  }catch(err){stock.innerHTML=`<div class="empty error">質問カード読み込み失敗：${escapeHtml(err.message)}</div>`}
 }
-
-function toggleQuestion(id, checked){
-  if(checked){
-    if(!selectedQuestions.includes(id)){
-      selectedQuestions.push(id);
-    }
-  }else{
-    selectedQuestions = selectedQuestions.filter(v => v !== id);
-  }
-
-  document.querySelectorAll("[data-stock-wrap]").forEach(el => {
-    el.classList.toggle("active", selectedQuestions.includes(el.dataset.stockWrap));
-  });
-
-  renderSelected();
-  renderPreview();
+function toggleQuestion(id,checked){
+  if(checked){if(!selectedQuestions.includes(id))selectedQuestions.push(id)}
+  else{selectedQuestions=selectedQuestions.filter(v=>v!==id)}
+  document.querySelectorAll("[data-stock-wrap]").forEach(el=>el.classList.toggle("active",selectedQuestions.includes(el.dataset.stockWrap)));
+  renderSelected();renderPreview();
 }
-
 function renderSelected(){
-  const box = document.getElementById("selectedList");
-
-  if(!selectedQuestions.length){
-    box.innerHTML = `<div class="empty">まだ選択されていません。</div>`;
-    return;
-  }
-
-  box.innerHTML = selectedQuestions.map((id, idx) => {
-    const card = questionCards.find(c => c.id === id);
-    const title = card?.title || id;
-
-    return `
-      <div class="selected-row">
-        <div class="selected-name">${escapeHtml(title)}</div>
-        <div class="move-btns">
-          <button type="button" onclick="moveQuestion(${idx},-1)">↑</button>
-          <button type="button" onclick="moveQuestion(${idx},1)">↓</button>
-          <button type="button" onclick="removeQuestion(${idx})">×</button>
-        </div>
-      </div>
-    `;
+  const box=document.getElementById("selectedList");
+  if(!selectedQuestions.length){box.innerHTML=`<div class="empty">まだ選択されていません。</div>`;return}
+  box.innerHTML=selectedQuestions.map((id,idx)=>{
+    const card=questionCards.find(c=>c.id===id);
+    return `<div class="selected-row"><div class="selected-name">${escapeHtml(card?.title||id)}</div><div class="move-btns"><button type="button" onclick="moveQuestion(${idx},-1)">↑</button><button type="button" onclick="moveQuestion(${idx},1)">↓</button><button type="button" onclick="removeQuestion(${idx})">×</button></div></div>`;
   }).join("");
 }
-
-window.moveQuestion = function(idx, dir){
-  const next = idx + dir;
-
-  if(next < 0 || next >= selectedQuestions.length){
-    return;
-  }
-
-  const tmp = selectedQuestions[idx];
-  selectedQuestions[idx] = selectedQuestions[next];
-  selectedQuestions[next] = tmp;
-
-  renderSelected();
-  renderPreview();
-};
-
-window.removeQuestion = function(idx){
-  const id = selectedQuestions[idx];
-  selectedQuestions.splice(idx, 1);
-
-  const ch = document.querySelector(`[data-qid="${cssEscape(id)}"]`);
-  if(ch){
-    ch.checked = false;
-  }
-
-  document.querySelectorAll("[data-stock-wrap]").forEach(el => {
-    el.classList.toggle("active", selectedQuestions.includes(el.dataset.stockWrap));
-  });
-
-  renderSelected();
-  renderPreview();
-};
-
+window.moveQuestion=function(idx,dir){const next=idx+dir;if(next<0||next>=selectedQuestions.length)return;const tmp=selectedQuestions[idx];selectedQuestions[idx]=selectedQuestions[next];selectedQuestions[next]=tmp;renderSelected();renderPreview()}
+window.removeQuestion=function(idx){
+  const id=selectedQuestions[idx];selectedQuestions.splice(idx,1);
+  const ch=document.querySelector(`[data-qid="${cssEscape(id)}"]`);if(ch)ch.checked=false;
+  document.querySelectorAll("[data-stock-wrap]").forEach(el=>el.classList.toggle("active",selectedQuestions.includes(el.dataset.stockWrap)));
+  renderSelected();renderPreview();
+}
+function addFreeQuestion(){
+  const title=document.getElementById("freeTitle").value.trim();
+  const description=document.getElementById("freeDesc").value.trim();
+  if(!title){alert("自由質問タイトルを入力してください。");return}
+  freeQuestions.push({id:`free_${Date.now()}_${freeQuestions.length}`,title,description});
+  document.getElementById("freeTitle").value="";
+  document.getElementById("freeDesc").value="";
+  renderFreeList();renderPreview();
+}
+function renderFreeList(){
+  const box=document.getElementById("freeList");
+  if(!freeQuestions.length){box.innerHTML=`<div class="empty">自由質問はまだありません。</div>`;return}
+  box.innerHTML=freeQuestions.map((fq,idx)=>`
+    <div class="free-row">
+      <div>
+        <div class="selected-name">${escapeHtml(fq.title)}</div>
+        ${fq.description?`<div class="stock-desc">${escapeHtml(fq.description)}</div>`:""}
+      </div>
+      <div class="move-btns"><button type="button" onclick="removeFreeQuestion(${idx})">×</button></div>
+    </div>
+  `).join("");
+}
+window.removeFreeQuestion=function(idx){freeQuestions.splice(idx,1);renderFreeList();renderPreview()}
 function renderPreview(){
-  const area = document.getElementById("previewArea");
-
-  if(!area){
-    return;
-  }
-
-  const title = document.getElementById("surveyTitle")?.value.trim() || "アンケート名";
-  const note = document.getElementById("surveyNote")?.value.trim();
-
-  if(!selectedQuestions.length){
-    area.innerHTML = `
-      <div class="preview-q">
-        <div class="preview-q-title">${escapeHtml(title)}</div>
-        ${note ? `<div class="preview-q-body">${escapeHtml(note)}</div>` : ""}
-        <div class="preview-q-body">質問を選ぶと、ここに表示イメージが出ます。</div>
-      </div>
-    `;
-    return;
-  }
-
-  area.innerHTML = `
-    <div class="preview-q">
-      <div class="preview-q-title">${escapeHtml(title)}</div>
-      ${note ? `<div class="preview-q-body">${escapeHtml(note)}</div>` : ""}
-    </div>
-    ${selectedQuestions.map(id => {
-      const card = questionCards.find(c => c.id === id);
-      if(!card){
-        return "";
-      }
-
-      return `
-        <div class="preview-q">
-          <div class="preview-q-title">${escapeHtml(card.title)}</div>
-          ${card.description ? `<div class="preview-q-body">${escapeHtml(card.description)}</div>` : ""}
-          <span class="badge">${typeLabel(card.type)}</span>
-        </div>
-      `;
-    }).join("")}
-  `;
+  const area=document.getElementById("previewArea");if(!area)return;
+  const title=document.getElementById("surveyTitle")?.value.trim()||"アンケート名";
+  const note=document.getElementById("surveyNote")?.value.trim();
+  const blocks=[];
+  selectedQuestions.forEach(id=>{
+    const card=questionCards.find(c=>c.id===id);if(!card)return;
+    blocks.push(`<div class="preview-q"><div class="preview-q-title">${escapeHtml(card.title)}</div>${card.description?`<div class="preview-q-body">${escapeHtml(card.description)}</div>`:""}<span class="badge">${typeLabel(card.type)}</span></div>`);
+  });
+  freeQuestions.forEach(fq=>{
+    blocks.push(`<div class="preview-q"><div class="preview-q-title">${escapeHtml(fq.title)}</div>${fq.description?`<div class="preview-q-body">${escapeHtml(fq.description)}</div>`:""}<span class="badge">自由入力</span></div>`);
+  });
+  area.innerHTML=`<div class="preview-q"><div class="preview-q-title">${escapeHtml(title)}</div>${note?`<div class="preview-q-body">${escapeHtml(note)}</div>`:""}</div>${blocks.length?blocks.join(""):`<div class="empty">質問を選ぶと、ここに表示イメージが出ます。</div>`}`;
 }
-
 async function saveSurvey(status){
-  const msg = document.getElementById("msg");
-  const title = document.getElementById("surveyTitle").value.trim();
-  const note = document.getElementById("surveyNote").value.trim();
-  const saveDraftBtn = document.getElementById("saveDraftBtn");
-  const saveOpenBtn = document.getElementById("saveOpenBtn");
-
-  msg.className = "msg";
-  msg.textContent = "";
-
-  if(!title){
-    msg.className = "msg error";
-    msg.textContent = "アンケート名を入力してください。";
-    return;
-  }
-
-  if(!selectedQuestions.length){
-    msg.className = "msg error";
-    msg.textContent = "質問を1つ以上選択してください。";
-    return;
-  }
-
-  saveDraftBtn.disabled = true;
-  saveOpenBtn.disabled = true;
-  msg.textContent = "保存中...";
-
+  const msg=document.getElementById("msg");
+  const title=document.getElementById("surveyTitle").value.trim();
+  const note=document.getElementById("surveyNote").value.trim();
+  const openAt=document.getElementById("openAt").value;
+  const closeAt=document.getElementById("closeAt").value;
+  const saveDraftBtn=document.getElementById("saveDraftBtn");
+  const saveOpenBtn=document.getElementById("saveOpenBtn");
+  msg.className="msg";msg.textContent="";
+  if(!title){msg.className="msg error";msg.textContent="アンケート名を入力してください。";return}
+  if(!selectedQuestions.length&&!freeQuestions.length){msg.className="msg error";msg.textContent="質問を1つ以上追加してください。";return}
+  saveDraftBtn.disabled=true;saveOpenBtn.disabled=true;msg.textContent="保存中...";
   try{
-    const survey = {
-      title,
-      note,
-      status,
-      questionCards: selectedQuestions,
-      heroCards: [],
-      freeQuestions: [],
-      targetAllianceCodes: []
-    };
-
-    const res = await fetch(SAVE_SURVEY_URL, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        discordId:getDiscordId(),
-        survey
-      })
-    });
-
-    const data = await res.json();
-
-    if(!res.ok || !data.ok){
-      throw new Error(data.error || "save_failed");
-    }
-
-    msg.className = "msg ok";
-    msg.textContent = status === "open" ? "保存して公開しました。" : "下書き保存しました。";
-
-    document.getElementById("surveyTitle").value = "";
-    document.getElementById("surveyNote").value = "";
-    selectedQuestions = [];
-
-    document.querySelectorAll("[data-qid]").forEach(ch => {
-      ch.checked = false;
-    });
-
-    document.querySelectorAll("[data-stock-wrap]").forEach(el => {
-      el.classList.remove("active");
-    });
-
-    renderSelected();
-    renderPreview();
-    await loadSurveys();
-
-  }catch(err){
-    msg.className = "msg error";
-    msg.textContent = "保存失敗：" + err.message;
-  }finally{
-    saveDraftBtn.disabled = false;
-    saveOpenBtn.disabled = false;
-  }
+    const survey={title,note,status,questionCards:selectedQuestions,freeQuestions,heroCards:[],targetAllianceCodes:[],openAt,closeAt};
+    const res=await fetch(SAVE_SURVEY_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),survey})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"save_failed");
+    msg.className="msg ok";msg.textContent=status==="open"?"保存して公開しました。":"下書き保存しました。";
+    document.getElementById("surveyTitle").value="";document.getElementById("surveyNote").value="";document.getElementById("openAt").value="";document.getElementById("closeAt").value="";
+    selectedQuestions=[];freeQuestions=[];
+    document.querySelectorAll("[data-qid]").forEach(ch=>ch.checked=false);
+    document.querySelectorAll("[data-stock-wrap]").forEach(el=>el.classList.remove("active"));
+    renderSelected();renderFreeList();renderPreview();await loadSurveys();
+  }catch(err){msg.className="msg error";msg.textContent="保存失敗："+err.message}
+  finally{saveDraftBtn.disabled=false;saveOpenBtn.disabled=false}
 }
-
 async function loadSurveys(){
-  const list = document.getElementById("surveyList");
-  list.innerHTML = `<div class="empty">読み込み中...</div>`;
-
+  const list=document.getElementById("surveyList");list.innerHTML=`<div class="empty">読み込み中...</div>`;
   try{
-    const res = await fetch(LIST_SURVEY_URL, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId:getDiscordId()})
-    });
-
-    const data = await res.json();
-
-    if(!res.ok || !data.ok){
-      throw new Error(data.error || "load_failed");
-    }
-
-    if(!data.surveys.length){
-      list.innerHTML = `<div class="empty">まだ作成済みアンケートはありません。</div>`;
-      return;
-    }
-
-    list.innerHTML = data.surveys.map(surveyCard).join("");
-
-    document.querySelectorAll("[data-status-id]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        updateStatus(btn.dataset.statusId, btn.dataset.statusValue);
-      });
-    });
-
-  }catch(err){
-    list.innerHTML = `<div class="empty error">アンケート読み込み失敗：${escapeHtml(err.message)}</div>`;
-  }
+    const res=await fetch(LIST_SURVEY_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");
+    const surveys=(data.surveys||[]).filter(s=>s.title);
+    if(!surveys.length){list.innerHTML=`<div class="empty">まだ作成済みアンケートはありません。</div>`;return}
+    list.innerHTML=surveys.map(surveyCard).join("");
+    document.querySelectorAll("[data-status-id]").forEach(btn=>btn.addEventListener("click",()=>updateStatus(btn.dataset.statusId,btn.dataset.statusValue)));
+  }catch(err){list.innerHTML=`<div class="empty error">アンケート読み込み失敗：${escapeHtml(err.message)}</div>`}
 }
-
 function surveyCard(s){
-  const status = s.status || "draft";
-
-  return `
-    <div class="survey-card">
-      <div class="survey-title">${escapeHtml(s.title || "無題")}</div>
-      ${s.note ? `<div class="survey-note">${escapeHtml(s.note)}</div>` : ""}
-      <div class="survey-meta">
-        質問数：${(s.questionCards || []).length}<br>
-        回答数：${s.answerCount || 0}
-      </div>
-      <span class="status ${escapeAttr(status)}">${statusLabel(status)}</span>
-
-      <div class="quick-actions">
-        <button class="open-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="open">公開</button>
-        <button class="draft-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="draft">下書き</button>
-        <button class="close-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="closed">締切</button>
-      </div>
-
-      ${status === "open" ? `<a class="back" href="${SURVEY_URL}" target="_blank">回答画面を開く</a>` : ""}
-    </div>
-  `;
+  const status=s.status||"draft";
+  const qCount=(s.questionCards||[]).length+(s.freeQuestions||[]).length;
+  return `<div class="survey-card"><div class="survey-title">${escapeHtml(s.title||"無題")}</div>${s.note?`<div class="survey-note">${escapeHtml(s.note)}</div>`:""}<div class="survey-meta">質問数：${qCount}<br>回答数：${s.answerCount||0}${s.closeAt?`<br>締切：${escapeHtml(s.closeAt)}`:""}</div><span class="status ${escapeAttr(status)}">${statusLabel(status)}</span><div class="quick-actions"><button class="open-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="open">公開</button><button class="draft-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="draft">下書き</button><button class="close-btn" data-status-id="${escapeAttr(s.id)}" data-status-value="closed">締切</button></div>${status==="open"?`<a class="back" href="${SURVEY_URL}" target="_blank">回答画面を開く</a>`:""}</div>`;
 }
-
-async function updateStatus(id, status){
+async function updateStatus(id,status){
   try{
-    const res = await fetch(UPDATE_STATUS_URL, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        discordId:getDiscordId(),
-        id,
-        status
-      })
-    });
-
-    const data = await res.json();
-
-    if(!res.ok || !data.ok){
-      throw new Error(data.error || "update_failed");
-    }
-
+    const res=await fetch(UPDATE_STATUS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),id,status})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"update_failed");
     await loadSurveys();
-
-  }catch(err){
-    alert("状態変更に失敗しました：" + err.message);
-  }
+  }catch(err){alert("状態変更に失敗しました："+err.message)}
 }
-
-function typeLabel(type){
-  return {
-    single_select:"1つだけ選択",
-    multi_select:"複数選択",
-    number:"数字入力",
-    text:"文章入力"
-  }[type] || type;
-}
-
-function statusLabel(status){
-  return {
-    draft:"下書き",
-    open:"公開中",
-    closed:"締切"
-  }[status] || status;
-}
-
-function cssEscape(value){
-  if(window.CSS && CSS.escape){
-    return CSS.escape(value);
-  }
-  return String(value).replace(/"/g, '\\"');
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function escapeAttr(str){
-  return escapeHtml(str);
-}
-
-session = getSession();
-
+function typeLabel(type){return {single_select:"1つだけ選択",multi_select:"複数選択",number:"数字入力",text:"文章入力"}[type]||type}
+function statusLabel(status){return {draft:"下書き",open:"公開中",closed:"締切"}[status]||status}
+function cssEscape(value){if(window.CSS&&CSS.escape)return CSS.escape(value);return String(value).replace(/"/g,'\\"')}
+function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttr(str){return escapeHtml(str)}
+session=getSession();
 if(session){
-  const level = getPermissionLevel(session);
-
-  if(level < 1){
-    document.getElementById("app").innerHTML = `
-      <div class="panel">
-        <div class="panel-title">権限がありません</div>
-        <p class="sub">アンケート作成はテクニカルマネージャー以上が利用できます。</p>
-        <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
-      </div>
-    `;
-  }else{
-    render();
-  }
+  const level=getPermissionLevel(session);
+  if(level<1){document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">アンケート作成はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`}
+  else render();
 }
 </script>
 </body>
