@@ -112,7 +112,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   background:rgba(255,255,255,.3);
   transform:translate(-50%,-50%) scale(0);
   animation:ripple .5s ease-out forwards;
-  pointer-events:none;
+  text-decoration:none;
+  display:none;
   z-index:200;
 }
 @keyframes ripple{
@@ -264,7 +265,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   font-size:11px;
   font-weight:800;
   backdrop-filter:blur(8px);
-  pointer-events:none;
+  text-decoration:none;
+  display:none;
 }
 @media(max-width:480px){
   #adminFuture{
@@ -284,8 +286,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   <button id="logoutBtn" type="button">ログアウト</button>
 </div>
 
-<!-- 将来の管理者ページリンク予定地 -->
-<div id="adminFuture">管理者ページ 予定地</div>
+<!-- 管理者ページリンク -->
+<a id="adminFuture" href="/1648-portal/admin/">管理者ページ</a>
 
 
 <!-- 官職予約モーションオーバーレイ -->
@@ -454,7 +456,48 @@ function initUserBadge(){
   }
 }
 
-document.addEventListener("DOMContentLoaded", initUserBadge);
+
+// ===== 権限レベル判定（Discordロール連携まではKさんをdeveloper固定） =====
+function getPortalPermissionLevel(){
+  try{
+    const raw = localStorage.getItem("discord_user");
+    if(!raw) return 0;
+    const data = JSON.parse(raw);
+    const discordId =
+      data?.user?.discordId ||
+      data?.discord?.id ||
+      data?.discordId ||
+      "";
+
+    if(discordId === "795152243883114527"){
+      return 3; // HQディベロッパー
+    }
+
+    const role = data?.role || data?.user?.role || "member";
+    const levelMap = {
+      "developer": 3,
+      "manager": 2,
+      "technical": 1,
+      "member": 0
+    };
+
+    return levelMap[role] ?? 0;
+  }catch(e){
+    return 0;
+  }
+}
+
+function initAdminLink(){
+  const adminLink = document.getElementById("adminFuture");
+  if(!adminLink) return;
+  const level = getPortalPermissionLevel();
+  adminLink.style.display = level >= 1 ? "block" : "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initUserBadge();
+  initAdminLink();
+});
 
 </script>
 </body>
