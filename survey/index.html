@@ -359,7 +359,8 @@ function surveyCard(s){
     <div class="survey-card">
       <div class="survey-title">${escapeHtml(s.title)}</div>
       ${s.note ? `<div class="note">${escapeHtml(s.note)}</div>` : ""}
-      ${s.closeAt ? `<div class="note">締切：${escapeHtml(s.closeAt)}</div>` : ""}
+      ${s.closeAt ? `<div class="note">締切：${escapeHtml(formatDateTime(s.closeAt))}</div>` : ""}
+      ${s.answered && s.updatedAt ? `<div class="note">最終更新：${escapeHtml(formatTimestamp(s.updatedAt))}</div>` : ""}
       <span class="status ${statusClass}">${statusText}</span>
       <a class="btn" href="/1648-portal/survey/?id=${encodeURIComponent(s.id)}">${btnText}</a>
     </div>
@@ -400,7 +401,7 @@ async function renderAnswer(){
       renderHeader(survey.title, survey.note || "1ページで最後まで回答できます。", "/1648-portal/survey/")
       + renderUserBox()
       + editNote
-      + questions.map(q => questionTemplate(q, old[q.id])).join("")
+      + questions.map(q => questionTemplate(q, old[q.id] !== undefined ? old[q.id] : q.defaultValue)).join("")
       + `<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`;
 
     document.getElementById("saveBtn").addEventListener("click", saveAnswer);
@@ -497,6 +498,24 @@ async function saveAnswer(){
   }
 }
 
+
+
+function formatDateTime(value){
+  if(!value) return "";
+  return String(value).replace("T", " ");
+}
+
+function formatTimestamp(value){
+  if(!value) return "";
+  if(typeof value === "string") return value;
+  if(value._seconds){
+    return new Date(value._seconds * 1000).toLocaleString("ja-JP");
+  }
+  if(value.seconds){
+    return new Date(value.seconds * 1000).toLocaleString("ja-JP");
+  }
+  return "";
+}
 
 function errorLabel(code){
   return {
