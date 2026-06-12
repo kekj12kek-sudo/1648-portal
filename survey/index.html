@@ -1,14 +1,533 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>アンケートRoom</title><style>
-*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}body{padding:16px;padding-bottom:32px}.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:rgba(7,11,18,.96);border-bottom:1px solid rgba(255,255,255,.08)}h1{font-size:20px;color:#86efac}.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}.card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:18px;padding:15px;margin-bottom:12px}.title{font-size:16px;font-weight:900}.note{font-size:12px;line-height:1.7;opacity:.75;margin-top:7px}.status{display:inline-block;margin-top:10px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1)}.status.done{background:rgba(250,204,21,.16);color:#fde68a}.status.todo{background:rgba(34,197,94,.18);color:#bbf7d0}.btn{display:block;text-align:center;text-decoration:none;width:100%;min-height:48px;line-height:48px;margin-top:12px;border:none;border-radius:14px;background:linear-gradient(135deg,#16a34a,#86efac);color:#052e16;font-size:15px;font-weight:900}.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:28px 8px}.question{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}.qtitle{font-size:16px;font-weight:900}.qbody{font-size:13px;line-height:1.7;opacity:.82;margin-top:8px}.choice{display:flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:12px;padding:11px;margin-top:8px;font-size:14px}.choice input{width:19px;height:19px}input[type='number'],textarea{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit;margin-top:10px}textarea{min-height:92px;resize:vertical;line-height:1.6}.save{width:100%;min-height:52px;border:none;border-radius:15px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;font-size:16px;font-weight:900}.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}.ok{color:#86efac}.error{color:#fca5a5}
-</style></head><body><div id="app"></div><script>
-const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify",PORTAL_URL="/1648-portal/",LIST_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getOpenSurveysForUser",GET_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getSurveyForAnswer",SAVE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyAnswer";
-let session=null,surveyId="",survey=null,questions=[],oldAnswer=null;
-function sess(){const r=localStorage.getItem("discord_user");if(!r){location.replace(LOGIN_URL);return null}try{const d=JSON.parse(r);if(!d.ok){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}if(d.status==="pending_profile"){location.replace("/1648-portal/profile-setup/");return null}if(d.status!=="active"){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}return d}catch(e){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}}
-function did(){return session?.user?.discordId||session?.discord?.id||session?.discordId||""}function header(t,s){return `<div class="header"><h1>${h(t)}</h1><div class="sub">${h(s)}</div><a class="back" href="${PORTAL_URL}">← Portalへ戻る</a></div>`}
-async function list(){app.innerHTML=header("アンケートRoom","公開中のアンケートを選んで回答できます。")+`<div class="empty">読み込み中...</div>`;try{const res=await fetch(LIST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:did()})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");if(!data.surveys.length){app.innerHTML=header("アンケートRoom","公開中のアンケートを選んで回答できます。")+`<div class="empty">現在、公開中のアンケートはありません。</div>`;return}app.innerHTML=header("アンケートRoom","公開中のアンケートを選んで回答できます。")+data.surveys.map(s=>`<div class="card"><div class="title">${h(s.title)}</div>${s.note?`<div class="note">${h(s.note)}</div>`:""}<span class="status ${s.answered?"done":"todo"}">${s.answered?"回答済み・修正可能":"未回答"}</span><a class="btn" href="/1648-portal/survey/?id=${encodeURIComponent(s.id)}">${s.answered?"回答を修正":"回答する"}</a></div>`).join("")}catch(e){app.innerHTML=header("アンケートRoom","公開中のアンケートを選んで回答できます。")+`<div class="empty error">読み込み失敗：${h(e.message)}</div>`}}
-async function answer(){app.innerHTML=header("アンケート","読み込み中...")+`<div class="empty">読み込み中...</div>`;try{const res=await fetch(GET_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:did(),surveyId})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");survey=data.survey;questions=data.questions||[];oldAnswer=data.answer||null;const old=oldAnswer?.answers||{};app.innerHTML=header(survey.title,survey.note||"1ページで最後まで回答できます。")+questions.map(q=>qt(q,old[q.id])).join("")+`<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`;saveBtn.onclick=save}catch(e){app.innerHTML=header("アンケート","読み込み失敗")+`<div class="empty error">${h(e.message)}</div>`}}
-function qt(q,val){let x=`<div class="question" data-question="${esc(q.id)}"><div class="qtitle">${h(q.title)}</div>${q.description?`<div class="qbody">${h(q.description)}</div>`:""}`;if(q.type==="single_select"){x+=(q.options||[]).map(o=>`<label class="choice"><input type="radio" name="q_${esc(q.id)}" value="${esc(o)}" ${val===o?"checked":""}>${h(o)}</label>`).join("")}else if(q.type==="multi_select"){const a=Array.isArray(val)?val:[];x+=(q.options||[]).map(o=>`<label class="choice"><input type="checkbox" data-qmulti="${esc(q.id)}" value="${esc(o)}" ${a.includes(o)?"checked":""}>${h(o)}</label>`).join("")}else if(q.type==="number"){x+=`<input type="number" data-qinput="${esc(q.id)}" value="${esc(val||"")}" placeholder="数字を入力">`}else{x+=`<textarea data-qinput="${esc(q.id)}" placeholder="入力してください">${h(val||"")}</textarea>`}return x+`</div>`}
-async function save(){const ans={};questions.forEach(q=>{if(q.type==="single_select"){ans[q.id]=document.querySelector(`input[name='q_${CSS.escape(q.id)}']:checked`)?.value||""}else if(q.type==="multi_select"){ans[q.id]=Array.from(document.querySelectorAll(`[data-qmulti='${CSS.escape(q.id)}']:checked`)).map(v=>v.value)}else{ans[q.id]=document.querySelector(`[data-qinput='${CSS.escape(q.id)}']`)?.value||""}});msg.className="msg";msg.textContent="保存中...";try{const res=await fetch(SAVE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:did(),surveyId,answers:ans})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"save_failed");msg.className="msg ok";msg.textContent="保存しました。締切までは何度でも修正できます。"}catch(e){msg.className="msg error";msg.textContent="保存失敗："+e.message}}
-function h(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function esc(s){return h(s)}
-session=sess();if(session){surveyId=new URLSearchParams(location.search).get("id")||"";surveyId?answer():list()}
-</script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>アンケートRoom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#070b12;
+  color:#fff;
+  font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+}
+body{
+  padding:16px;
+  padding-bottom:32px;
+}
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  margin:-16px -16px 16px;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));
+  border-bottom:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(10px);
+}
+h1{
+  font-size:20px;
+  color:#86efac;
+  line-height:1.3;
+}
+.sub{
+  margin-top:4px;
+  font-size:12px;
+  opacity:.75;
+  line-height:1.7;
+}
+.back{
+  display:inline-flex;
+  margin-top:12px;
+  color:#93c5fd;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:800;
+}
+.user-box{
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:14px;
+  font-size:12px;
+  line-height:1.7;
+  color:#dbeafe;
+}
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.survey-card{
+  border:1px solid rgba(255,255,255,.13);
+  background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));
+  border-radius:18px;
+  padding:15px;
+}
+.survey-title{
+  font-size:16px;
+  font-weight:900;
+  line-height:1.4;
+}
+.note{
+  font-size:12px;
+  line-height:1.7;
+  opacity:.75;
+  margin-top:7px;
+}
+.status{
+  display:inline-block;
+  margin-top:10px;
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:10px;
+  font-weight:900;
+  background:rgba(255,255,255,.1);
+}
+.status.done{
+  background:rgba(250,204,21,.16);
+  color:#fde68a;
+}
+.status.todo{
+  background:rgba(34,197,94,.18);
+  color:#bbf7d0;
+}
+.btn{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  width:100%;
+  min-height:48px;
+  line-height:48px;
+  margin-top:12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#16a34a,#86efac);
+  color:#052e16;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn-blue{
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+}
+.empty{
+  font-size:13px;
+  line-height:1.7;
+  opacity:.72;
+  text-align:center;
+  padding:28px 8px;
+}
+.error{color:#fca5a5}
+.ok{color:#86efac}
+.question{
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.qtitle{
+  font-size:16px;
+  font-weight:900;
+  line-height:1.4;
+}
+.qbody{
+  font-size:13px;
+  line-height:1.7;
+  opacity:.82;
+  margin-top:8px;
+}
+.choice{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  border-radius:12px;
+  padding:11px;
+  margin-top:8px;
+  font-size:14px;
+}
+.choice input{
+  width:19px;
+  height:19px;
+  flex-shrink:0;
+}
+input[type='number'],textarea{
+  width:100%;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-size:16px;
+  padding:12px;
+  outline:none;
+  font-family:inherit;
+  margin-top:10px;
+}
+textarea{
+  min-height:92px;
+  resize:vertical;
+  line-height:1.6;
+}
+.save{
+  width:100%;
+  min-height:52px;
+  border:none;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.save:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.msg{
+  font-size:12px;
+  line-height:1.7;
+  margin-top:10px;
+  text-align:center;
+}
+.answer-note{
+  border:1px solid rgba(250,204,21,.25);
+  background:rgba(250,204,21,.08);
+  color:#fde68a;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.7;
+  margin-bottom:14px;
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const LOGIN_URL =
+  "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+
+const PORTAL_URL = "/1648-portal/";
+
+const LIST_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getOpenSurveysForUser";
+const GET_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getSurveyForAnswer";
+const SAVE_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyAnswer";
+
+let session = null;
+let surveyId = "";
+let survey = null;
+let questions = [];
+let oldAnswer = null;
+
+function getSession(){
+  const raw = localStorage.getItem("discord_user");
+
+  if(!raw){
+    window.location.replace(LOGIN_URL);
+    return null;
+  }
+
+  try{
+    const data = JSON.parse(raw);
+
+    if(!data.ok){
+      localStorage.removeItem("discord_user");
+      window.location.replace(LOGIN_URL);
+      return null;
+    }
+
+    if(data.status === "pending_profile"){
+      window.location.replace("/1648-portal/profile-setup/");
+      return null;
+    }
+
+    if(data.status !== "active"){
+      localStorage.removeItem("discord_user");
+      window.location.replace(LOGIN_URL);
+      return null;
+    }
+
+    return data;
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    window.location.replace(LOGIN_URL);
+    return null;
+  }
+}
+
+function getDiscordId(){
+  return (
+    session?.user?.discordId ||
+    session?.discord?.id ||
+    session?.discordId ||
+    ""
+  );
+}
+
+function getUserName(){
+  return (
+    session?.user?.playerName ||
+    session?.discord?.globalName ||
+    session?.discord?.username ||
+    "メンバー"
+  );
+}
+
+function getAlliance(){
+  return session?.user?.alliance || "";
+}
+
+function renderHeader(title, sub, backUrl = PORTAL_URL){
+  return `
+    <div class="header">
+      <h1>${escapeHtml(title)}</h1>
+      <div class="sub">${escapeHtml(sub)}</div>
+      <a class="back" href="${backUrl}">← 戻る</a>
+    </div>
+  `;
+}
+
+function renderUserBox(){
+  const alliance = getAlliance();
+  return `
+    <div class="user-box">
+      回答者：${escapeHtml(getUserName())}
+      ${alliance ? `<br>同盟：${escapeHtml(alliance)}` : ""}
+    </div>
+  `;
+}
+
+async function renderList(){
+  document.getElementById("app").innerHTML =
+    renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+    + renderUserBox()
+    + `<div class="empty">読み込み中...</div>`;
+
+  try{
+    const res = await fetch(LIST_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({discordId:getDiscordId()})
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "load_failed");
+    }
+
+    if(!data.surveys.length){
+      document.getElementById("app").innerHTML =
+        renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+        + renderUserBox()
+        + `<div class="empty">現在、公開中のアンケートはありません。</div>`;
+      return;
+    }
+
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+      + renderUserBox()
+      + `<div class="list">`
+      + data.surveys.map(surveyCard).join("")
+      + `</div>`;
+
+  }catch(err){
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+      + renderUserBox()
+      + `<div class="empty error">読み込み失敗：${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function surveyCard(s){
+  const btnText = s.answered ? "回答を修正" : "回答する";
+  const statusText = s.answered ? "回答済み・修正可能" : "未回答";
+  const statusClass = s.answered ? "done" : "todo";
+
+  return `
+    <div class="survey-card">
+      <div class="survey-title">${escapeHtml(s.title)}</div>
+      ${s.note ? `<div class="note">${escapeHtml(s.note)}</div>` : ""}
+      ${s.closeAt ? `<div class="note">締切：${escapeHtml(s.closeAt)}</div>` : ""}
+      <span class="status ${statusClass}">${statusText}</span>
+      <a class="btn" href="/1648-portal/survey/?id=${encodeURIComponent(s.id)}">${btnText}</a>
+    </div>
+  `;
+}
+
+async function renderAnswer(){
+  document.getElementById("app").innerHTML =
+    renderHeader("アンケート", "読み込み中...", "/1648-portal/survey/")
+    + `<div class="empty">読み込み中...</div>`;
+
+  try{
+    const res = await fetch(GET_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        discordId:getDiscordId(),
+        surveyId
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "load_failed");
+    }
+
+    survey = data.survey;
+    questions = data.questions || [];
+    oldAnswer = data.answer || null;
+
+    const old = oldAnswer?.answers || {};
+    const editNote = oldAnswer
+      ? `<div class="answer-note">前回の回答を読み込みました。変更がある場合だけ修正してください。</div>`
+      : `<div class="answer-note">ゲーム内の現在の状態を確認して回答してください。</div>`;
+
+    document.getElementById("app").innerHTML =
+      renderHeader(survey.title, survey.note || "1ページで最後まで回答できます。", "/1648-portal/survey/")
+      + renderUserBox()
+      + editNote
+      + questions.map(q => questionTemplate(q, old[q.id])).join("")
+      + `<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`;
+
+    document.getElementById("saveBtn").addEventListener("click", saveAnswer);
+
+  }catch(err){
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケート", "読み込み失敗", "/1648-portal/survey/")
+      + `<div class="empty error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function questionTemplate(q, value){
+  let html = `
+    <div class="question" data-question="${escapeAttr(q.id)}">
+      <div class="qtitle">${escapeHtml(q.title)}</div>
+      ${q.description ? `<div class="qbody">${escapeHtml(q.description)}</div>` : ""}
+  `;
+
+  if(q.imageUrl){
+    html += `<img src="${escapeAttr(q.imageUrl)}" alt="" style="width:100%;border-radius:14px;margin-top:10px;">`;
+  }
+
+  if(q.type === "single_select"){
+    html += (q.options || []).map(opt => `
+      <label class="choice">
+        <input type="radio" name="q_${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${value === opt ? "checked" : ""}>
+        <span>${escapeHtml(opt)}</span>
+      </label>
+    `).join("");
+  }else if(q.type === "multi_select"){
+    const arr = Array.isArray(value) ? value : [];
+
+    html += (q.options || []).map(opt => `
+      <label class="choice">
+        <input type="checkbox" data-qmulti="${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${arr.includes(opt) ? "checked" : ""}>
+        <span>${escapeHtml(opt)}</span>
+      </label>
+    `).join("");
+  }else if(q.type === "number"){
+    html += `<input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="数字を入力">`;
+  }else{
+    html += `<textarea data-qinput="${escapeAttr(q.id)}" placeholder="入力してください">${escapeHtml(value || "")}</textarea>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+async function saveAnswer(){
+  const answers = {};
+
+  questions.forEach(q => {
+    if(q.type === "single_select"){
+      answers[q.id] = document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`)?.value || "";
+    }else if(q.type === "multi_select"){
+      answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else{
+      answers[q.id] = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`)?.value || "";
+    }
+  });
+
+  const msg = document.getElementById("msg");
+  const saveBtn = document.getElementById("saveBtn");
+
+  msg.className = "msg";
+  msg.textContent = "保存中...";
+  saveBtn.disabled = true;
+
+  try{
+    const res = await fetch(SAVE_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        discordId:getDiscordId(),
+        surveyId,
+        answers
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "save_failed");
+    }
+
+    msg.className = "msg ok";
+    msg.textContent = "保存しました。締切までは何度でも修正できます。";
+
+  }catch(err){
+    msg.className = "msg error";
+    msg.textContent = "保存失敗：" + err.message;
+  }finally{
+    saveBtn.disabled = false;
+  }
+}
+
+function cssEscape(value){
+  if(window.CSS && CSS.escape){
+    return CSS.escape(value);
+  }
+  return String(value).replace(/'/g, "\\'");
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function escapeAttr(str){
+  return escapeHtml(str);
+}
+
+session = getSession();
+
+if(session){
+  surveyId = new URLSearchParams(location.search).get("id") || "";
+
+  if(surveyId){
+    renderAnswer();
+  }else{
+    renderList();
+  }
+}
+</script>
+</body>
+</html>
