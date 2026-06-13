@@ -3,31 +3,160 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>アンケート結果</title>
+<title>アンケート集計</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
-body{padding:16px 16px 34px}
-.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
-h1{font-size:20px;color:#facc15;line-height:1.3}.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}
-.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}
-.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}
-.panel-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#fde68a}
-.help{border:1px solid rgba(250,204,21,.25);background:rgba(250,204,21,.08);color:#fde68a;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
-.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:22px 8px}.error{color:#fca5a5}.ok{color:#86efac}
-.survey-list,.answer-list,.hero-list{display:flex;flex-direction:column;gap:10px}
-.survey-card,.answer-card,.hero-row{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:13px}
-.survey-title{font-size:15px;font-weight:900;line-height:1.4}.survey-note,.meta{font-size:11px;opacity:.72;line-height:1.7;margin-top:6px}
-.status{display:inline-block;margin-top:8px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1)}
-.btn{width:100%;min-height:44px;margin-top:10px;border:none;border-radius:13px;background:linear-gradient(135deg,#ca8a04,#facc15);color:#1c1917;font-size:14px;font-weight:900;cursor:pointer}
-.grid{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:860px){.grid{grid-template-columns:360px 1fr}}
-.hero-row{display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center}
-.hero-img{width:58px;height:58px;border-radius:12px;background:rgba(255,255,255,.08);object-fit:cover}
-.hero-name{font-size:14px;font-weight:900}.hero-users{font-size:11px;opacity:.7;line-height:1.6;margin-top:4px}.hero-count{font-size:20px;font-weight:900;color:#86efac}
-.answer-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.player{font-size:15px;font-weight:900}.answer-body{margin-top:10px;display:flex;flex-direction:column;gap:8px}
-.answer-line{border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);border-radius:12px;padding:9px}
-.qtitle{font-size:12px;font-weight:900;color:#bfdbfe}.qvalue{font-size:13px;line-height:1.7;margin-top:4px;white-space:pre-wrap}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.mini-btn{border:none;border-radius:999px;padding:8px 10px;background:rgba(255,255,255,.1);color:#e5e7eb;font-size:12px;font-weight:900;cursor:pointer}
+html,body{
+  width:100%;
+  min-height:100%;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(96,165,250,.12),transparent 28%),
+    radial-gradient(circle at 90% 8%,rgba(34,197,94,.10),transparent 26%),
+    #070b12;
+  color:#fff;
+  font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+}
+body{padding:14px;padding-bottom:34px}
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  margin:-14px -14px 14px;
+  padding:14px;
+  background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));
+  border-bottom:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(10px);
+}
+h1{font-size:21px;color:#60a5fa;line-height:1.3}
+.sub{margin-top:5px;font-size:12px;opacity:.78;line-height:1.65}
+.back{display:inline-flex;align-items:center;min-height:34px;margin-top:10px;color:#bfdbfe;text-decoration:none;font-size:12px;font-weight:900}
+.panel{
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.055);
+  border-radius:20px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 14px 30px rgba(0,0,0,.20);
+}
+.panel-title{font-size:16px;font-weight:950;color:#bfdbfe;line-height:1.45}
+.help{
+  margin-top:8px;
+  font-size:12px;
+  line-height:1.7;
+  color:#cbd5e1;
+  opacity:.86;
+}
+.survey-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.survey-card{
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));
+  border-radius:18px;
+  padding:13px;
+  cursor:pointer;
+}
+.survey-card.active{
+  border-color:rgba(96,165,250,.55);
+  box-shadow:0 0 0 1px rgba(96,165,250,.20),0 0 22px rgba(37,99,235,.16);
+}
+.survey-title{font-size:15px;font-weight:950;line-height:1.45}
+.survey-meta{margin-top:7px;font-size:11px;line-height:1.65;color:#cbd5e1;opacity:.78}
+.badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:10px;
+  font-weight:950;
+  background:rgba(255,255,255,.10);
+  color:#e5e7eb;
+}
+.badge.open{background:rgba(34,197,94,.16);color:#bbf7d0}
+.badge.closed{background:rgba(248,113,113,.14);color:#fecaca}
+.badge.draft{background:rgba(250,204,21,.14);color:#fde68a}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.summary-box{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.045);
+  border-radius:15px;
+  padding:10px;
+}
+.summary-label{font-size:10px;font-weight:900;color:#94a3b8}
+.summary-value{margin-top:3px;font-size:18px;font-weight:950;color:#fff}
+.hero-ranking{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.hero-row{
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(135deg,rgba(34,197,94,.10),rgba(15,23,42,.88));
+  border-radius:17px;
+  padding:10px;
+}
+.hero-head{display:flex;gap:10px;align-items:center}
+.hero-img{
+  width:64px;
+  height:64px;
+  border-radius:13px;
+  object-fit:cover;
+  background:rgba(255,255,255,.08);
+  flex-shrink:0;
+}
+.hero-name{font-size:15px;font-weight:950;line-height:1.4}
+.hero-count{margin-top:4px;font-size:12px;color:#bbf7d0;font-weight:900}
+.bar{
+  height:8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  overflow:hidden;
+  margin-top:9px;
+}
+.bar-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#16a34a,#86efac);
+  border-radius:999px;
+}
+.member-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.member-card{
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045);
+  border-radius:18px;
+  padding:12px;
+}
+.member-name{font-size:15px;font-weight:950;line-height:1.45}
+.member-meta{margin-top:4px;font-size:11px;line-height:1.6;color:#cbd5e1;opacity:.78}
+.answer-block{
+  margin-top:10px;
+  border-top:1px solid rgba(255,255,255,.10);
+  padding-top:10px;
+}
+.answer-title{font-size:11px;font-weight:950;color:#93c5fd}
+.answer-text{margin-top:5px;font-size:13px;line-height:1.7;color:#e5e7eb}
+.empty{
+  font-size:13px;
+  line-height:1.75;
+  opacity:.74;
+  text-align:center;
+  padding:26px 8px;
+}
+.error{color:#fca5a5}
+.loading{opacity:.76}
+.btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:48px;
+  border:none;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  font-size:14px;
+  font-weight:950;
+  cursor:pointer;
+  margin-top:12px;
+}
+@media(min-width:520px){
+  body{max-width:520px;margin:0 auto}
+}
 </style>
 </head>
 <body>
@@ -35,10 +164,11 @@ h1{font-size:20px;color:#facc15;line-height:1.3}.sub{margin-top:4px;font-size:12
 <script>
 const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
 const ADMIN_URL="/1648-portal/admin/";
-const RESULT_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getSurveyResults";
+const RESULTS_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getSurveyResults";
 let session=null;
 let surveys=[];
-let current=null;
+let selectedSurveyId="";
+let selectedResult=null;
 
 function getSession(){
   const raw=localStorage.getItem("discord_user");
@@ -58,111 +188,150 @@ function getPermissionLevel(data){
   const role=data?.role||data?.user?.role||"member";
   return {developer:3,manager:2,technical:1,member:0}[role]??0;
 }
-function header(title,sub){
-  return `<div class="header"><h1>${escapeHtml(title)}</h1><div class="sub">${escapeHtml(sub)}</div><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`;
+function renderShell(content){
+  document.getElementById("app").innerHTML=`
+    <div class="header">
+      <h1>アンケート集計</h1>
+      <div class="sub">回答結果と英雄カード集計を確認します。</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+    </div>
+    ${content}
+  `;
 }
-function renderShell(){
-  document.getElementById("app").innerHTML=
-    header("アンケート結果","回答一覧と英雄カード集計を確認します。")+
-    `<div class="grid">
-      <div class="panel"><div class="panel-title">アンケート一覧</div><div id="surveyList" class="survey-list"><div class="empty">読み込み中...</div></div></div>
-      <div id="resultArea"><div class="panel"><div class="empty">左からアンケートを選択してください。</div></div></div>
-    </div>`;
-}
-async function loadSurveyList(){
-  const box=document.getElementById("surveyList");
+async function loadResults(){
+  renderShell(`<div class="panel"><div class="empty loading">読み込み中...</div></div>`);
   try{
-    const res=await fetch(RESULT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});
+    const res=await fetch(RESULTS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({discordId:getDiscordId()})
+    });
     const data=await res.json();
     if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");
-    surveys=data.surveys||[];
-    if(!surveys.length){box.innerHTML=`<div class="empty">アンケートがありません。</div>`;return}
-    box.innerHTML=surveys.map(s=>`
-      <div class="survey-card">
-        <div class="survey-title">${escapeHtml(s.title||"無題")}</div>
-        ${s.note?`<div class="survey-note">${escapeHtml(s.note)}</div>`:""}
-        <div class="meta">回答数：${Number(s.answerCount||s.answeredUserCount||0)}<br>状態：${escapeHtml(openStateLabel(s.openState||s.status))}${s.closeAt?`<br>締切：${escapeHtml(formatDateTime(s.closeAt))}`:""}</div>
-        <span class="status">${escapeHtml(statusLabel(s.status||"draft"))}</span>
-        <button class="btn" data-survey-id="${escapeAttr(s.id)}">結果を見る</button>
-      </div>
-    `).join("");
-    document.querySelectorAll("[data-survey-id]").forEach(btn=>btn.addEventListener("click",()=>loadResult(btn.dataset.surveyId)));
+    surveys=(data.surveys||[]).filter(s=>s.title && s.title!=="無題" && s.id!=="sample");
+    if(!surveys.length){
+      renderShell(`<div class="panel"><div class="panel-title">集計対象なし</div><div class="empty">表示できるアンケートがありません。</div></div>`);
+      return;
+    }
+    selectedSurveyId=selectedSurveyId||surveys[0].id;
+    selectedResult=surveys.find(s=>s.id===selectedSurveyId)||surveys[0];
+    selectedSurveyId=selectedResult.id;
+    render();
   }catch(err){
-    box.innerHTML=`<div class="empty error">読み込み失敗：${escapeHtml(errorLabel(err.message))}</div>`;
+    renderShell(`<div class="panel"><div class="panel-title error">読み込み失敗</div><div class="empty error">${escapeHtml(err.message)}</div></div>`);
   }
 }
-async function loadResult(surveyId){
-  const area=document.getElementById("resultArea");
-  area.innerHTML=`<div class="panel"><div class="empty">結果を読み込み中...</div></div>`;
-  try{
-    const res=await fetch(RESULT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),surveyId})});
-    const data=await res.json();
-    if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");
-    current=data;
-    renderResult();
-  }catch(err){
-    area.innerHTML=`<div class="panel"><div class="empty error">結果読み込み失敗：${escapeHtml(errorLabel(err.message))}</div></div>`;
-  }
-}
-function renderResult(){
-  const area=document.getElementById("resultArea");
-  const s=current.survey||{};
-  const heroSummary=current.heroSummary||[];
-  const answers=current.answers||[];
-  const questions=current.questions||[];
-  const qMap={};
-  questions.forEach(q=>qMap[q.id]=q);
-  area.innerHTML=`
+function render(){
+  renderShell(`
     <div class="panel">
-      <div class="panel-title">${escapeHtml(s.title||"アンケート結果")}</div>
+      <div class="panel-title">アンケート一覧</div>
+      <div class="help">確認するアンケートを選んでください。</div>
+      <div class="survey-list">
+        ${surveys.map(surveyCard).join("")}
+      </div>
+    </div>
+    ${selectedResult ? resultPanel(selectedResult) : ""}
+  `);
+  document.querySelectorAll("[data-survey-id]").forEach(card=>{
+    card.addEventListener("click",()=>{
+      selectedSurveyId=card.dataset.surveyId;
+      selectedResult=surveys.find(s=>s.id===selectedSurveyId);
+      render();
+      setTimeout(()=>document.getElementById("resultPanel")?.scrollIntoView({behavior:"smooth",block:"start"}),50);
+    });
+  });
+}
+function surveyCard(s){
+  const active=s.id===selectedSurveyId;
+  return `
+    <div class="survey-card ${active?"active":""}" data-survey-id="${escapeAttr(s.id)}">
+      <div class="survey-title">${escapeHtml(s.title)}</div>
+      ${s.note?`<div class="survey-meta">${escapeHtml(s.note)}</div>`:""}
+      <div class="badge-row">
+        <span class="badge ${escapeAttr(s.status||"")}">${statusLabel(s.status)}</span>
+        <span class="badge">回答 ${Number(s.answerCount||0)}人</span>
+      </div>
+    </div>
+  `;
+}
+function resultPanel(s){
+  const answers=Array.isArray(s.answers)?s.answers:[];
+  const heroRanking=Array.isArray(s.heroRanking)?s.heroRanking:[];
+  const max=Math.max(...heroRanking.map(h=>Number(h.count||0)),1);
+  return `
+    <div class="panel" id="resultPanel">
+      <div class="panel-title">${escapeHtml(s.title)}</div>
       ${s.note?`<div class="help">${escapeHtml(s.note)}</div>`:""}
-      <div class="meta">回答数：${answers.length} / 状態：${escapeHtml(openStateLabel(s.openState||s.status))}${s.closeAt?` / 締切：${escapeHtml(formatDateTime(s.closeAt))}`:""}</div>
+      <div class="summary-grid">
+        <div class="summary-box">
+          <div class="summary-label">回答数</div>
+          <div class="summary-value">${Number(s.answerCount||answers.length||0)}</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-label">英雄種類</div>
+          <div class="summary-value">${heroRanking.length}</div>
+        </div>
+      </div>
     </div>
 
     <div class="panel">
       <div class="panel-title">英雄カード集計</div>
-      ${heroSummary.length?`<div class="hero-list">${heroSummary.map(heroRow).join("")}</div>`:`<div class="empty">英雄カード回答はありません。</div>`}
+      ${heroRanking.length ? `<div class="hero-ranking">${heroRanking.map(h=>heroRow(h,max)).join("")}</div>` : `<div class="empty">英雄カード回答はありません。</div>`}
     </div>
 
     <div class="panel">
       <div class="panel-title">回答者別一覧</div>
-      ${answers.length?`<div class="answer-list">${answers.map(a=>answerCard(a,qMap)).join("")}</div>`:`<div class="empty">回答がありません。</div>`}
+      ${answers.length ? `<div class="member-list">${answers.map(memberCard).join("")}</div>` : `<div class="empty">回答者はいません。</div>`}
     </div>
   `;
 }
-function heroRow(h){
-  const users=(h.users||[]).map(u=>u.playerName||u.discordId).filter(Boolean).join(" / ");
-  return `<div class="hero-row">
-    ${h.imageUrl?`<img class="hero-img" src="${escapeAttr(h.imageUrl)}" alt="">`:`<div class="hero-img"></div>`}
-    <div><div class="hero-name">${escapeHtml(h.name||h.id)}</div>${users?`<div class="hero-users">${escapeHtml(users)}</div>`:""}</div>
-    <div class="hero-count">${Number(h.count||0)}</div>
-  </div>`;
-}
-function answerCard(a,qMap){
-  const keys=Object.keys(a.answers||{});
-  return `<div class="answer-card">
-    <div class="answer-head">
-      <div><div class="player">${escapeHtml(a.playerName||"名前なし")}</div><div class="meta">${escapeHtml(a.alliance||"")} ${a.gameId?`/ ${escapeHtml(a.gameId)}`:""}</div></div>
-      <div class="meta">${escapeHtml(formatTimestamp(a.updatedAt)||"")}</div>
+function heroRow(h,max){
+  const percent=Math.round(Number(h.count||0)/max*100);
+  return `
+    <div class="hero-row">
+      <div class="hero-head">
+        ${h.imageUrl?`<img class="hero-img" src="${escapeAttr(h.imageUrl)}" alt="">`:`<div class="hero-img"></div>`}
+        <div>
+          <div class="hero-name">${escapeHtml(h.name||h.id||"不明")}</div>
+          <div class="hero-count">${Number(h.count||0)}人</div>
+        </div>
+      </div>
+      <div class="bar"><div class="bar-fill" style="width:${percent}%"></div></div>
     </div>
-    <div class="answer-body">
-      ${keys.length?keys.map(k=>answerLine(k,a.answers[k],qMap[k])).join(""):`<div class="empty">回答内容なし</div>`}
+  `;
+}
+function memberCard(a){
+  const answers=a.answers||{};
+  const heroes=Array.isArray(answers.heroes)?answers.heroes:[];
+  const heroNames=Array.isArray(a.heroNames)?a.heroNames:heroes;
+  const otherAnswers=Object.keys(answers).filter(k=>k!=="heroes");
+  return `
+    <div class="member-card">
+      <div class="member-name">${escapeHtml(a.playerName||"名前未登録")}</div>
+      <div class="member-meta">${escapeHtml(a.alliance||"-")} / ${escapeHtml(a.gameId||"-")}<br>${escapeHtml(formatTimestamp(a.updatedAt||a.submittedAt))}</div>
+      ${heroes.length?`
+        <div class="answer-block">
+          <div class="answer-title">英雄育成状況</div>
+          <div class="answer-text">${escapeHtml(heroNames.join(" / "))}</div>
+        </div>
+      `:""}
+      ${otherAnswers.map(k=>`
+        <div class="answer-block">
+          <div class="answer-title">${escapeHtml(k)}</div>
+          <div class="answer-text">${escapeHtml(formatAnswer(answers[k]))}</div>
+        </div>
+      `).join("")}
     </div>
-  </div>`;
+  `;
 }
-function answerLine(key,value,q){
-  const title=q?.title||key;
-  let shown="";
-  if(Array.isArray(value)){
-    shown=value.length?value.join(" / "):"未選択";
-  }else if(value && typeof value==="object"){
-    shown=JSON.stringify(value);
-  }else{
-    shown=String(value||"");
-  }
-  return `<div class="answer-line"><div class="qtitle">${escapeHtml(title)}</div><div class="qvalue">${escapeHtml(shown)}</div></div>`;
+function formatAnswer(v){
+  if(Array.isArray(v))return v.join(" / ");
+  if(v===null||v===undefined)return "";
+  return String(v);
 }
-function formatDateTime(value){return value?String(value).replace("T"," "):""}
+function statusLabel(status){
+  return {draft:"下書き",open:"公開中",closed:"締切"}[status]||status||"-";
+}
 function formatTimestamp(value){
   if(!value)return "";
   if(typeof value==="string")return value;
@@ -170,19 +339,15 @@ function formatTimestamp(value){
   if(value.seconds)return new Date(value.seconds*1000).toLocaleString("ja-JP");
   return "";
 }
-function openStateLabel(state){return {draft:"下書き",waiting:"公開待ち",open:"公開中",closed:"締切済み"}[state]||state}
-function statusLabel(status){return {draft:"下書き",open:"公開中",closed:"締切"}[status]||status}
-function errorLabel(code){return {permission_denied:"権限がありません。",survey_not_found:"アンケートが見つかりません。"}[code]||code}
 function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function escapeAttr(str){return escapeHtml(str)}
 session=getSession();
 if(session){
   const level=getPermissionLevel(session);
   if(level<1){
-    document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">アンケート結果はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`;
+    renderShell(`<div class="panel"><div class="panel-title">権限がありません</div><div class="empty">集計画面はテクニカルマネージャー以上が利用できます。</div></div>`);
   }else{
-    renderShell();
-    loadSurveyList();
+    loadResults();
   }
 }
 </script>
