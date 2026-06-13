@@ -66,54 +66,107 @@ h1{
   gap:12px;
 }
 .survey-card{
+  position:relative;
   border:1px solid rgba(255,255,255,.13);
-  background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));
-  border-radius:18px;
+  background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));
+  border-radius:20px;
   padding:15px;
+  box-shadow:0 14px 30px rgba(0,0,0,.22);
+  overflow:hidden;
+}
+.survey-card.todo-card{
+  border-color:rgba(251,146,60,.34);
+  background:linear-gradient(135deg,rgba(251,146,60,.13),rgba(15,23,42,.96) 48%);
+}
+.survey-card.done-card{
+  border-color:rgba(134,239,172,.30);
+  background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(15,23,42,.96) 48%);
 }
 .survey-title{
-  font-size:16px;
-  font-weight:900;
-  line-height:1.4;
+  font-size:17px;
+  font-weight:950;
+  line-height:1.45;
+  margin-top:8px;
 }
 .note{
   font-size:12px;
   line-height:1.7;
-  opacity:.75;
+  opacity:.78;
   margin-top:7px;
 }
+.status-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
 .status{
-  display:inline-block;
-  margin-top:10px;
+  display:inline-flex;
+  align-items:center;
   border-radius:999px;
-  padding:4px 8px;
-  font-size:10px;
-  font-weight:900;
+  padding:5px 9px;
+  font-size:11px;
+  font-weight:950;
   background:rgba(255,255,255,.1);
 }
 .status.done{
-  background:rgba(250,204,21,.16);
-  color:#fde68a;
-}
-.status.todo{
   background:rgba(34,197,94,.18);
   color:#bbf7d0;
+  border:1px solid rgba(134,239,172,.22);
+}
+.status.todo{
+  background:rgba(251,146,60,.18);
+  color:#fed7aa;
+  border:1px solid rgba(251,146,60,.25);
+}
+.meta-box{
+  margin-top:12px;
+  display:grid;
+  gap:8px;
+}
+.meta-line{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.045);
+  border-radius:13px;
+  padding:9px 10px;
+}
+.meta-label{
+  font-size:10px;
+  font-weight:900;
+  color:#94a3b8;
+  line-height:1.3;
+}
+.meta-value{
+  margin-top:3px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.45;
+  color:#e5e7eb;
+}
+.meta-value.deadline{
+  color:#fde68a;
 }
 .btn{
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   text-align:center;
   text-decoration:none;
   width:100%;
-  min-height:48px;
-  line-height:48px;
-  margin-top:12px;
+  min-height:52px;
+  margin-top:13px;
   border:none;
-  border-radius:14px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#f97316,#fdba74);
+  color:#431407;
+  font-size:15px;
+  font-weight:950;
+  cursor:pointer;
+}
+.done-card .btn{
   background:linear-gradient(135deg,#16a34a,#86efac);
   color:#052e16;
-  font-size:15px;
-  font-weight:900;
-  cursor:pointer;
 }
 .btn-blue{
   background:linear-gradient(135deg,#2563eb,#60a5fa);
@@ -466,16 +519,35 @@ async function renderList(){
 
 function surveyCard(s){
   const btnText = s.answered ? "回答を修正" : "回答する";
-  const statusText = s.answered ? "回答済み・修正可能" : "未回答";
+  const statusText = s.answered ? "🟢 回答済み" : "🟠 未回答";
   const statusClass = s.answered ? "done" : "todo";
+  const cardClass = s.answered ? "done-card" : "todo-card";
 
   return `
-    <div class="survey-card">
+    <div class="survey-card ${cardClass}">
+      <div class="status-row">
+        <span class="status ${statusClass}">${statusText}</span>
+      </div>
+
       <div class="survey-title">${escapeHtml(s.title)}</div>
       ${s.note ? `<div class="note">${escapeHtml(s.note)}</div>` : ""}
-      ${s.closeAt ? `<div class="note">締切：${escapeHtml(formatDateTime(s.closeAt))}</div>` : ""}
-      ${s.answered && s.updatedAt ? `<div class="note">最終更新：${escapeHtml(formatTimestamp(s.updatedAt))}</div>` : ""}
-      <span class="status ${statusClass}">${statusText}</span>
+
+      <div class="meta-box">
+        ${s.answered && s.updatedAt ? `
+          <div class="meta-line">
+            <div class="meta-label">最終更新</div>
+            <div class="meta-value">${escapeHtml(formatTimestamp(s.updatedAt))}</div>
+          </div>
+        ` : ""}
+
+        ${s.closeAt ? `
+          <div class="meta-line">
+            <div class="meta-label">締切</div>
+            <div class="meta-value deadline">${escapeHtml(formatDateTime(s.closeAt))}</div>
+          </div>
+        ` : ""}
+      </div>
+
       <a class="btn" href="/1648-portal/survey/?id=${encodeURIComponent(s.id)}">${btnText}</a>
     </div>
   `;
