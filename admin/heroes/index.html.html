@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>英雄カード管理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:16px;padding-bottom:34px}
+.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:20px;color:#c084fc}.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}
+.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}
+.panel-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#ddd6fe}
+.help{border:1px solid rgba(192,132,252,.25);background:rgba(126,34,206,.12);color:#e9d5ff;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:900;margin:14px 0 7px;color:#e5e7eb}
+input,select{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit}
+.two{display:grid;grid-template-columns:1fr;gap:10px}@media(min-width:760px){.two{grid-template-columns:1fr 1fr}}
+.btn{width:100%;min-height:52px;margin-top:14px;border:none;border-radius:15px;background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;font-size:16px;font-weight:900;cursor:pointer}.btn:disabled{opacity:.55}
+.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}.ok{color:#86efac}.error{color:#fca5a5}
+.hero-list{display:flex;flex-direction:column;gap:10px}
+.hero-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:12px;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center}
+.hero-img{width:120px;border-radius:12px;background:rgba(255,255,255,.08);object-fit:cover}
+.hero-name{font-size:16px;font-weight:900}.meta{font-size:11px;opacity:.7;line-height:1.7;margin-top:5px}
+.badge{display:inline-block;margin-top:7px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1)}
+.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:20px 8px}
+.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1;min-height:36px;border:none;border-radius:11px;font-size:12px;font-weight:900;cursor:pointer}
+.edit{background:rgba(59,130,246,.18);color:#bfdbfe}.delete{background:rgba(248,113,113,.16);color:#fecaca}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const ADMIN_URL="/1648-portal/admin/";
+const SAVE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveHeroCard";
+const LIST_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listHeroCards";
+const DELETE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/deleteHeroCard";
+let session=null;
+let heroes=[];
+let editingId="";
+function getSession(){
+  const raw=localStorage.getItem("discord_user");
+  if(!raw){window.location.replace(LOGIN_URL);return null}
+  try{
+    const data=JSON.parse(raw);
+    if(!data.ok){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+    if(data.status==="pending_profile"){window.location.replace("/1648-portal/profile-setup/");return null}
+    if(data.status!=="active"){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+    return data;
+  }catch(e){localStorage.removeItem("discord_user");window.location.replace(LOGIN_URL);return null}
+}
+function getDiscordId(){return session?.user?.discordId||session?.discord?.id||session?.discordId||""}
+function getPermissionLevel(data){
+  const discordId=data?.user?.discordId||data?.discord?.id||data?.discordId||"";
+  if(discordId==="795152243883114527")return 3;
+  const role=data?.role||data?.user?.role||"member";
+  return {developer:3,manager:2,technical:1,member:0}[role]??0;
+}
+function render(){
+  document.getElementById("app").innerHTML=`
+    <div class="header">
+      <h1>英雄カード管理</h1>
+      <div class="sub">アンケート回答画面で表示する英雄カードを登録します。</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+    </div>
+    <div class="panel">
+      <div class="panel-title">英雄カードを追加</div>
+      <div class="help">画像はURL指定です。Discord専用チャンネルに投稿した画像URLやGitHub上の画像URLを使えます。</div>
+      <label>英雄名</label><input id="name" placeholder="例：レイナ">
+      <label>画像URL</label><input id="imageUrl" placeholder="https://...">
+      <div class="two"><div><label>世代・シーズン</label><input id="season" placeholder="例：S4"></div><div><label>表示順</label><input id="order" type="number" placeholder="例：10"></div></div>
+      <div class="two"><div><label>レアリティ</label><select id="rarity"><option value="">未設定</option><option>SSR</option><option>SR</option></select></div><div><label>兵種</label><select id="troopType"><option value="">未設定</option><option>盾</option><option>槍</option><option>弓</option></select></div></div>
+      <label><input id="enabled" type="checkbox" checked style="width:auto;margin-right:8px;">有効にする</label>
+      <button class="btn" id="saveBtn">保存</button><div id="msg" class="msg"></div>
+    </div>
+    <div class="panel"><div class="panel-title">登録済み英雄カード</div><div id="heroList" class="hero-list"><div class="empty">読み込み中...</div></div></div>`;
+  document.getElementById("saveBtn").addEventListener("click", saveHero);
+  loadHeroes();
+}
+async function loadHeroes(){
+  const list=document.getElementById("heroList");
+  list.innerHTML=`<div class="empty">読み込み中...</div>`;
+  try{
+    const res=await fetch(LIST_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId()})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"load_failed");
+    heroes=data.heroes||[];
+    if(!heroes.length){list.innerHTML=`<div class="empty">まだ英雄カードはありません。</div>`;return}
+    list.innerHTML=heroes.map(h=>`
+      <div class="hero-card">
+        ${h.imageUrl?`<img class="hero-img" src="${escapeAttr(h.imageUrl)}" alt="">`:`<div class="hero-img" style="height:80px;"></div>`}
+        <div><div class="hero-name">${escapeHtml(h.name)}</div><div class="meta">ID：${escapeHtml(h.id)}<br>順番：${h.order} / ${escapeHtml(h.rarity||"-")} / ${escapeHtml(h.season||"-")} / ${escapeHtml(h.troopType||"-")}</div><span class="badge">${h.enabled?"有効":"無効"}</span><div class="actions"><button class="edit" onclick="editHero('${escapeAttr(h.id)}')">編集</button><button class="delete" onclick="deleteHero('${escapeAttr(h.id)}')">削除</button></div></div>
+      </div>`).join("");
+  }catch(err){list.innerHTML=`<div class="empty error">読み込み失敗：${escapeHtml(err.message)}</div>`}
+}
+async function saveHero(){
+  const msg=document.getElementById("msg");
+  const hero={id:editingId,name:document.getElementById("name").value.trim(),imageUrl:document.getElementById("imageUrl").value.trim(),season:document.getElementById("season").value.trim(),order:Number(document.getElementById("order").value||999),rarity:document.getElementById("rarity").value,troopType:document.getElementById("troopType").value,enabled:document.getElementById("enabled").checked};
+  if(!hero.name){msg.className="msg error";msg.textContent="英雄名を入力してください。";return}
+  msg.className="msg";msg.textContent="保存中...";
+  try{
+    const res=await fetch(SAVE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),hero})});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||"save_failed");
+    msg.className="msg ok";msg.textContent="保存しました。";
+    editingId="";["name","imageUrl","season","order"].forEach(id=>document.getElementById(id).value="");document.getElementById("rarity").value="";document.getElementById("troopType").value="";document.getElementById("enabled").checked=true;await loadHeroes();
+  }catch(err){msg.className="msg error";msg.textContent="保存失敗："+err.message}
+}
+window.editHero=function(id){const h=heroes.find(x=>x.id===id);if(!h)return;editingId=h.id;document.getElementById("name").value=h.name||"";document.getElementById("imageUrl").value=h.imageUrl||"";document.getElementById("season").value=h.season||"";document.getElementById("order").value=h.order||"";document.getElementById("rarity").value=h.rarity||"";document.getElementById("troopType").value=h.troopType||"";document.getElementById("enabled").checked=h.enabled!==false;scrollTo({top:0,behavior:"smooth"});}
+window.deleteHero=async function(id){if(!confirm("この英雄カードを削除しますか？"))return;try{const res=await fetch(DELETE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({discordId:getDiscordId(),id})});const data=await res.json();if(!res.ok||!data.ok)throw new Error(data.error||"delete_failed");await loadHeroes();}catch(err){alert("削除失敗："+err.message)}}
+function escapeHtml(str){return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttr(str){return escapeHtml(str)}
+session=getSession();
+if(session){const level=getPermissionLevel(session);if(level<1){document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">英雄カード管理はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`}else render()}
+</script>
+</body>
+</html>
