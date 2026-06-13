@@ -464,6 +464,77 @@ textarea{
   .list{margin-top:16vh}
 }
 
+
+/* ===== v3 fix: card right, text left, root bg video ===== */
+.survey-card{
+  margin-left:auto;
+  margin-right:0;
+  text-align:left;
+}
+.status-row{
+  justify-content:flex-start;
+}
+.survey-title{
+  text-align:left;
+}
+.meta-box{
+  text-align:left;
+}
+.meta-line{
+  text-align:left;
+}
+
+
+/* ===== v4 video visibility fix ===== */
+html,body{
+  background:#070b12 !important;
+}
+.bg-video{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  object-fit:cover !important;
+  z-index:0 !important;
+  opacity:.62 !important;
+  pointer-events:none !important;
+}
+.bg-shade{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:1 !important;
+  pointer-events:none !important;
+  background:
+    linear-gradient(90deg,rgba(7,11,18,.84) 0%,rgba(7,11,18,.58) 42%,rgba(7,11,18,.22) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.78) 0%,rgba(7,11,18,.40) 48%,rgba(7,11,18,.82) 100%) !important;
+}
+#app{
+  position:relative;
+  z-index:2;
+}
+.header{
+  background:linear-gradient(180deg,rgba(7,11,18,.72),rgba(7,11,18,.22)) !important;
+}
+.user-box{
+  background:rgba(15,23,42,.44) !important;
+  backdrop-filter:blur(8px);
+}
+.survey-card{
+  position:relative;
+  z-index:3;
+  background:rgba(15,23,42,.46) !important;
+  backdrop-filter:blur(9px);
+}
+.survey-card.todo-card{
+  background:rgba(40,22,8,.46) !important;
+}
+.survey-card.done-card{
+  background:rgba(8,34,22,.46) !important;
+}
+.survey-title{
+  color:#fff !important;
+}
+
 </style>
 </head>
 <body>
