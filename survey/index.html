@@ -181,67 +181,48 @@ textarea{
 }
 .hero-option{
   position:relative;
-  border:2px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.05);
-  border-radius:16px;
-  margin-top:10px;
-  padding:8px;
+  display:block;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045);
+  border-radius:17px;
+  margin-top:12px;
+  padding:10px;
   cursor:pointer;
   transition:.15s;
 }
 .hero-option.selected{
-  border-color:#86efac;
-  background:rgba(34,197,94,.15);
+  border-color:rgba(134,239,172,.42);
+  background:rgba(34,197,94,.10);
+}
+.hero-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:34px;
+  margin-bottom:8px;
 }
 .hero-option input{
-  position:absolute;
-  left:12px;
-  top:12px;
-  width:22px;
-  height:22px;
-  z-index:2;
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  accent-color:#22c55e;
+}
+.hero-label{
+  font-size:15px;
+  font-weight:950;
+  line-height:1.4;
 }
 .hero-option img{
   width:100%;
   display:block;
-  border-radius:12px;
+  border-radius:13px;
+  border:2px solid transparent;
+  background:rgba(255,255,255,.08);
+  transition:.15s;
 }
-.hero-label{
-  margin-top:7px;
-  font-size:13px;
-  font-weight:900;
-  line-height:1.5;
-}
-.save{
-  width:100%;
-  min-height:52px;
-  border:none;
-  border-radius:15px;
-  background:linear-gradient(135deg,#2563eb,#60a5fa);
-  color:#fff;
-  font-size:16px;
-  font-weight:900;
-  cursor:pointer;
-}
-.save:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-.msg{
-  font-size:12px;
-  line-height:1.7;
-  margin-top:10px;
-  text-align:center;
-}
-.answer-note{
-  border:1px solid rgba(250,204,21,.25);
-  background:rgba(250,204,21,.08);
-  color:#fde68a;
-  border-radius:14px;
-  padding:10px 12px;
-  font-size:12px;
-  line-height:1.7;
-  margin-bottom:14px;
+.hero-option.selected img{
+  border-color:#86efac;
+  box-shadow:0 0 0 1px rgba(134,239,172,.22),0 0 22px rgba(34,197,94,.32);
 }
 .progress-box{
   border:1px solid rgba(96,165,250,.24);
@@ -272,33 +253,6 @@ textarea{
   border-radius:999px;
   background:linear-gradient(90deg,#2563eb,#86efac);
   transition:.18s;
-}
-.hero-option{
-  opacity:.72;
-}
-.hero-option.selected{
-  opacity:1;
-  border-color:#86efac;
-  background:rgba(34,197,94,.18);
-  box-shadow:0 0 0 1px rgba(134,239,172,.28),0 0 22px rgba(34,197,94,.18);
-}
-.hero-badge{
-  position:absolute;
-  right:10px;
-  top:10px;
-  z-index:3;
-  border-radius:999px;
-  padding:5px 9px;
-  font-size:11px;
-  font-weight:900;
-  background:rgba(15,23,42,.86);
-  border:1px solid rgba(255,255,255,.16);
-  color:#cbd5e1;
-}
-.hero-option.selected .hero-badge{
-  background:#86efac;
-  color:#052e16;
-  border-color:rgba(134,239,172,.55);
 }
 .complete-card{
   border:1px solid rgba(134,239,172,.28);
@@ -334,6 +288,37 @@ textarea{
   color:#052e16;
   font-size:15px;
   font-weight:950;
+}
+.save{
+  width:100%;
+  min-height:52px;
+  border:none;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.save:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.msg{
+  font-size:12px;
+  line-height:1.7;
+  margin-top:10px;
+  text-align:center;
+}
+.answer-note{
+  border:1px solid rgba(250,204,21,.25);
+  background:rgba(250,204,21,.08);
+  color:#fde68a;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.7;
+  margin-bottom:14px;
 }
 </style>
 </head>
@@ -537,11 +522,7 @@ async function renderAnswer(){
     document.querySelectorAll("[data-qhero]").forEach(ch => {
       ch.addEventListener("change", () => {
         const label = ch.closest(".hero-option");
-        if(label){
-          label.classList.toggle("selected", ch.checked);
-          const badge = label.querySelector(".hero-badge");
-          if(badge) badge.textContent = ch.checked ? "✓ 選択中" : "未選択";
-        }
+        if(label) label.classList.toggle("selected", ch.checked);
         updateProgress();
       });
     });
@@ -577,10 +558,11 @@ function questionTemplate(q, value){
     const arr = Array.isArray(value) ? value : [];
     html += (q.options || []).map(hero => `
       <label class="hero-option ${arr.includes(hero.id) ? "selected" : ""}" data-hero-choice="${escapeAttr(q.id)}">
-        <input type="checkbox" data-qhero="${escapeAttr(q.id)}" value="${escapeAttr(hero.id)}" ${arr.includes(hero.id) ? "checked" : ""}>
-        <div class="hero-badge">${arr.includes(hero.id) ? "✓ 選択中" : "未選択"}</div>
+        <div class="hero-head">
+          <input type="checkbox" data-qhero="${escapeAttr(q.id)}" value="${escapeAttr(hero.id)}" ${arr.includes(hero.id) ? "checked" : ""}>
+          <div class="hero-label">${escapeHtml(hero.name)}</div>
+        </div>
         ${hero.imageUrl ? `<img src="${escapeAttr(hero.imageUrl)}" alt="${escapeAttr(hero.name)}">` : ""}
-        <div class="hero-label">${escapeHtml(hero.name)}</div>
       </label>
     `).join("");
   }else if(q.type === "single_select"){
