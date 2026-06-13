@@ -16,6 +16,10 @@ html,body{
 body{
   padding:16px;
   padding-bottom:32px;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(34,197,94,.12),transparent 28%),
+    radial-gradient(circle at 95% 6%,rgba(96,165,250,.10),transparent 26%),
+    #070b12;
 }
 .header{
   position:sticky;
@@ -239,6 +243,98 @@ textarea{
   line-height:1.7;
   margin-bottom:14px;
 }
+.progress-box{
+  border:1px solid rgba(96,165,250,.24);
+  background:rgba(37,99,235,.10);
+  border-radius:15px;
+  padding:10px 12px;
+  margin-bottom:14px;
+}
+.progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#bfdbfe;
+}
+.progress-bar{
+  height:8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  overflow:hidden;
+  margin-top:8px;
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#2563eb,#86efac);
+  transition:.18s;
+}
+.hero-option{
+  opacity:.72;
+}
+.hero-option.selected{
+  opacity:1;
+  border-color:#86efac;
+  background:rgba(34,197,94,.18);
+  box-shadow:0 0 0 1px rgba(134,239,172,.28),0 0 22px rgba(34,197,94,.18);
+}
+.hero-badge{
+  position:absolute;
+  right:10px;
+  top:10px;
+  z-index:3;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:11px;
+  font-weight:900;
+  background:rgba(15,23,42,.86);
+  border:1px solid rgba(255,255,255,.16);
+  color:#cbd5e1;
+}
+.hero-option.selected .hero-badge{
+  background:#86efac;
+  color:#052e16;
+  border-color:rgba(134,239,172,.55);
+}
+.complete-card{
+  border:1px solid rgba(134,239,172,.28);
+  background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(15,23,42,.94));
+  border-radius:20px;
+  padding:18px;
+  text-align:center;
+  margin-top:18px;
+}
+.complete-title{
+  font-size:22px;
+  font-weight:950;
+  color:#86efac;
+  line-height:1.35;
+}
+.complete-body{
+  margin-top:10px;
+  font-size:13px;
+  line-height:1.8;
+  color:#dbeafe;
+  opacity:.9;
+}
+.complete-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:52px;
+  margin-top:16px;
+  border-radius:15px;
+  text-decoration:none;
+  background:linear-gradient(135deg,#16a34a,#86efac);
+  color:#052e16;
+  font-size:15px;
+  font-weight:950;
+}
 </style>
 </head>
 <body>
@@ -434,15 +530,28 @@ async function renderAnswer(){
       renderHeader(survey.title, survey.note || "1ページで最後まで回答できます。", "/1648-portal/survey/")
       + renderUserBox()
       + editNote
+      + progressTemplate()
       + questions.map(q => questionTemplate(q, old[q.id] !== undefined ? old[q.id] : q.defaultValue)).join("")
       + `<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`;
 
     document.querySelectorAll("[data-qhero]").forEach(ch => {
       ch.addEventListener("change", () => {
         const label = ch.closest(".hero-option");
-        if(label) label.classList.toggle("selected", ch.checked);
+        if(label){
+          label.classList.toggle("selected", ch.checked);
+          const badge = label.querySelector(".hero-badge");
+          if(badge) badge.textContent = ch.checked ? "✓ 選択中" : "未選択";
+        }
+        updateProgress();
       });
     });
+
+    document.querySelectorAll("input, textarea").forEach(el => {
+      el.addEventListener("change", updateProgress);
+      el.addEventListener("input", updateProgress);
+    });
+
+    updateProgress();
 
     document.getElementById("saveBtn").addEventListener("click", saveAnswer);
 
@@ -469,6 +578,7 @@ function questionTemplate(q, value){
     html += (q.options || []).map(hero => `
       <label class="hero-option ${arr.includes(hero.id) ? "selected" : ""}" data-hero-choice="${escapeAttr(q.id)}">
         <input type="checkbox" data-qhero="${escapeAttr(q.id)}" value="${escapeAttr(hero.id)}" ${arr.includes(hero.id) ? "checked" : ""}>
+        <div class="hero-badge">${arr.includes(hero.id) ? "✓ 選択中" : "未選択"}</div>
         ${hero.imageUrl ? `<img src="${escapeAttr(hero.imageUrl)}" alt="${escapeAttr(hero.name)}">` : ""}
         <div class="hero-label">${escapeHtml(hero.name)}</div>
       </label>
@@ -497,6 +607,58 @@ function questionTemplate(q, value){
 
   html += `</div>`;
   return html;
+}
+
+
+function progressTemplate(){
+  return `
+    <div class="progress-box">
+      <div class="progress-top">
+        <span>回答進捗</span>
+        <span id="progressText">0 / ${questions.length}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  `;
+}
+
+function isQuestionAnswered(q){
+  if(q.type === "single_select"){
+    return Boolean(document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`));
+  }
+  if(q.type === "multi_select"){
+    return document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`).length > 0;
+  }
+  if(q.type === "hero_multi"){
+    return document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`).length > 0;
+  }
+  const input = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`);
+  return Boolean(input && String(input.value || "").trim());
+}
+
+function updateProgress(){
+  const total = questions.length || 0;
+  const answered = questions.filter(isQuestionAnswered).length;
+  const text = document.getElementById("progressText");
+  const fill = document.getElementById("progressFill");
+  if(text) text.textContent = `${answered} / ${total}`;
+  if(fill) fill.style.width = total ? `${Math.round(answered / total * 100)}%` : "0%";
+}
+
+function renderComplete(){
+  document.getElementById("app").innerHTML =
+    renderHeader("回答完了", "回答を保存しました。", "/1648-portal/survey/")
+    + renderUserBox()
+    + `
+      <div class="complete-card">
+        <div class="complete-title">回答完了</div>
+        <div class="complete-body">
+          回答は正常に保存されました。<br>
+          締切まではアンケート一覧から再度開いて修正できます。
+        </div>
+        <a class="complete-btn" href="/1648-portal/survey/">アンケート一覧へ戻る</a>
+      </div>
+    `;
 }
 
 async function saveAnswer(){
@@ -538,8 +700,7 @@ async function saveAnswer(){
       throw new Error(data.error || "save_failed");
     }
 
-    msg.className = "msg ok";
-    msg.textContent = "保存しました。締切までは何度でも修正できます。";
+    renderComplete();
 
   }catch(err){
     msg.className = "msg error";
