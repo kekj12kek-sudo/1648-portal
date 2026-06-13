@@ -26,7 +26,7 @@ textarea{min-height:72px;resize:vertical;line-height:1.6}
 .stock-item.active{border-color:rgba(96,165,250,.65);background:rgba(37,99,235,.18)}
 .stock-item input{width:19px;height:19px;flex-shrink:0;margin-top:2px}
 .stock-title{font-size:14px;font-weight:900;line-height:1.4}
-.stock-desc{font-size:11px;opacity:.68;line-height:1.6;margin-top:3px}
+.stock-desc{font-size:11px;opacity:.68;line-height:1.6;margin-top:3px}.hero-thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,.08);flex-shrink:0}
 .badge{display:inline-block;margin-top:6px;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1);color:#e5e7eb}
 .selected-box{border:1px solid rgba(34,197,94,.24);background:rgba(34,197,94,.06);border-radius:16px;padding:12px;margin-top:12px}
 .selected-title{font-size:13px;font-weight:900;color:#86efac;margin-bottom:8px}
@@ -63,6 +63,7 @@ const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470
 const ADMIN_URL="/1648-portal/admin/";
 const SURVEY_URL="/1648-portal/survey/";
 const LIST_Q_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";
+const LIST_HERO_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listHeroCards";
 const SAVE_SURVEY_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyRoom";
 const LIST_SURVEY_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listSurveyRooms";
 const UPDATE_STATUS_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/updateSurveyStatus";
@@ -70,6 +71,8 @@ let session=null;
 let questionCards=[];
 let selectedQuestions=[];
 let freeQuestions=[];
+let heroCards=[];
+let selectedHeroes=[];
 
 function getSession(){
   const raw=localStorage.getItem("discord_user");
@@ -236,9 +239,10 @@ async function loadHeroes(){
     box.innerHTML = heroCards.map(hero => `
       <label class="stock-item" data-hero-wrap="${escapeAttr(hero.id)}">
         <input type="checkbox" data-hero-id="${escapeAttr(hero.id)}">
+        ${hero.imageUrl ? `<img class="hero-thumb" src="${escapeAttr(hero.imageUrl)}" alt="">` : `<div class="hero-thumb"></div>`}
         <div>
           <div class="stock-title">${escapeHtml(hero.name)}</div>
-          <div class="stock-desc">${escapeHtml([hero.rarity, hero.season, hero.troopType].filter(Boolean).join(" / "))}</div>
+          <div class="stock-desc">条件：★4以上 かつ 遠征スキルLv5</div>
           <span class="badge">英雄カード</span>
         </div>
       </label>
@@ -352,7 +356,7 @@ async function loadSurveys(){
 function surveyCard(s){
   const status = s.status || "draft";
   const openState = s.openState || status;
-  const qCount = (s.questionCards || []).length + (s.freeQuestions || []).length;
+  const qCount = (s.questionCards || []).length + (s.freeQuestions || []).length + (s.heroCards || []).length;
   const answered = s.answeredUserCount || s.answerCount || 0;
 
   return `
