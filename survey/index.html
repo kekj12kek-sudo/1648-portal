@@ -567,10 +567,261 @@ html,body{
   background:rgba(8,34,22,.45) !important;
 }
 
+
+/* ===== v6 compact horizontal survey bars ===== */
+.user-box{
+  display:none !important;
+}
+.list{
+  margin-top:34vh !important;
+  gap:10px !important;
+  align-items:flex-end !important;
+}
+.survey-card{
+  width:min(88vw,420px) !important;
+  min-height:82px !important;
+  padding:10px 11px !important;
+  border-radius:16px !important;
+  display:grid !important;
+  grid-template-columns:1fr 104px !important;
+  grid-template-areas:
+    "main status"
+    "main button" !important;
+  gap:8px 10px !important;
+  align-items:center !important;
+  text-align:left !important;
+}
+.status-row{
+  grid-area:status !important;
+  justify-content:flex-end !important;
+  margin:0 !important;
+}
+.status{
+  padding:4px 8px !important;
+  font-size:10px !important;
+  white-space:nowrap !important;
+}
+.survey-title{
+  grid-area:main !important;
+  font-size:16px !important;
+  line-height:1.35 !important;
+  margin:0 0 6px !important;
+}
+.meta-box{
+  grid-area:main !important;
+  margin-top:30px !important;
+}
+.meta-line{
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+}
+.meta-label{
+  display:inline !important;
+  font-size:10px !important;
+  margin-right:6px !important;
+}
+.meta-value{
+  display:inline !important;
+  font-size:12px !important;
+  color:#fde68a !important;
+}
+.btn{
+  grid-area:button !important;
+  min-height:38px !important;
+  margin:0 !important;
+  border-radius:12px !important;
+  font-size:13px !important;
+  padding:0 8px !important;
+}
+@media(max-width:390px){
+  .survey-card{
+    width:90vw !important;
+    grid-template-columns:1fr 96px !important;
+  }
+  .survey-title{font-size:15px !important}
+  .btn{font-size:12px !important}
+}
+
+
+/* ===== v7 final room layout + loading speed polish ===== */
+.header{
+  min-height:auto !important;
+  padding:18px 16px 10px !important;
+  background:linear-gradient(180deg,rgba(7,11,18,.58),rgba(7,11,18,.10)) !important;
+}
+.header .sub{
+  display:none !important;
+}
+.header{
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  grid-template-areas:
+    "title user"
+    "back user" !important;
+  column-gap:12px !important;
+  align-items:start !important;
+}
+.header h1{
+  grid-area:title !important;
+  font-size:25px !important;
+  line-height:1.2 !important;
+}
+.header .back{
+  grid-area:back !important;
+  margin-top:10px !important;
+  min-height:28px !important;
+}
+.room-user-mini{
+  grid-area:user;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+  margin-top:2px;
+}
+.room-user-line{
+  min-width:118px;
+  border:1px solid rgba(134,239,172,.50);
+  background:rgba(8,34,22,.34);
+  color:#fff;
+  border-radius:14px 0 0 14px;
+  padding:8px 11px;
+  font-size:13px;
+  font-weight:950;
+  line-height:1.2;
+  text-align:left;
+  box-shadow:0 0 16px rgba(34,197,94,.10);
+}
+.room-user-line.alliance{
+  margin-right:10px;
+}
+.user-box{
+  display:none !important;
+}
+.list{
+  margin-top:15vh !important;
+  gap:9px !important;
+  align-items:flex-end !important;
+}
+.survey-card{
+  width:min(88vw,410px) !important;
+  min-height:74px !important;
+  padding:9px 10px !important;
+  border-radius:15px !important;
+  display:grid !important;
+  grid-template-columns:1fr 96px !important;
+  grid-template-areas:
+    "main status"
+    "main button" !important;
+  gap:7px 9px !important;
+  align-items:center !important;
+  background:rgba(18,24,31,.34) !important;
+  backdrop-filter:blur(7px) !important;
+  -webkit-backdrop-filter:blur(7px) !important;
+}
+.survey-card.todo-card{
+  border-color:rgba(251,146,60,.78) !important;
+  background:rgba(42,22,8,.34) !important;
+  box-shadow:0 0 16px rgba(251,146,60,.24),0 14px 24px rgba(0,0,0,.20) !important;
+}
+.survey-card.done-card{
+  border-color:rgba(134,239,172,.42) !important;
+  background:rgba(8,34,22,.30) !important;
+  box-shadow:0 0 10px rgba(34,197,94,.10),0 14px 24px rgba(0,0,0,.18) !important;
+}
+.status-row{
+  grid-area:status !important;
+  justify-content:flex-end !important;
+  margin:0 !important;
+}
+.status{
+  padding:4px 8px !important;
+  font-size:10px !important;
+  white-space:nowrap !important;
+}
+.survey-title{
+  grid-area:main !important;
+  font-size:15px !important;
+  line-height:1.35 !important;
+  margin:0 0 5px !important;
+}
+.meta-box{
+  grid-area:main !important;
+  margin-top:27px !important;
+}
+.meta-line{
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+}
+.meta-label{
+  display:inline !important;
+  font-size:10px !important;
+  margin-right:5px !important;
+}
+.meta-value{
+  display:inline !important;
+  font-size:12px !important;
+  color:#fde68a !important;
+}
+.btn{
+  grid-area:button !important;
+  min-height:35px !important;
+  margin:0 !important;
+  border-radius:11px !important;
+  font-size:12px !important;
+  padding:0 7px !important;
+}
+.todo-card .btn{
+  box-shadow:0 0 16px rgba(251,146,60,.35) !important;
+}
+.empty-room{
+  width:min(88vw,410px);
+  margin-left:auto;
+  margin-top:15vh;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(30,35,42,.28);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  border-radius:16px;
+  padding:22px 14px;
+  text-align:center;
+  font-size:16px;
+  font-weight:950;
+  color:rgba(255,255,255,.88);
+}
+.empty-room-icon{
+  font-size:28px;
+  opacity:.74;
+  margin-bottom:8px;
+}
+.bg-video{
+  opacity:1 !important;
+}
+.bg-shade{
+  background:
+    linear-gradient(90deg,rgba(7,11,18,.24) 0%,rgba(7,11,18,.16) 45%,rgba(7,11,18,.06) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.22) 0%,rgba(7,11,18,.12) 50%,rgba(7,11,18,.25) 100%) !important;
+}
+.loading{
+  display:none !important;
+}
+@media(max-width:390px){
+  .header h1{font-size:23px !important}
+  .room-user-line{min-width:106px;font-size:12px;padding:7px 10px}
+  .survey-card{
+    width:90vw !important;
+    grid-template-columns:1fr 90px !important;
+  }
+  .survey-title{font-size:14px !important}
+  .btn{font-size:11px !important}
+}
+
 </style>
 </head>
 <body>
-<video class="bg-video" autoplay muted loop playsinline preload="metadata">
+<video class="bg-video" autoplay muted loop playsinline preload="auto" poster="/1648-portal/survey/poster.jpg">
   <source src="/1648-portal/survey/bg.mp4" type="video/mp4">
 </video>
 <div class="bg-shade"></div>
@@ -702,7 +953,6 @@ async function renderList(){
 
     document.getElementById("app").innerHTML =
       renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
-      + renderUserBox()
       + `<div class="list">`
       + data.surveys.map(surveyCard).join("")
       + `</div>`;
@@ -958,7 +1208,18 @@ async function saveAnswer(){
 
 function formatDateTime(value){
   if(!value) return "";
-  return String(value).replace("T", " ");
+  const text = String(value);
+  const d = new Date(text.includes("T") ? text : text.replace(" ", "T"));
+  if(!Number.isNaN(d.getTime())){
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${m}月${day}日 ${hh}:${mm}`;
+  }
+  const m = text.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if(m) return `${Number(m[2])}月${Number(m[3])}日 ${m[4]}:${m[5]}`;
+  return text.replace("T", " ");
 }
 
 function formatTimestamp(value){
