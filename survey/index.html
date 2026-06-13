@@ -175,6 +175,39 @@ textarea{
   resize:vertical;
   line-height:1.6;
 }
+.hero-option{
+  position:relative;
+  border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  border-radius:16px;
+  margin-top:10px;
+  padding:8px;
+  cursor:pointer;
+  transition:.15s;
+}
+.hero-option.selected{
+  border-color:#86efac;
+  background:rgba(34,197,94,.15);
+}
+.hero-option input{
+  position:absolute;
+  left:12px;
+  top:12px;
+  width:22px;
+  height:22px;
+  z-index:2;
+}
+.hero-option img{
+  width:100%;
+  display:block;
+  border-radius:12px;
+}
+.hero-label{
+  margin-top:7px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.5;
+}
 .save{
   width:100%;
   min-height:52px;
@@ -404,6 +437,13 @@ async function renderAnswer(){
       + questions.map(q => questionTemplate(q, old[q.id] !== undefined ? old[q.id] : q.defaultValue)).join("")
       + `<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`;
 
+    document.querySelectorAll("[data-qhero]").forEach(ch => {
+      ch.addEventListener("change", () => {
+        const label = ch.closest(".hero-option");
+        if(label) label.classList.toggle("selected", ch.checked);
+      });
+    });
+
     document.getElementById("saveBtn").addEventListener("click", saveAnswer);
 
   }catch(err){
@@ -424,7 +464,16 @@ function questionTemplate(q, value){
     html += `<img src="${escapeAttr(q.imageUrl)}" alt="" style="width:100%;border-radius:14px;margin-top:10px;">`;
   }
 
-  if(q.type === "single_select"){
+  if(q.type === "hero_multi"){
+    const arr = Array.isArray(value) ? value : [];
+    html += (q.options || []).map(hero => `
+      <label class="hero-option ${arr.includes(hero.id) ? "selected" : ""}" data-hero-choice="${escapeAttr(q.id)}">
+        <input type="checkbox" data-qhero="${escapeAttr(q.id)}" value="${escapeAttr(hero.id)}" ${arr.includes(hero.id) ? "checked" : ""}>
+        ${hero.imageUrl ? `<img src="${escapeAttr(hero.imageUrl)}" alt="${escapeAttr(hero.name)}">` : ""}
+        <div class="hero-label">${escapeHtml(hero.name)}</div>
+      </label>
+    `).join("");
+  }else if(q.type === "single_select"){
     html += (q.options || []).map(opt => `
       <label class="choice">
         <input type="radio" name="q_${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${value === opt ? "checked" : ""}>
@@ -458,6 +507,8 @@ async function saveAnswer(){
       answers[q.id] = document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`)?.value || "";
     }else if(q.type === "multi_select"){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else if(q.type === "hero_multi"){
+      answers[q.id] = Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`)).map(v => v.value);
     }else{
       answers[q.id] = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`)?.value || "";
     }
