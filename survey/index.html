@@ -6,7 +6,6 @@
 <title>アンケートRoom</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-
 html,body{
   width:100%;
   min-height:100%;
@@ -14,286 +13,180 @@ html,body{
   color:#fff;
   font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
 }
-
-body{
-  padding:16px;
-  padding-bottom:32px;
-}
-
-/* =========================
-   背景動画
-========================= */
 .bg-video{
   position:fixed;
   inset:0;
   width:100%;
   height:100%;
-  object-fit:contain;
-  object-position:center center;
-  background:#070b12;
-  z-index:0;
-  opacity:1;
-  pointer-events:none;
+  object-fit:cover;
+  z-index:-3;
+  opacity:.52;
 }
-
 .bg-shade{
   position:fixed;
   inset:0;
-  z-index:1;
-  pointer-events:none;
+  z-index:-2;
   background:
-    linear-gradient(90deg,rgba(7,11,18,.24) 0%,rgba(7,11,18,.16) 45%,rgba(7,11,18,.06) 100%),
-    linear-gradient(180deg,rgba(7,11,18,.22) 0%,rgba(7,11,18,.12) 50%,rgba(7,11,18,.25) 100%);
+    linear-gradient(90deg,rgba(7,11,18,.88) 0%,rgba(7,11,18,.58) 43%,rgba(7,11,18,.18) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.70) 0%,rgba(7,11,18,.34) 42%,rgba(7,11,18,.86) 100%);
 }
-
-#app{
-  position:relative;
-  z-index:2;
+body{
+  padding:16px;
+  padding-bottom:32px;
 }
-
-/* =========================
-   共通ヘッダー
-========================= */
 .header{
   position:sticky;
   top:0;
   z-index:20;
-  margin:-16px -16px 10px;
-  padding:12px 14px 6px;
-  min-height:94px;
-  display:grid;
-  grid-template-columns:1fr auto;
-  grid-template-areas:
-    "title user"
-    "back user";
-  column-gap:12px;
-  align-items:start;
-  background:linear-gradient(180deg,rgba(7,11,18,.58),rgba(7,11,18,.10));
+  margin:-16px -16px 16px;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(7,11,18,.82),rgba(7,11,18,.34));
   border-bottom:1px solid rgba(255,255,255,.07);
   backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
 }
-
-.header h1{
-  grid-area:title;
-  font-size:23px;
-  line-height:1.15;
+h1{
+  font-size:20px;
   color:#86efac;
-  font-weight:950;
+  line-height:1.3;
 }
-
-.header .sub{
-  display:none;
+.sub{
+  margin-top:4px;
+  font-size:12px;
+  opacity:.75;
+  line-height:1.7;
 }
-
 .back{
-  grid-area:back;
   display:inline-flex;
-  align-items:center;
-  min-height:24px;
-  margin-top:6px;
+  margin-top:12px;
   color:#93c5fd;
   text-decoration:none;
-  font-size:13px;
-  font-weight:900;
-}
-
-.room-user-mini{
-  grid-area:user;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:4px;
-}
-
-.room-user-line{
-  min-width:104px;
-  border:1px solid rgba(134,239,172,.50);
-  background:rgba(8,34,22,.34);
-  color:#fff;
-  border-radius:12px 0 0 12px;
-  padding:6px 10px;
   font-size:12px;
-  font-weight:950;
-  line-height:1.2;
-  text-align:left;
-  box-shadow:0 0 16px rgba(34,197,94,.10);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
+  font-weight:800;
 }
-
-.room-user-line.alliance{
-  margin-right:8px;
-}
-
-/* =========================
-   アンケートRoom 一覧
-========================= */
 .user-box{
-  display:none;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:14px;
+  font-size:12px;
+  line-height:1.7;
+  color:#dbeafe;
 }
-
 .list{
   display:flex;
   flex-direction:column;
   align-items:flex-end;
-  gap:8px;
-  margin-top:3vh;
+  gap:12px;
+  margin-top:20vh;
 }
-
 .survey-card{
-  width:min(88vw,410px);
-  min-height:70px;
-  padding:8px 10px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:15px;
-  display:grid;
-  grid-template-columns:1fr 96px;
-  grid-template-areas:
-    "main status"
-    "main button";
-  gap:7px 9px;
-  align-items:center;
-  text-align:left;
-  background:rgba(18,24,31,.34);
-  backdrop-filter:blur(7px);
-  -webkit-backdrop-filter:blur(7px);
-  box-shadow:0 14px 24px rgba(0,0,0,.18);
+  position:relative;
+  border:1px solid rgba(255,255,255,.13);
+  background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));
+  border-radius:20px;
+  padding:15px;
+  box-shadow:0 14px 30px rgba(0,0,0,.22);
+  overflow:hidden;
 }
-
 .survey-card.todo-card{
-  border-color:rgba(251,146,60,.78);
-  background:rgba(42,22,8,.34);
-  box-shadow:0 0 16px rgba(251,146,60,.24),0 14px 24px rgba(0,0,0,.20);
+  border-color:rgba(251,146,60,.34);
+  background:linear-gradient(135deg,rgba(251,146,60,.13),rgba(15,23,42,.96) 48%);
 }
-
 .survey-card.done-card{
-  border-color:rgba(134,239,172,.42);
-  background:rgba(8,34,22,.30);
-  box-shadow:0 0 10px rgba(34,197,94,.10),0 14px 24px rgba(0,0,0,.18);
+  border-color:rgba(134,239,172,.30);
+  background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(15,23,42,.96) 48%);
 }
-
+.survey-title{
+  font-size:17px;
+  font-weight:950;
+  line-height:1.45;
+  margin-top:8px;
+}
+.note{
+  font-size:12px;
+  line-height:1.7;
+  opacity:.78;
+  margin-top:7px;
+}
 .status-row{
-  grid-area:status;
   display:flex;
-  justify-content:flex-end;
-  margin:0;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
 }
-
 .status{
   display:inline-flex;
   align-items:center;
   border-radius:999px;
-  padding:4px 8px;
-  font-size:10px;
+  padding:5px 9px;
+  font-size:11px;
   font-weight:950;
-  white-space:nowrap;
+  background:rgba(255,255,255,.1);
 }
-
-.status.todo{
-  background:rgba(251,146,60,.22);
-  color:#fed7aa;
-  border:1px solid rgba(251,146,60,.35);
-}
-
 .status.done{
-  background:rgba(34,197,94,.20);
+  background:rgba(34,197,94,.18);
   color:#bbf7d0;
-  border:1px solid rgba(134,239,172,.32);
+  border:1px solid rgba(134,239,172,.22);
 }
-
-.survey-title{
-  grid-area:main;
-  font-size:15px;
-  font-weight:950;
-  line-height:1.35;
-  color:#fff;
-  margin:0 0 5px;
-  text-shadow:0 2px 12px rgba(0,0,0,.35);
+.status.todo{
+  background:rgba(251,146,60,.18);
+  color:#fed7aa;
+  border:1px solid rgba(251,146,60,.25);
 }
-
-.note{
-  display:none;
-}
-
 .meta-box{
-  grid-area:main;
-  margin-top:27px;
-  text-align:left;
+  margin-top:12px;
+  display:grid;
+  gap:8px;
 }
-
 .meta-line{
-  padding:0;
-  border:none;
-  background:transparent;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.045);
+  border-radius:13px;
+  padding:9px 10px;
 }
-
 .meta-label{
-  display:inline;
   font-size:10px;
   font-weight:900;
-  margin-right:5px;
-  color:#cbd5e1;
+  color:#94a3b8;
+  line-height:1.3;
 }
-
 .meta-value{
-  display:inline;
-  font-size:12px;
-  font-weight:950;
+  margin-top:3px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.45;
+  color:#e5e7eb;
+}
+.meta-value.deadline{
   color:#fde68a;
 }
-
 .btn{
-  grid-area:button;
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
   text-decoration:none;
   width:100%;
-  min-height:35px;
+  min-height:52px;
+  margin-top:13px;
   border:none;
-  border-radius:11px;
-  margin:0;
-  padding:0 7px;
+  border-radius:16px;
   background:linear-gradient(135deg,#f97316,#fdba74);
   color:#431407;
-  font-size:12px;
+  font-size:15px;
   font-weight:950;
   cursor:pointer;
 }
-
-.todo-card .btn{
-  box-shadow:0 0 16px rgba(251,146,60,.35);
-}
-
 .done-card .btn{
   background:linear-gradient(135deg,#16a34a,#86efac);
   color:#052e16;
 }
-
-.empty-room{
-  width:min(88vw,410px);
-  margin-left:auto;
-  margin-top:3vh;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(30,35,42,.28);
-  backdrop-filter:blur(7px);
-  -webkit-backdrop-filter:blur(7px);
-  border-radius:16px;
-  padding:22px 14px;
-  text-align:center;
-  font-size:16px;
-  font-weight:950;
-  color:rgba(255,255,255,.88);
+.btn-blue{
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
 }
-
-.empty-room-icon{
-  font-size:28px;
-  opacity:.74;
-  margin-bottom:8px;
-}
-
 .empty{
   font-size:13px;
   line-height:1.7;
@@ -301,40 +194,26 @@ body{
   text-align:center;
   padding:28px 8px;
 }
-
-.loading{
-  display:none;
-}
-
 .error{color:#fca5a5}
 .ok{color:#86efac}
-
-/* =========================
-   回答画面
-========================= */
 .question{
   border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.06);
   border-radius:18px;
   padding:14px;
   margin-bottom:14px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
 }
-
 .qtitle{
   font-size:16px;
   font-weight:900;
   line-height:1.4;
 }
-
 .qbody{
   font-size:13px;
   line-height:1.7;
   opacity:.82;
   margin-top:8px;
 }
-
 .choice{
   display:flex;
   align-items:center;
@@ -346,13 +225,11 @@ body{
   margin-top:8px;
   font-size:14px;
 }
-
 .choice input{
   width:19px;
   height:19px;
   flex-shrink:0;
 }
-
 input[type='number'],textarea{
   width:100%;
   border-radius:13px;
@@ -365,13 +242,11 @@ input[type='number'],textarea{
   font-family:inherit;
   margin-top:10px;
 }
-
 textarea{
   min-height:92px;
   resize:vertical;
   line-height:1.6;
 }
-
 .hero-option{
   position:relative;
   display:block;
@@ -383,12 +258,10 @@ textarea{
   cursor:pointer;
   transition:.15s;
 }
-
 .hero-option.selected{
   border-color:rgba(134,239,172,.42);
   background:rgba(34,197,94,.10);
 }
-
 .hero-head{
   display:flex;
   align-items:center;
@@ -396,20 +269,17 @@ textarea{
   min-height:34px;
   margin-bottom:8px;
 }
-
 .hero-option input{
   width:24px;
   height:24px;
   flex-shrink:0;
   accent-color:#22c55e;
 }
-
 .hero-label{
   font-size:15px;
   font-weight:950;
   line-height:1.4;
 }
-
 .hero-option img{
   width:100%;
   display:block;
@@ -418,22 +288,17 @@ textarea{
   background:rgba(255,255,255,.08);
   transition:.15s;
 }
-
 .hero-option.selected img{
   border-color:#86efac;
   box-shadow:0 0 0 1px rgba(134,239,172,.22),0 0 22px rgba(34,197,94,.32);
 }
-
 .progress-box{
   border:1px solid rgba(96,165,250,.24);
   background:rgba(37,99,235,.10);
   border-radius:15px;
   padding:10px 12px;
   margin-bottom:14px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
 }
-
 .progress-top{
   display:flex;
   justify-content:space-between;
@@ -443,7 +308,6 @@ textarea{
   font-weight:900;
   color:#bfdbfe;
 }
-
 .progress-bar{
   height:8px;
   border-radius:999px;
@@ -451,7 +315,6 @@ textarea{
   overflow:hidden;
   margin-top:8px;
 }
-
 .progress-fill{
   height:100%;
   width:0%;
@@ -459,62 +322,20 @@ textarea{
   background:linear-gradient(90deg,#2563eb,#86efac);
   transition:.18s;
 }
-
-.save{
-  width:100%;
-  min-height:52px;
-  border:none;
-  border-radius:15px;
-  background:linear-gradient(135deg,#2563eb,#60a5fa);
-  color:#fff;
-  font-size:16px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.save:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-
-.msg{
-  font-size:12px;
-  line-height:1.7;
-  margin-top:10px;
-  text-align:center;
-}
-
-.answer-note{
-  border:1px solid rgba(250,204,21,.25);
-  background:rgba(250,204,21,.08);
-  color:#fde68a;
-  border-radius:14px;
-  padding:10px 12px;
-  font-size:12px;
-  line-height:1.7;
-  margin-bottom:14px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-}
-
 .complete-card{
   border:1px solid rgba(134,239,172,.28);
-  background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(15,23,42,.72));
+  background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(15,23,42,.94));
   border-radius:20px;
   padding:18px;
   text-align:center;
   margin-top:18px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
 }
-
 .complete-title{
   font-size:22px;
   font-weight:950;
   color:#86efac;
   line-height:1.35;
 }
-
 .complete-body{
   margin-top:10px;
   font-size:13px;
@@ -522,7 +343,6 @@ textarea{
   color:#dbeafe;
   opacity:.9;
 }
-
 .complete-btn{
   display:flex;
   align-items:center;
@@ -537,47 +357,530 @@ textarea{
   font-size:15px;
   font-weight:950;
 }
+.save{
+  width:100%;
+  min-height:52px;
+  border:none;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.save:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.msg{
+  font-size:12px;
+  line-height:1.7;
+  margin-top:10px;
+  text-align:center;
+}
+.answer-note{
+  border:1px solid rgba(250,204,21,.25);
+  background:rgba(250,204,21,.08);
+  color:#fde68a;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.7;
+  margin-bottom:14px;
+}
 
-/* =========================
-   小型端末
-========================= */
+/* ===== Survey Room top layout ===== */
+.room-list-note{display:none}
+.survey-card{
+  width:min(82vw,360px);
+  margin-left:auto;
+  text-align:right;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(15,23,42,.42);
+  backdrop-filter:blur(10px);
+  border-radius:20px;
+  padding:14px;
+  box-shadow:0 18px 34px rgba(0,0,0,.24);
+}
+.survey-card.todo-card{
+  border-color:rgba(251,146,60,.45);
+  background:rgba(41,24,9,.38);
+}
+.survey-card.done-card{
+  border-color:rgba(134,239,172,.36);
+  background:rgba(12,35,24,.36);
+}
+.status-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:8px;
+}
+.survey-title{
+  text-align:right;
+  font-size:17px;
+  font-weight:950;
+  line-height:1.45;
+  margin-top:0;
+  text-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+.note{
+  display:none;
+}
+.meta-box{
+  text-align:right;
+  margin-top:10px;
+}
+.meta-line{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:9px 10px;
+}
+.meta-label{
+  font-size:10px;
+  color:#cbd5e1;
+}
+.meta-value{
+  font-size:14px;
+  font-weight:950;
+}
+.status.todo{
+  background:rgba(251,146,60,.22);
+  color:#fed7aa;
+  border:1px solid rgba(251,146,60,.35);
+}
+.status.done{
+  background:rgba(34,197,94,.20);
+  color:#bbf7d0;
+  border:1px solid rgba(134,239,172,.32);
+}
+.btn{
+  min-height:50px;
+  border-radius:15px;
+  margin-top:12px;
+}
+@media(max-width:390px){
+  .survey-card{width:86vw}
+  .list{margin-top:16vh}
+}
+
+
+/* ===== v3 fix: card right, text left, root bg video ===== */
+.survey-card{
+  margin-left:auto;
+  margin-right:0;
+  text-align:left;
+}
+.status-row{
+  justify-content:flex-start;
+}
+.survey-title{
+  text-align:left;
+}
+.meta-box{
+  text-align:left;
+}
+.meta-line{
+  text-align:left;
+}
+
+
+/* ===== v4 video visibility fix ===== */
+html,body{
+  background:#070b12 !important;
+}
+.bg-video{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  object-fit:contain !important; object-position:center center !important;
+  z-index:0 !important;
+  opacity:.62 !important;
+  pointer-events:none !important;
+}
+.bg-shade{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:1 !important;
+  pointer-events:none !important;
+  background:
+    linear-gradient(90deg,rgba(7,11,18,.84) 0%,rgba(7,11,18,.58) 42%,rgba(7,11,18,.22) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.78) 0%,rgba(7,11,18,.40) 48%,rgba(7,11,18,.82) 100%) !important;
+}
+#app{
+  position:relative;
+  z-index:2;
+}
+.header{
+  background:linear-gradient(180deg,rgba(7,11,18,.72),rgba(7,11,18,.22)) !important;
+}
+.user-box{
+  background:rgba(15,23,42,.44) !important;
+  backdrop-filter:blur(8px);
+}
+.survey-card{
+  position:relative;
+  z-index:3;
+  background:rgba(15,23,42,.46) !important;
+  backdrop-filter:blur(9px);
+}
+.survey-card.todo-card{
+  background:rgba(40,22,8,.46) !important;
+}
+.survey-card.done-card{
+  background:rgba(8,34,22,.46) !important;
+}
+.survey-title{
+  color:#fff !important;
+}
+
+
+/* ===== final brightness setting ===== */
+.bg-video{
+  opacity:1 !important;
+}
+.bg-shade{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(7,11,18,.28) 0%,
+      rgba(7,11,18,.20) 45%,
+      rgba(7,11,18,.08) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(7,11,18,.25) 0%,
+      rgba(7,11,18,.15) 50%,
+      rgba(7,11,18,.28) 100%
+    ) !important;
+}
+.survey-card{
+  background:rgba(15,23,42,.45) !important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.survey-card.todo-card{
+  background:rgba(40,22,8,.45) !important;
+}
+.survey-card.done-card{
+  background:rgba(8,34,22,.45) !important;
+}
+
+
+/* ===== v6 compact horizontal survey bars ===== */
+.user-box{
+  display:none !important;
+}
+.list{
+  margin-top:34vh !important;
+  gap:10px !important;
+  align-items:flex-end !important;
+}
+.survey-card{
+  width:min(88vw,420px) !important;
+  min-height:82px !important;
+  padding:10px 11px !important;
+  border-radius:16px !important;
+  display:grid !important;
+  grid-template-columns:1fr 104px !important;
+  grid-template-areas:
+    "main status"
+    "main button" !important;
+  gap:8px 10px !important;
+  align-items:center !important;
+  text-align:left !important;
+}
+.status-row{
+  grid-area:status !important;
+  justify-content:flex-end !important;
+  margin:0 !important;
+}
+.status{
+  padding:4px 8px !important;
+  font-size:10px !important;
+  white-space:nowrap !important;
+}
+.survey-title{
+  grid-area:main !important;
+  font-size:16px !important;
+  line-height:1.35 !important;
+  margin:0 0 6px !important;
+}
+.meta-box{
+  grid-area:main !important;
+  margin-top:30px !important;
+}
+.meta-line{
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+}
+.meta-label{
+  display:inline !important;
+  font-size:10px !important;
+  margin-right:6px !important;
+}
+.meta-value{
+  display:inline !important;
+  font-size:12px !important;
+  color:#fde68a !important;
+}
+.btn{
+  grid-area:button !important;
+  min-height:38px !important;
+  margin:0 !important;
+  border-radius:12px !important;
+  font-size:13px !important;
+  padding:0 8px !important;
+}
+@media(max-width:390px){
+  .survey-card{
+    width:90vw !important;
+    grid-template-columns:1fr 96px !important;
+  }
+  .survey-title{font-size:15px !important}
+  .btn{font-size:12px !important}
+}
+
+
+/* ===== v7 final room layout + loading speed polish ===== */
+.header{
+  min-height:auto !important;
+  padding:18px 16px 10px !important;
+  background:linear-gradient(180deg,rgba(7,11,18,.58),rgba(7,11,18,.10)) !important;
+}
+.header .sub{
+  display:none !important;
+}
+.header{
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  grid-template-areas:
+    "title user"
+    "back user" !important;
+  column-gap:12px !important;
+  align-items:start !important;
+}
+.header h1{
+  grid-area:title !important;
+  font-size:25px !important;
+  line-height:1.2 !important;
+}
+.header .back{
+  grid-area:back !important;
+  margin-top:10px !important;
+  min-height:28px !important;
+}
+.room-user-mini{
+  grid-area:user;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+  margin-top:2px;
+}
+.room-user-line{
+  min-width:118px;
+  border:1px solid rgba(134,239,172,.50);
+  background:rgba(8,34,22,.34);
+  color:#fff;
+  border-radius:14px 0 0 14px;
+  padding:8px 11px;
+  font-size:13px;
+  font-weight:950;
+  line-height:1.2;
+  text-align:left;
+  box-shadow:0 0 16px rgba(34,197,94,.10);
+}
+.room-user-line.alliance{
+  margin-right:10px;
+}
+.user-box{
+  display:none !important;
+}
+.list{
+  margin-top:15vh !important;
+  gap:9px !important;
+  align-items:flex-end !important;
+}
+.survey-card{
+  width:min(88vw,410px) !important;
+  min-height:74px !important;
+  padding:9px 10px !important;
+  border-radius:15px !important;
+  display:grid !important;
+  grid-template-columns:1fr 96px !important;
+  grid-template-areas:
+    "main status"
+    "main button" !important;
+  gap:7px 9px !important;
+  align-items:center !important;
+  background:rgba(18,24,31,.34) !important;
+  backdrop-filter:blur(7px) !important;
+  -webkit-backdrop-filter:blur(7px) !important;
+}
+.survey-card.todo-card{
+  border-color:rgba(251,146,60,.78) !important;
+  background:rgba(42,22,8,.34) !important;
+  box-shadow:0 0 16px rgba(251,146,60,.24),0 14px 24px rgba(0,0,0,.20) !important;
+}
+.survey-card.done-card{
+  border-color:rgba(134,239,172,.42) !important;
+  background:rgba(8,34,22,.30) !important;
+  box-shadow:0 0 10px rgba(34,197,94,.10),0 14px 24px rgba(0,0,0,.18) !important;
+}
+.status-row{
+  grid-area:status !important;
+  justify-content:flex-end !important;
+  margin:0 !important;
+}
+.status{
+  padding:4px 8px !important;
+  font-size:10px !important;
+  white-space:nowrap !important;
+}
+.survey-title{
+  grid-area:main !important;
+  font-size:15px !important;
+  line-height:1.35 !important;
+  margin:0 0 5px !important;
+}
+.meta-box{
+  grid-area:main !important;
+  margin-top:27px !important;
+}
+.meta-line{
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+}
+.meta-label{
+  display:inline !important;
+  font-size:10px !important;
+  margin-right:5px !important;
+}
+.meta-value{
+  display:inline !important;
+  font-size:12px !important;
+  color:#fde68a !important;
+}
+.btn{
+  grid-area:button !important;
+  min-height:35px !important;
+  margin:0 !important;
+  border-radius:11px !important;
+  font-size:12px !important;
+  padding:0 7px !important;
+}
+.todo-card .btn{
+  box-shadow:0 0 16px rgba(251,146,60,.35) !important;
+}
+.empty-room{
+  width:min(88vw,410px);
+  margin-left:auto;
+  margin-top:15vh;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(30,35,42,.28);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  border-radius:16px;
+  padding:22px 14px;
+  text-align:center;
+  font-size:16px;
+  font-weight:950;
+  color:rgba(255,255,255,.88);
+}
+.empty-room-icon{
+  font-size:28px;
+  opacity:.74;
+  margin-bottom:8px;
+}
+.bg-video{
+  opacity:1 !important;
+}
+.bg-shade{
+  background:
+    linear-gradient(90deg,rgba(7,11,18,.24) 0%,rgba(7,11,18,.16) 45%,rgba(7,11,18,.06) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.22) 0%,rgba(7,11,18,.12) 50%,rgba(7,11,18,.25) 100%) !important;
+}
+.loading{
+  display:none !important;
+}
+@media(max-width:390px){
+  .header h1{font-size:23px !important}
+  .room-user-line{min-width:106px;font-size:12px;padding:7px 10px}
+  .survey-card{
+    width:90vw !important;
+    grid-template-columns:1fr 90px !important;
+  }
+  .survey-title{font-size:14px !important}
+  .btn{font-size:11px !important}
+}
+
+
+/* ===== v8 compact header + higher survey bars ===== */
+.header{
+  padding:12px 14px 6px !important;
+  min-height:94px !important;
+  grid-template-columns:1fr auto !important;
+  grid-template-areas:
+    "title user"
+    "back user" !important;
+  align-items:start !important;
+}
+.header h1{
+  font-size:23px !important;
+  line-height:1.15 !important;
+}
+.header .back{
+  margin-top:6px !important;
+  min-height:24px !important;
+  font-size:13px !important;
+}
+.room-user-mini{
+  margin-top:0 !important;
+  gap:4px !important;
+}
+.room-user-line{
+  min-width:104px !important;
+  padding:6px 10px !important;
+  font-size:12px !important;
+  border-radius:12px 0 0 12px !important;
+}
+.room-user-line.alliance{
+  margin-right:8px !important;
+}
+.list{
+  margin-top:3vh !important;
+  gap:8px !important;
+}
+.survey-card{
+  min-height:70px !important;
+  padding:8px 10px !important;
+}
 @media(max-width:390px){
   .header{
-    min-height:88px;
-    padding:11px 13px 5px;
+    min-height:88px !important;
+    padding:11px 13px 5px !important;
   }
-
   .header h1{
-    font-size:22px;
+    font-size:22px !important;
   }
-
   .room-user-line{
-    min-width:98px;
-    font-size:11px;
-    padding:6px 9px;
+    min-width:98px !important;
+    font-size:11px !important;
+    padding:6px 9px !important;
   }
-
   .list{
-    margin-top:2.5vh;
-  }
-
-  .survey-card{
-    width:90vw;
-    grid-template-columns:1fr 90px;
-  }
-
-  .survey-title{
-    font-size:14px;
-  }
-
-  .btn{
-    font-size:11px;
+    margin-top:2.5vh !important;
   }
 }
+
 </style>
 </head>
 <body>
-<video class="bg-video" autoplay muted loop playsinline preload="auto" poster="/1648-portal/survey/poster.jpg">
+<video class="bg-video" autoplay muted loop playsinline preload="auto">
   <source src="/1648-portal/survey/bg.mp4" type="video/mp4">
 </video>
 <div class="bg-shade"></div>
@@ -661,18 +964,11 @@ function getAlliance(){
 }
 
 function renderHeader(title, sub, backUrl = PORTAL_URL){
-  const name = getUserName();
-  const alliance = getAlliance();
-
   return `
     <div class="header">
       <h1>${escapeHtml(title)}</h1>
       <div class="sub">${escapeHtml(sub)}</div>
       <a class="back" href="${backUrl}">← 戻る</a>
-      <div class="room-user-mini">
-        <div class="room-user-line">👤 ${escapeHtml(name)}</div>
-        <div class="room-user-line alliance">🛡 ${escapeHtml(alliance || "-")}</div>
-      </div>
     </div>
   `;
 }
@@ -690,7 +986,8 @@ function renderUserBox(){
 async function renderList(){
   document.getElementById("app").innerHTML =
     renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
-    + `<div class="empty loading">読み込み中...</div>`;
+    + renderUserBox()
+    + `<div class="empty">読み込み中...</div>`;
 
   try{
     const res = await fetch(LIST_URL, {
@@ -708,7 +1005,8 @@ async function renderList(){
     if(!data.surveys.length){
       document.getElementById("app").innerHTML =
         renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
-        + `<div class="empty-room"><div class="empty-room-icon">☑</div>アンケートはありません。</div>`;
+        + renderUserBox()
+        + `<div class="empty">現在、公開中のアンケートはありません。</div>`;
       return;
     }
 
@@ -721,6 +1019,7 @@ async function renderList(){
   }catch(err){
     document.getElementById("app").innerHTML =
       renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+      + renderUserBox()
       + `<div class="empty error">読み込み失敗：${escapeHtml(errorLabel(err.message))}</div>`;
   }
 }
@@ -742,8 +1041,8 @@ function surveyCard(s){
       <div class="meta-box">
         ${s.closeAt ? `
           <div class="meta-line">
-            <span class="meta-label">締切</span>
-            <span class="meta-value deadline">${escapeHtml(formatDateTime(s.closeAt))}</span>
+            <div class="meta-label">締切</div>
+            <div class="meta-value deadline">${escapeHtml(formatDateTime(s.closeAt))}</div>
           </div>
         ` : ""}
       </div>
@@ -863,6 +1162,7 @@ function questionTemplate(q, value){
   return html;
 }
 
+
 function progressTemplate(){
   return `
     <div class="progress-box">
@@ -963,9 +1263,19 @@ async function saveAnswer(){
   }
 }
 
+
+
 function formatDateTime(value){
   if(!value) return "";
   const text = String(value);
+  const d = new Date(text.includes("T") ? text : text.replace(" ", "T"));
+  if(!Number.isNaN(d.getTime())){
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${m}月${day}日 ${hh}:${mm}`;
+  }
   const m = text.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
   if(m) return `${Number(m[2])}月${Number(m[3])}日 ${m[4]}:${m[5]}`;
   return text.replace("T", " ");
