@@ -113,17 +113,6 @@ h2,h3{margin-top:0}
 /* ポップアップサマリー */
 .editor-summary{font-size:12px;color:#94a3b8;margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.05);border-radius:8px}
 .editor-summary .warn-text{color:#f87171}
-/* ユーザー名オーバーレイ */
-#userOverlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
-#userOverlay.hidden{display:none}
-.user-dialog{background:#1a0a00;border:2px solid #f59e0b;border-radius:16px;padding:24px;width:100%;max-width:340px;text-align:center}
-.user-dialog h2{color:#f59e0b;margin:0 0 8px;font-size:18px}
-.user-dialog p{color:#c9a87c;font-size:13px;margin:0 0 16px;line-height:1.6}
-.user-input{width:100%;padding:12px;border-radius:10px;border:2px solid #7c4a00;background:#2a1400;color:#fff;font-size:16px;margin-bottom:12px;text-align:center;font-weight:700}
-.user-input:focus{outline:none;border-color:#f59e0b}
-.btn-start{width:100%;padding:12px;border-radius:10px;border:none;background:#92400e;color:#fde68a;font-size:15px;font-weight:900;cursor:pointer;margin-bottom:8px;touch-action:manipulation}
-.btn-start:active{background:#b45309}
-.btn-skip{width:100%;padding:10px;border-radius:10px;border:1px solid #475569;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer;touch-action:manipulation}
 /* ヘッダーユーザー情報 */
 .header-user{display:flex;align-items:center;gap:8px;margin-left:auto}
 .header-username{color:#fde68a;font-size:13px;font-weight:700}
@@ -644,22 +633,71 @@ header > button.goal{
   text-align:left !important;
 }
 
+
+/* ===== v6 hard final ===== */
+#userOverlay{display:none !important}
+header{
+  min-height:54px !important;
+  padding:8px 10px !important;
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  gap:8px !important;
+  align-items:center !important;
+}
+.title-row{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+}
+.title-row strong{
+  display:inline !important;
+  width:auto !important;
+  font-size:16px !important;
+  color:#f59e0b !important;
+  white-space:nowrap !important;
+}
+.back-portal{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:26px !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(245,158,11,.55) !important;
+  background:rgba(18,8,0,.72) !important;
+  color:#fde68a !important;
+  text-decoration:none !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+header > .goal,
+header button.goal,
+header > strong{display:none !important}
+.header-user{
+  display:grid !important;
+  grid-template-columns:auto auto !important;
+  grid-template-areas:"name btn" "alliance btn" !important;
+  gap:2px 8px !important;
+  align-items:center !important;
+  padding:6px 8px !important;
+  border-radius:12px !important;
+  border:1px solid rgba(245,158,11,.55) !important;
+  background:rgba(18,8,0,.72) !important;
+}
+.header-username{grid-area:name !important;font-size:12px !important;line-height:1.2 !important;max-width:120px !important;overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important}
+.header-alliance{grid-area:alliance !important;font-size:11px !important;color:#c9a87c !important;font-weight:900 !important}
+#btnT12Status{grid-area:btn !important;padding:7px 10px !important;border-radius:10px !important;border:1px solid #22c55e !important;background:#166534 !important;color:#dcfce7 !important;font-size:12px !important;font-weight:900 !important}
+#saveStatus{display:none !important}
+.mypage-summary,#myPageSummary,#t12SummaryPanel,.t12-summary-panel,.profile-summary,.t12-profile-box,.summary-box,[data-summary="t12"],[data-block="mypage-summary"]{display:none !important}
+.t12-modal-actions{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:8px !important;margin-top:10px !important}
+.t12-modal-save{flex:0 0 auto !important;padding:9px 12px !important;border-radius:10px !important;border:1px solid #22c55e !important;background:#166534 !important;color:#dcfce7 !important;font-weight:900 !important;font-size:13px !important}
+.t12-modal-save-status{flex:1 !important;color:#c9a87c !important;font-size:12px !important;font-weight:800 !important;text-align:left !important}
+
 </style>
 </head>
 <body>
-
-<!-- ユーザー名入力オーバーレイ -->
-<div id="userOverlay">
-  <div class="user-dialog">
-    <h2>👤 ユーザー名を入力</h2>
-    <p>入力すると設定が自動保存され<br>次回から続きから始められます<br><small style="color:#64748b">※スキップすると保存なし</small></p>
-    <input id="userNameInput" class="user-input" type="text" placeholder="ゲーム内ネーム" maxlength="20">
-    <button class="btn-start" id="btnUserStart">✓ 記録を開始する</button>
-    <button class="btn-skip" id="btnUserSkip">保存なしで使用する</button>
-  </div>
-</div>
-
-<!-- エディターオーバーレイ（外タップで閉じる） -->
 <div id="editorOverlay"></div>
 
 <!-- マーカーポップアップエディター -->
@@ -688,15 +726,16 @@ header > button.goal{
 </div>
 
 <header>
-<strong class="portal-title">1648 T12 Planner</strong>
-<div class="goal-tabs">
-</div>
-<div class="header-user" id="headerUser">
-  <div class="header-user-main" id="headerUsername">👤 -</div>
-  <div class="header-user-sub" id="headerAlliance">🛡 -</div>
-  <button id="btnT12Status" class="portal-mini-btn" type="button">マイページ</button>
-  <div class="save-status" id="saveStatus">保存準備中</div>
-</div>
+  <div class="title-row">
+    <a id="btnBackPortal" class="back-portal" href="/1648-portal/">← 戻る</a>
+    <strong>1648 T12 Planner</strong>
+  </div>
+
+  <div class="header-user" id="headerUser">
+    <span class="header-username" id="headerUsername">👤 メンバー</span>
+    <span class="header-alliance" id="headerAlliance">🛡 -</span>
+    <button id="btnT12Status" class="portal-mini-btn" type="button">マイページ</button>
+  </div>
 </header>
 
 <div class="main">
@@ -1010,46 +1049,24 @@ function initPortalUser(){
 }
 
 function initUser(name){
-  currentUser = name.trim();
+  currentUser = String(name || getPortalUserName() || "メンバー").trim();
   localStorage.setItem("t12_lastUser", currentUser);
-  document.getElementById("headerUsername").textContent = "👤 " + currentUser;
-  document.getElementById("headerAlliance").textContent = "🛡 " + (portalAlliance || "-");
-  document.getElementById("headerUser").style.display = "flex";
-  document.getElementById("userOverlay").classList.add("hidden");
+
+  const headerUsername = document.getElementById("headerUsername");
+  if(headerUsername) headerUsername.textContent = "👤 " + currentUser;
+
+  const headerUser = document.getElementById("headerUser");
+  if(headerUser) headerUser.style.display = "grid";
+
+  const overlay = document.getElementById("userOverlay");
+  if(overlay) overlay.classList.add("hidden");
 }
 
 function startWithoutSave(){
-  currentUser = null;
-  document.getElementById("userOverlay").classList.add("hidden");
+  currentUser = getPortalUserName() || "メンバー";
+  const overlay = document.getElementById("userOverlay");
+  if(overlay) overlay.classList.add("hidden");
 }
-
-// ユーザー名入力ボタン
-document.getElementById("btnUserStart").addEventListener("click", () => {
-  const name = document.getElementById("userNameInput").value.trim();
-  if(!name){ document.getElementById("userNameInput").focus(); return; }
-  initUser(name);
-  const loaded = loadState();
-  // 読み込み後にUIを反映
-  applyLoadedState();
-});
-
-document.getElementById("btnUserSkip").addEventListener("click", () => {
-  startWithoutSave();
-});
-
-const myPageBtn = document.getElementById("btnMyPage");
-if(myPageBtn){
-  myPageBtn.addEventListener("click", () => {
-    sessionStorage.setItem("portal_entry", "1");
-  });
-}
-
-// Enterキーで確定
-document.getElementById("userNameInput").addEventListener("keydown", e => {
-  if(e.key === "Enter"){
-    document.getElementById("btnUserStart").click();
-  }
-});
 
 function applyLoadedState(){
   // goal ボタン反映
@@ -2165,6 +2182,51 @@ document.addEventListener("DOMContentLoaded", ()=>{
         if(typeof updateT12StatusModal === "function") updateT12StatusModal();
       }, 900);
     });
+  }
+});
+
+
+// ===== v6 portal user auto-init / header alliance =====
+function applyPortalHeaderUser(){
+  const name = getPortalUserName ? getPortalUserName() : "メンバー";
+  const alliance = typeof getPortalAlliance === "function" ? getPortalAlliance() : "";
+  const u = document.getElementById("headerUsername");
+  const a = document.getElementById("headerAlliance");
+  const box = document.getElementById("headerUser");
+  if(u) u.textContent = "👤 " + (name || "メンバー");
+  if(a) a.textContent = "🛡 " + (alliance || "-");
+  if(box) box.style.display = "grid";
+  if(!currentUser) currentUser = name || "メンバー";
+}
+document.addEventListener("DOMContentLoaded", applyPortalHeaderUser);
+
+// ===== v6 final bindings =====
+document.addEventListener("DOMContentLoaded", ()=>{
+  applyPortalHeaderUser();
+
+  const btn = document.getElementById("btnT12Status");
+  if(btn){
+    btn.textContent = "マイページ";
+    btn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openT12StatusModal === "function") openT12StatusModal();
+    };
+  }
+
+  const saveBtn = document.getElementById("btnCloudSave");
+  if(saveBtn){
+    saveBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const s = document.getElementById("modalSaveStatus");
+      if(s) s.textContent = "保存状態：保存中...";
+      if(typeof manualT12CloudSave === "function") manualT12CloudSave();
+      else if(typeof saveState === "function") saveState();
+      setTimeout(()=>{
+        if(typeof updateT12StatusModal === "function") updateT12StatusModal();
+      }, 900);
+    };
   }
 });
 
