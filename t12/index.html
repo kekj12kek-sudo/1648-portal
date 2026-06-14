@@ -395,8 +395,6 @@ header strong{
 </section>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
 // =========================================================
@@ -406,24 +404,16 @@ const PORTAL_URL = "/1648-portal/";
 const LOGIN_URL = "/1648-portal/auth/";
 const MYPAGE_URL = "/1648-portal/mypage/";
 const SAVE_KEY_PREFIX = "t12_";
-const T12_COLLECTION = "t12_progress";
+const SAVE_T12_URL = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveT12Progress";
+const GET_T12_URL  = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getT12Progress";
 let currentUser = null;
 let portalSession = null;
 let portalDiscordId = "";
 let portalAlliance = "";
 let portalGameId = "";
-let t12Db = null;
+let t12ApiReady = false;
 let isBooting = true;
 let cloudSaveTimer = null;
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCEELGkoD0E2BweLmt3ae8z622u2KFYeqQ",
-  authDomain: "yoyaku-4ec7c.firebaseapp.com",
-  projectId: "yoyaku-4ec7c",
-  storageBucket: "yoyaku-4ec7c.firebasestorage.app",
-  messagingSenderId: "753962945830",
-  appId: "1:753962945830:web:c74bb9bbef3ffdda9905e7"
-};
 
 function setSaveStatus(text, cls){
   const el = document.getElementById("saveStatus");
@@ -1569,7 +1559,7 @@ async function bootPlanner(){
   portalSession = getPortalSession();
   if(!portalSession) return;
   initPortalUser();
-  initT12Firestore();
+  initT12Cloud();
 
   let loaded = await loadStateFromCloud();
   if(!loaded) loaded = loadState();
