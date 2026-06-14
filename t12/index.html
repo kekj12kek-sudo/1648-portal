@@ -521,6 +521,129 @@ header > button.goal{
   text-align:right;
 }
 
+
+/* ===== v5 final: clean header / popup mypage / back button ===== */
+.title-row{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+}
+.title-row strong{
+  width:auto !important;
+  font-size:16px !important;
+  color:#f59e0b !important;
+  white-space:nowrap !important;
+}
+.back-portal{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:26px !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(245,158,11,.55) !important;
+  background:rgba(18,8,0,.72) !important;
+  color:#fde68a !important;
+  text-decoration:none !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+header{
+  min-height:58px !important;
+  padding:8px 10px !important;
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  align-items:center !important;
+}
+header > strong{
+  display:none !important;
+}
+header .goal,
+header > button.goal{
+  display:none !important;
+}
+#saveStatus{
+  display:none !important;
+}
+.header-user,
+#headerUser,
+.portal-user{
+  grid-column:2 !important;
+  display:grid !important;
+  grid-template-columns:auto auto !important;
+  grid-template-areas:
+    "name btn"
+    "alliance btn" !important;
+  align-items:center !important;
+  column-gap:8px !important;
+  row-gap:2px !important;
+  padding:6px 8px !important;
+  border-radius:12px !important;
+  border:1px solid rgba(245,158,11,.55) !important;
+  background:rgba(18,8,0,.72) !important;
+}
+#headerUsername,
+.header-username{
+  grid-area:name !important;
+  font-size:12px !important;
+  line-height:1.2 !important;
+  max-width:118px !important;
+}
+.portal-alliance,
+#headerAlliance{
+  grid-area:alliance !important;
+  font-size:11px !important;
+}
+#btnT12Status,
+.portal-mini-btn{
+  grid-area:btn !important;
+  padding:7px 10px !important;
+  border-radius:10px !important;
+  border:1px solid #22c55e !important;
+  background:#166534 !important;
+  color:#dcfce7 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+.mypage-summary,
+#myPageSummary,
+#t12SummaryPanel,
+.t12-summary-panel,
+.profile-summary,
+.t12-profile-box,
+.summary-box,
+[data-summary="t12"],
+[data-block="mypage-summary"]{
+  display:none !important;
+}
+.t12-modal-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  margin-top:10px !important;
+}
+.t12-modal-save{
+  flex:0 0 auto !important;
+  padding:9px 12px !important;
+  border-radius:10px !important;
+  border:1px solid #22c55e !important;
+  background:#166534 !important;
+  color:#dcfce7 !important;
+  font-weight:900 !important;
+  font-size:13px !important;
+}
+.t12-modal-save-status{
+  flex:1 !important;
+  color:#c9a87c !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  text-align:left !important;
+}
+
 </style>
 </head>
 <body>
@@ -571,18 +694,14 @@ header > button.goal{
 <div class="header-user" id="headerUser">
   <div class="header-user-main" id="headerUsername">👤 -</div>
   <div class="header-user-sub" id="headerAlliance">🛡 -</div>
-  <button id="btnT12Status" class="portal-mini-btn" type="button">研究状況</button>
+  <button id="btnT12Status" class="portal-mini-btn" type="button">マイページ</button>
   <div class="save-status" id="saveStatus">保存準備中</div>
 </div>
 </header>
 
 <div class="main">
 <section>
-  <div class="t12-summary-box" id="t12SummaryBox">
-    <div class="t12-summary-head">
-      
-    <div class="t12-summary-grid" id="t12SummaryGrid"></div>
-  </div>
+</div>
 
   
   <div class="goal-select-box">
@@ -2012,6 +2131,42 @@ if(__oldSetSaveStatus){
     if(s) s.textContent = "保存状態：" + text;
   };
 }
+
+
+// ===== v5 final force: mypage popup + modal save =====
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll("a,button").forEach(el=>{
+    const txt = (el.textContent || "").trim();
+    if(txt === "マイページ" || txt === "研究状況"){
+      el.textContent = "マイページ";
+      el.removeAttribute("href");
+      el.setAttribute("type","button");
+      el.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        if(typeof openT12StatusModal === "function") openT12StatusModal();
+      });
+    }
+  });
+
+  const saveBtn = document.getElementById("btnCloudSave");
+  if(saveBtn){
+    saveBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const s = document.getElementById("modalSaveStatus");
+      if(s) s.textContent = "保存状態：保存中...";
+      if(typeof manualT12CloudSave === "function"){
+        manualT12CloudSave();
+      }else if(typeof saveState === "function"){
+        saveState();
+      }
+      setTimeout(()=>{
+        if(typeof updateT12StatusModal === "function") updateT12StatusModal();
+      }, 900);
+    });
+  }
+});
 
 </script>
 </body>
