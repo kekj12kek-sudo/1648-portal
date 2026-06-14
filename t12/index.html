@@ -245,6 +245,178 @@ header strong{
   .btn-mypage{min-width:76px !important;font-size:11px !important;padding:5px 8px !important;}
 }
 
+
+/* ===== T12 Portal UI final: compact header + in-page goal selector + status modal ===== */
+header{
+  position:sticky;
+  top:0;
+  z-index:120;
+  padding:8px 10px !important;
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  gap:6px 8px !important;
+  align-items:center !important;
+}
+header strong{
+  width:auto !important;
+  font-size:15px !important;
+  line-height:1.2 !important;
+}
+header > .goal{
+  display:none !important;
+}
+.header-user,
+.portal-user,
+#headerUser{
+  grid-column:2 !important;
+  grid-row:1 / span 2 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  gap:4px !important;
+  margin-left:0 !important;
+}
+.header-username,
+#headerUsername{
+  font-size:11px !important;
+  line-height:1.25 !important;
+  max-width:150px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.portal-mini-btn,
+#btnCloudSave,
+#btnT12Status{
+  padding:5px 8px !important;
+  border-radius:8px !important;
+  border:1px solid #7c4a00 !important;
+  background:#2a1400 !important;
+  color:#fde68a !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  cursor:pointer !important;
+}
+#btnCloudSave{
+  border-color:#22c55e !important;
+  color:#86efac !important;
+  background:#0d2a0d !important;
+}
+.goal-select-box{
+  background:#120800;
+  border:2px solid #7c4a00;
+  border-radius:12px;
+  padding:10px;
+  margin:0 0 10px;
+}
+.goal-select-title{
+  color:#f59e0b;
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+.goal-select-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+.goal-select-grid .goal{
+  width:100%;
+  min-height:38px;
+  padding:8px 6px;
+  font-size:12px;
+  border-radius:10px;
+}
+#t12SummaryPanel,
+.t12-summary-panel,
+.mypage-summary,
+#myPageSummary{
+  display:none !important;
+}
+.t12-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:400;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.72);
+}
+.t12-modal-backdrop.open{display:flex}
+.t12-modal{
+  width:100%;
+  max-width:360px;
+  border:2px solid #f59e0b;
+  border-radius:18px;
+  background:#1a0a00;
+  box-shadow:0 18px 60px rgba(0,0,0,.7);
+  overflow:hidden;
+}
+.t12-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  border-bottom:1px solid #7c4a00;
+}
+.t12-modal-title{
+  color:#f59e0b;
+  font-size:16px;
+  font-weight:900;
+}
+.t12-modal-close{
+  border:none;
+  background:transparent;
+  color:#c9a87c;
+  font-size:22px;
+  padding:2px 8px;
+  cursor:pointer;
+}
+.t12-modal-body{padding:14px}
+.t12-status-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:1px solid #7c4a00;
+  background:#120800;
+  border-radius:12px;
+  padding:10px 12px;
+  margin-bottom:8px;
+}
+.t12-status-name{
+  color:#c9a87c;
+  font-size:13px;
+  font-weight:900;
+}
+.t12-status-value{
+  color:#fff;
+  font-size:14px;
+  font-weight:900;
+}
+.t12-status-date{
+  margin-top:10px;
+  color:#fde68a;
+  font-size:12px;
+  font-weight:800;
+}
+.t12-status-note{
+  margin-top:10px;
+  color:#c9a87c;
+  font-size:11px;
+  line-height:1.65;
+  border-top:1px solid rgba(124,74,0,.65);
+  padding-top:10px;
+}
+@media(max-width:420px){
+  .header-username,
+  #headerUsername{
+    max-width:128px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -299,7 +471,7 @@ header strong{
 <div class="header-user" id="headerUser">
   <div class="header-user-main" id="headerUsername">👤 -</div>
   <div class="header-user-sub" id="headerAlliance">🛡 -</div>
-  <a class="btn-mypage" id="btnMyPage" href="/1648-portal/mypage/">マイページ</a>
+  <a class="btn-mypage" id="btnMyPage" href="#">研究状況</a><button id="btnCloudSave" class="portal-mini-btn" type="button">DB保存</button>
   <div class="save-status" id="saveStatus">保存準備中</div>
 </div>
 </header>
@@ -313,6 +485,17 @@ header strong{
     </div>
     <div class="t12-summary-grid" id="t12SummaryGrid"></div>
   </div>
+  
+  <div class="goal-select-box">
+    <div class="goal-select-title">目標選択</div>
+    <div class="goal-select-grid">
+      <button class="goal active" data-goal="unlock">T12解放まで</button>
+      <button class="goal" data-goal="skill">スキル3解放まで</button>
+      <button class="goal" data-goal="capacity">容量3解放まで</button>
+      <button class="goal" data-goal="max">カンストまで</button>
+    </div>
+  </div>
+
   <div class="goal-result">
     <h3>大枠目標の必要素材</h3>
     <div class="info-list">
@@ -393,6 +576,32 @@ header strong{
   </div>
 
 </section>
+</div>
+
+
+<div id="t12StatusModal" class="t12-modal-backdrop">
+  <div class="t12-modal">
+    <div class="t12-modal-head">
+      <div class="t12-modal-title">T12研究状況</div>
+      <button class="t12-modal-close" type="button" id="btnT12StatusClose">×</button>
+    </div>
+    <div class="t12-modal-body">
+      <div class="t12-status-row">
+        <div class="t12-status-name">盾</div>
+        <div class="t12-status-value" id="modalT12Shield">未解放</div>
+      </div>
+      <div class="t12-status-row">
+        <div class="t12-status-name">弓</div>
+        <div class="t12-status-value" id="modalT12Bow">未解放</div>
+      </div>
+      <div class="t12-status-row">
+        <div class="t12-status-name">槍</div>
+        <div class="t12-status-value" id="modalT12Spear">未解放</div>
+      </div>
+      <div class="t12-status-date" id="modalT12SavedAt">最終保存：未保存</div>
+      <div class="t12-status-note">※この研究状況はアンケート回答時に利用できます。<br>自分専用の研究進捗データとして保存されます。</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1572,6 +1781,96 @@ async function bootPlanner(){
 bootPlanner();
 window.addEventListener("resize", renderMarkers);
 document.getElementById("treeImage").addEventListener("load", renderMarkers);
+
+// ===== T12研究状況ポップアップ / 手動DB保存 =====
+function t12StageLabel(stage){
+  return {
+    locked:"未解放",
+    unlocked:"T12解放済み",
+    skill_1:"スキルLv1",
+    skill_2:"スキルLv2",
+    skill_3:"スキルLv3",
+    capacity_1:"容量Lv1",
+    capacity_2:"容量Lv2",
+    capacity_3:"容量Lv3",
+    max:"カンスト"
+  }[stage] || "未解放";
+}
+
+function getT12SummarySafe(){
+  try{
+    if(typeof buildT12Summary === "function") return buildT12Summary();
+    if(typeof createT12Summary === "function") return createT12Summary();
+    if(typeof getT12Summary === "function") return getT12Summary();
+  }catch(e){}
+  return {shield:"locked", bow:"locked", spear:"locked"};
+}
+
+function updateT12StatusModal(){
+  const summary = getT12SummarySafe();
+  const shield = document.getElementById("modalT12Shield");
+  const bow = document.getElementById("modalT12Bow");
+  const spear = document.getElementById("modalT12Spear");
+  const savedAt = document.getElementById("modalT12SavedAt");
+  if(shield) shield.textContent = t12StageLabel(summary.shield);
+  if(bow) bow.textContent = t12StageLabel(summary.bow);
+  if(spear) spear.textContent = t12StageLabel(summary.spear);
+
+  let last = "";
+  try{
+    const raw = currentUser ? localStorage.getItem(getSaveKey()) : "";
+    if(raw){
+      const data = JSON.parse(raw);
+      last = data.updatedAtText || data.savedAt || "";
+    }
+  }catch(e){}
+  if(savedAt){
+    savedAt.textContent = "最終保存：" + (last ? formatT12DateTime(last) : "未保存");
+  }
+}
+
+function formatT12DateTime(value){
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value || "未保存");
+  return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+function openT12StatusModal(){
+  updateT12StatusModal();
+  const modal = document.getElementById("t12StatusModal");
+  if(modal) modal.classList.add("open");
+}
+
+function closeT12StatusModal(){
+  const modal = document.getElementById("t12StatusModal");
+  if(modal) modal.classList.remove("open");
+}
+
+function manualT12CloudSave(){
+  if(typeof buildSavePayload === "function"){
+    const data = buildSavePayload();
+    if(typeof saveStateToCloud === "function"){
+      saveStateToCloud(data);
+      return;
+    }
+  }
+  if(typeof saveState === "function") saveState();
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const statusBtn = document.getElementById("btnT12Status") || document.querySelector("a[href='#']");
+  if(statusBtn) statusBtn.addEventListener("click", (e)=>{ e.preventDefault(); openT12StatusModal(); });
+
+  const cloudBtn = document.getElementById("btnCloudSave");
+  if(cloudBtn) cloudBtn.addEventListener("click", manualT12CloudSave);
+
+  const closeBtn = document.getElementById("btnT12StatusClose");
+  if(closeBtn) closeBtn.addEventListener("click", closeT12StatusModal);
+
+  const modal = document.getElementById("t12StatusModal");
+  if(modal) modal.addEventListener("click", (e)=>{ if(e.target === modal) closeT12StatusModal(); });
+});
+
 </script>
 </body>
 </html>
