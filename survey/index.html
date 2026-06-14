@@ -599,6 +599,18 @@ textarea{
     font-size:11px;
   }
 }
+
+/* =========================
+   追加回答形式
+========================= */
+.unit-input-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.unit-label{min-width:42px;padding:12px 10px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fde68a;font-size:13px;font-weight:950;text-align:center}
+select{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit;margin-top:10px}
+select option{color:#111827}
+.time-range{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:10px}
+.time-range-sep{color:#cbd5e1;font-size:14px;font-weight:900}
+.placeholder-hint{margin-top:6px;color:#94a3b8;font-size:11px;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -849,6 +861,34 @@ async function renderAnswer(){
   }
 }
 
+
+function getQuestionPlaceholder(q){ return q.placeholder || q.example || ""; }
+function getQuestionUnit(q){ return q.unit || ""; }
+function getTimeOptions(q){
+  if(Array.isArray(q.options) && q.options.length) return q.options;
+  const step = Number(q.timeStep || 30);
+  const startHour = Number(q.startHour ?? 0);
+  const endHour = Number(q.endHour ?? 23);
+  const options = [];
+  for(let h=startHour; h<=endHour; h++){
+    for(let m=0; m<60; m+=step){
+      options.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+    }
+  }
+  return options;
+}
+function timeSelectTemplate(q, value, part){
+  const options = getTimeOptions(q);
+  const attr = part ? `data-qtime-${part}` : `data-qtime`;
+  const selected = value || "";
+  return `
+    <select ${attr}="${escapeAttr(q.id)}">
+      <option value="">選択してください</option>
+      ${options.map(t => `<option value="${escapeAttr(t)}" ${selected === t ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}
+    </select>
+  `;
+}
+
 function questionTemplate(q, value){
   let html = `
     <div class="question" data-question="${escapeAttr(q.id)}">
@@ -859,6 +899,9 @@ function questionTemplate(q, value){
   if(q.imageUrl){
     html += `<img src="${escapeAttr(q.imageUrl)}" alt="" style="width:100%;border-radius:14px;margin-top:10px;">`;
   }
+
+  const placeholder = getQuestionPlaceholder(q);
+  const unit = getQuestionUnit(q);
 
   if(q.type === "hero_multi"){
     const arr = Array.isArray(value) ? value : [];
@@ -871,6 +914,7 @@ function questionTemplate(q, value){
         ${hero.imageUrl ? `<img src="${escapeAttr(hero.imageUrl)}" alt="${escapeAttr(hero.name)}">` : ""}
       </label>
     `).join("");
+
   }else if(q.type === "single_select"){
     html += (q.options || []).map(opt => `
       <label class="choice">
@@ -878,19 +922,70 @@ function questionTemplate(q, value){
         <span>${escapeHtml(opt)}</span>
       </label>
     `).join("");
+
   }else if(q.type === "multi_select"){
     const arr = Array.isArray(value) ? value : [];
-
     html += (q.options || []).map(opt => `
       <label class="choice">
         <input type="checkbox" data-qmulti="${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${arr.includes(opt) ? "checked" : ""}>
         <span>${escapeHtml(opt)}</span>
       </label>
     `).join("");
+
+  }else if(q.type === "number_unit"){
+    html += `
+      <div class="unit-input-wrap">
+        <input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="${escapeAttr(placeholder || "数字を入力")}">
+        <div class="unit-label">${escapeHtml(unit || "単位")}</div>
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
   }else if(q.type === "number"){
-    html += `<input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="数字を入力">`;
+    html += `
+      <input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="${escapeAttr(placeholder || "数字を入力")}">
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else if(q.type === "time_select"){
+    html += timeSelectTemplate(q, value, "");
+    if(placeholder) html += `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>`;
+
+  }else if(q.type === "time_range"){
+    const range = value && typeof value === "object" ? value : {};
+    html += `
+      <div class="time-range">
+        ${timeSelectTemplate(q, range.start || "", "start")}
+        <div class="time-range-sep">〜</div>
+        ${timeSelectTemplate(q, range.end || "", "end")}
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else if(q.type === "time_hm"){
+    const hm = value && typeof value === "object" ? value : {};
+    const hour = hm.hour || "";
+    const minute = hm.minute || "";
+    html += `
+      <div class="time-range">
+        <select data-qhour="${escapeAttr(q.id)}">
+          <option value="">時</option>
+          ${Array.from({length:24},(_,i)=>String(i).padStart(2,"0")).map(h=>`<option value="${h}" ${hour === h ? "selected" : ""}>${h}</option>`).join("")}
+        </select>
+        <div class="time-range-sep">:</div>
+        <select data-qminute="${escapeAttr(q.id)}">
+          <option value="">分</option>
+          ${["00","10","20","30","40","50"].map(m=>`<option value="${m}" ${minute === m ? "selected" : ""}>${m}</option>`).join("")}
+        </select>
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
   }else{
-    html += `<textarea data-qinput="${escapeAttr(q.id)}" placeholder="入力してください">${escapeHtml(value || "")}</textarea>`;
+    html += `
+      <textarea data-qinput="${escapeAttr(q.id)}" placeholder="${escapeAttr(placeholder || "入力してください")}">${escapeHtml(value || "")}</textarea>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
   }
 
   html += `</div>`;
@@ -918,6 +1013,19 @@ function isQuestionAnswered(q){
   }
   if(q.type === "hero_multi"){
     return document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`).length > 0;
+  }
+  if(q.type === "time_select"){
+    return Boolean(document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "");
+  }
+  if(q.type === "time_range"){
+    const start = document.querySelector(`[data-qtime-start='${cssEscape(q.id)}']`)?.value || "";
+    const end = document.querySelector(`[data-qtime-end='${cssEscape(q.id)}']`)?.value || "";
+    return Boolean(start && end);
+  }
+  if(q.type === "time_hm"){
+    const hour = document.querySelector(`[data-qhour='${cssEscape(q.id)}']`)?.value || "";
+    const minute = document.querySelector(`[data-qminute='${cssEscape(q.id)}']`)?.value || "";
+    return Boolean(hour && minute);
   }
   const input = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`);
   return Boolean(input && String(input.value || "").trim());
@@ -959,6 +1067,18 @@ async function saveAnswer(){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
     }else if(q.type === "hero_multi"){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else if(q.type === "time_select"){
+      answers[q.id] = document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "";
+    }else if(q.type === "time_range"){
+      answers[q.id] = {
+        start: document.querySelector(`[data-qtime-start='${cssEscape(q.id)}']`)?.value || "",
+        end: document.querySelector(`[data-qtime-end='${cssEscape(q.id)}']`)?.value || ""
+      };
+    }else if(q.type === "time_hm"){
+      answers[q.id] = {
+        hour: document.querySelector(`[data-qhour='${cssEscape(q.id)}']`)?.value || "",
+        minute: document.querySelector(`[data-qminute='${cssEscape(q.id)}']`)?.value || ""
+      };
     }else{
       answers[q.id] = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`)?.value || "";
     }
