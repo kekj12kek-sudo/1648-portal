@@ -160,6 +160,91 @@ h2,h3{margin-top:0}
   .t12-summary-grid{grid-template-columns:1fr}
 }
 
+
+
+/* ===== v2 固定ヘッダー調整：ユーザー情報と目標タブの重なり解消 ===== */
+header{
+  position:sticky !important;
+  top:0 !important;
+  z-index:120 !important;
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  grid-template-areas:
+    "title user"
+    "goals goals" !important;
+  gap:9px 10px !important;
+  align-items:center !important;
+  padding:10px 12px 12px !important;
+  background:linear-gradient(180deg,rgba(42,20,0,.98),rgba(26,10,0,.96)) !important;
+  border-bottom:2px solid #7c4a00 !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.35) !important;
+}
+header .portal-title,
+header strong{
+  grid-area:title !important;
+  width:auto !important;
+  min-width:0 !important;
+  font-size:18px !important;
+  line-height:1.2 !important;
+  color:#f59e0b !important;
+  white-space:nowrap !important;
+}
+.goal-tabs{
+  grid-area:goals !important;
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:7px !important;
+  width:100% !important;
+}
+.goal-tabs .goal{
+  width:100% !important;
+  min-height:42px !important;
+  padding:8px 6px !important;
+  font-size:13px !important;
+  line-height:1.15 !important;
+  border-radius:12px !important;
+  white-space:nowrap !important;
+}
+.header-user{
+  grid-area:user !important;
+  position:static !important;
+  display:grid !important;
+  grid-template-columns:auto auto !important;
+  grid-template-areas:
+    "name button"
+    "alliance button"
+    "status status" !important;
+  align-items:center !important;
+  gap:3px 8px !important;
+  min-width:0 !important;
+  width:auto !important;
+  margin-left:0 !important;
+  padding:7px 8px !important;
+  border-radius:12px !important;
+  background:rgba(15,23,42,.44) !important;
+  border:1px solid rgba(245,158,11,.36) !important;
+  flex-direction:initial !important;
+}
+.header-user-main{grid-area:name !important;font-size:12px !important;text-align:left !important;white-space:nowrap !important;line-height:1.2 !important;}
+.header-user-sub{grid-area:alliance !important;font-size:11px !important;text-align:left !important;white-space:nowrap !important;line-height:1.2 !important;}
+.btn-mypage{grid-area:button !important;width:auto !important;min-width:82px !important;align-self:stretch !important;display:flex !important;align-items:center !important;justify-content:center !important;padding:6px 10px !important;font-size:12px !important;border-radius:10px !important;}
+.save-status{grid-area:status !important;text-align:right !important;font-size:10px !important;line-height:1.1 !important;}
+@media(max-width:420px){
+  header{
+    grid-template-columns:1fr auto !important;
+    padding:9px 10px 10px !important;
+    gap:8px !important;
+  }
+  header .portal-title,
+  header strong{font-size:17px !important;}
+  .goal-tabs{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  .goal-tabs .goal{min-height:39px !important;font-size:13px !important;}
+  .header-user{padding:6px 7px !important;gap:2px 6px !important;}
+  .header-user-main{font-size:12px !important;}
+  .header-user-sub{font-size:11px !important;}
+  .btn-mypage{min-width:76px !important;font-size:11px !important;padding:5px 8px !important;}
+}
+
 </style>
 </head>
 <body>
@@ -204,11 +289,13 @@ h2,h3{margin-top:0}
 </div>
 
 <header>
-<strong style="width:100%;font-size:16px">1648 T12 Planner</strong>
-<button class="goal active" data-goal="unlock">T12解放まで</button>
-<button class="goal" data-goal="skill">スキル解放まで</button>
-<button class="goal" data-goal="capacity">容量解放まで</button>
-<button class="goal" data-goal="max">カンストまで</button>
+<strong class="portal-title">1648 T12 Planner</strong>
+<div class="goal-tabs">
+  <button class="goal active" data-goal="unlock">T12解放まで</button>
+  <button class="goal" data-goal="skill">スキル3解放まで</button>
+  <button class="goal" data-goal="capacity">容量3解放まで</button>
+  <button class="goal" data-goal="max">カンストまで</button>
+</div>
 <div class="header-user" id="headerUser">
   <div class="header-user-main" id="headerUsername">👤 -</div>
   <div class="header-user-sub" id="headerAlliance">🛡 -</div>
@@ -694,8 +781,8 @@ function fmtTime(sec){
 
 const GOAL_COSTS = {
   unlock:   { label:"T12解放まで",   steel:1620000,  refined:440,  particle:3080,  time:0 },
-  skill:    { label:"スキル解放まで", steel:4263000,  refined:898,  particle:6235,  time:10087200 },
-  capacity: { label:"容量解放まで",   steel:10274250, refined:2456, particle:30504, time:24110640 },
+  skill:    { label:"スキル3解放まで", steel:4263000,  refined:898,  particle:6235,  time:10087200 },
+  capacity: { label:"容量3解放まで",   steel:10274250, refined:2456, particle:30504, time:24110640 },
   max:      { label:"カンストまで",   steel:17774250, refined:3895, particle:67944, time:76814640 }
 };
 let resultTroopCount = 1;
@@ -1079,8 +1166,8 @@ const goalPreset = {
 
 const goalLabel = {
   unlock: "T12解放まで",
-  skill: "スキル解放まで",
-  capacity: "容量解放まで",
+  skill: "スキル3解放まで",
+  capacity: "容量3解放まで",
   max: "カンストまで"
 };
 
