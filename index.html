@@ -290,7 +290,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 <a id="adminFuture" href="/1648-portal/admin/">管理者ページ</a>
 
 
-<!-- 官職予約モーションオーバーレイ -->
+<!-- 旧：官職予約モーションオーバーレイ（未使用・保守用） -->
 <div id="yoyakuOpening">
   <video id="yoyakuVideo" playsinline muted>
     <source src="yoyaku_opening.mp4" type="video/mp4">
@@ -317,7 +317,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 
   <!-- タップエリア：T12 promoter -->
   <div class="tap-area" id="link-t12"
-    data-url="https://kekj12kek-sudo.github.io/wos-alliance-tools/index.html">
+    data-url="/1648-portal/t12/">
   </div>
 </div>
 
@@ -330,7 +330,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
       <span class="link-btn-sub">SVS・霜竜 同時着弾管理</span>
     </span>
   </button>
-  <button class="link-btn link-btn-t12" onclick="goLink('https://kekj12kek-sudo.github.io/wos-alliance-tools/index.html', this)">
+  <button class="link-btn link-btn-t12" onclick="goPortalLink('/1648-portal/t12/', this)">
     <img class="link-btn-icon" src="T12.png" alt="T12 Planner">
     <span class="link-btn-text">
       <span class="link-btn-main">T12 Planner</span>
@@ -344,11 +344,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
       <span class="link-btn-sub">宝石・装備 育成コスト計算</span>
     </span>
   </button>
-  <button class="link-btn link-btn-yoyaku" onclick="goYoyaku(this)">
-    <img class="link-btn-icon" src="EXPRESS.png" alt="官職予約 EXPRESS">
+  <button class="link-btn link-btn-yoyaku" onclick="goPortalLink('/1648-portal/survey/', this)">
+    <img class="link-btn-icon" src="EXPRESS.png" alt="アンケートRoom">
     <span class="link-btn-text">
-      <span class="link-btn-main">官職予約 EXPRESS</span>
-      <span class="link-btn-sub">官職予約アンケート</span>
+      <span class="link-btn-main">アンケートRoom</span>
+      <span class="link-btn-sub">戦力調査・官職予約</span>
     </span>
   </button>
 </div>
@@ -382,7 +382,12 @@ function goLink(url, btn){
   setTimeout(()=>{ location.href = url; }, 250);
 }
 
-// ===== 官職予約：モーション→遷移 =====
+function goPortalLink(url, btn){
+  sessionStorage.setItem("portal_entry", "1");
+  goLink(url, btn);
+}
+
+// ===== 旧：官職予約モーション→遷移（未使用・保守用） =====
 function goYoyaku(btn){
   addRippleToBtn(btn);
   const ov  = document.getElementById('yoyakuOpening');
@@ -416,7 +421,12 @@ function addRippleToBtn(btn){
 document.querySelectorAll('.tap-area').forEach(el=>{
   el.addEventListener('click', e=>{
     const url = el.dataset.url;
-    if(url) goLink(url, null);
+    if(!url) return;
+    if(url.startsWith("/1648-portal/")){
+      goPortalLink(url, null);
+    }else{
+      goLink(url, null);
+    }
   });
 });
 
