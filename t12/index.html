@@ -695,6 +695,63 @@ header > strong{display:none !important}
 .t12-modal-save{flex:0 0 auto !important;padding:9px 12px !important;border-radius:10px !important;border:1px solid #22c55e !important;background:#166534 !important;color:#dcfce7 !important;font-weight:900 !important;font-size:13px !important}
 .t12-modal-save-status{flex:1 !important;color:#c9a87c !important;font-size:12px !important;font-weight:800 !important;text-align:left !important}
 
+
+/* ===== v7: force DB save button inside modal ===== */
+.t12-modal-backdrop{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:9999 !important;
+  display:none !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:16px !important;
+  background:rgba(0,0,0,.72) !important;
+}
+.t12-modal-backdrop.open{display:flex !important}
+.t12-modal{
+  width:100% !important;
+  max-width:370px !important;
+  border:2px solid #f59e0b !important;
+  border-radius:18px !important;
+  background:#1a0a00 !important;
+  box-shadow:0 18px 60px rgba(0,0,0,.7) !important;
+  overflow:hidden !important;
+}
+.t12-modal-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  margin:12px 0 8px !important;
+}
+.t12-modal-save{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:92px !important;
+  min-height:42px !important;
+  padding:9px 14px !important;
+  border-radius:12px !important;
+  border:1px solid #22c55e !important;
+  background:#16a34a !important;
+  color:#052e16 !important;
+  font-size:14px !important;
+  font-weight:950 !important;
+  cursor:pointer !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+.t12-modal-save-status{
+  flex:1 !important;
+  color:#fde68a !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  text-align:left !important;
+}
+#btnCloudSave{
+  display:inline-flex !important;
+}
+
 </style>
 </head>
 <body>
@@ -837,6 +894,7 @@ header > strong{display:none !important}
 
 
 
+
 <div id="t12StatusModal" class="t12-modal-backdrop">
   <div class="t12-modal">
     <div class="t12-modal-head">
@@ -856,10 +914,12 @@ header > strong{display:none !important}
         <div class="t12-status-name">槍</div>
         <div class="t12-status-value" id="modalT12Spear">未解放</div>
       </div>
+
       <div class="t12-modal-actions">
-        <button id="btnCloudSave" class="t12-modal-save" type="button">DB保存</button>
         <div id="modalSaveStatus" class="t12-modal-save-status">保存状態：未保存</div>
+        <button id="btnCloudSave" class="t12-modal-save" type="button">DB保存</button>
       </div>
+
       <div class="t12-status-date" id="modalT12SavedAt">最終保存：未保存</div>
       <div class="t12-status-note">※この研究状況はアンケート回答時に利用できます。<br>自分専用の研究進捗データとして保存されます。</div>
     </div>
@@ -2226,6 +2286,146 @@ document.addEventListener("DOMContentLoaded", ()=>{
       setTimeout(()=>{
         if(typeof updateT12StatusModal === "function") updateT12StatusModal();
       }, 900);
+    };
+  }
+});
+
+
+// ===== v7: modal save button guaranteed =====
+function setModalSaveStatus(text){
+  const el = document.getElementById("modalSaveStatus");
+  if(el) el.textContent = "保存状態：" + text;
+}
+
+function getT12SummarySafeV7(){
+  try{
+    if(typeof buildT12Summary === "function") return buildT12Summary();
+    if(typeof createT12Summary === "function") return createT12Summary();
+    if(typeof getT12Summary === "function") return getT12Summary();
+  }catch(e){}
+  return {shield:"locked", bow:"locked", spear:"locked"};
+}
+
+function t12StageLabelV7(stage){
+  return {
+    locked:"未解放",
+    unlocked:"T12解放済み",
+    skill_1:"スキルLv1",
+    skill_2:"スキルLv2",
+    skill_3:"スキルLv3",
+    capacity_1:"容量Lv1",
+    capacity_2:"容量Lv2",
+    capacity_3:"容量Lv3",
+    max:"カンスト"
+  }[stage] || "未解放";
+}
+
+function updateT12StatusModalV7(){
+  const summary = getT12SummarySafeV7();
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = value;
+  };
+  set("modalT12Shield", t12StageLabelV7(summary.shield));
+  set("modalT12Bow", t12StageLabelV7(summary.bow));
+  set("modalT12Spear", t12StageLabelV7(summary.spear));
+
+  let last = "";
+  try{
+    if(typeof getSaveKey === "function"){
+      const raw = localStorage.getItem(getSaveKey());
+      if(raw){
+        const data = JSON.parse(raw);
+        last = data.updatedAtText || data.savedAt || "";
+      }
+    }
+  }catch(e){}
+
+  const savedAt = document.getElementById("modalT12SavedAt");
+  if(savedAt){
+    if(last){
+      const d = new Date(last);
+      if(!Number.isNaN(d.getTime())){
+        savedAt.textContent = `最終保存：${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      }else{
+        savedAt.textContent = "最終保存：" + last;
+      }
+    }else{
+      savedAt.textContent = "最終保存：未保存";
+    }
+  }
+}
+
+function openT12StatusModalV7(){
+  updateT12StatusModalV7();
+  const modal = document.getElementById("t12StatusModal");
+  if(modal) modal.classList.add("open");
+}
+
+function closeT12StatusModalV7(){
+  const modal = document.getElementById("t12StatusModal");
+  if(modal) modal.classList.remove("open");
+}
+
+async function manualT12CloudSaveV7(){
+  try{
+    setModalSaveStatus("保存中...");
+
+    if(typeof saveState === "function"){
+      saveState();
+    }
+
+    let data = null;
+    if(typeof buildSavePayload === "function"){
+      data = buildSavePayload();
+    }
+
+    if(data && typeof saveStateToCloud === "function"){
+      await saveStateToCloud(data);
+    }else if(typeof saveStateToCloud === "function" && typeof buildSavePayload === "function"){
+      await saveStateToCloud(buildSavePayload());
+    }
+
+    setModalSaveStatus("DB保存済み");
+    updateT12StatusModalV7();
+  }catch(e){
+    console.warn(e);
+    setModalSaveStatus("DB保存失敗");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const myBtn = document.getElementById("btnT12Status");
+  if(myBtn){
+    myBtn.textContent = "マイページ";
+    myBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openT12StatusModalV7();
+    };
+  }
+
+  const closeBtn = document.getElementById("btnT12StatusClose");
+  if(closeBtn){
+    closeBtn.onclick = (e)=>{
+      e.preventDefault();
+      closeT12StatusModalV7();
+    };
+  }
+
+  const modal = document.getElementById("t12StatusModal");
+  if(modal){
+    modal.addEventListener("click", (e)=>{
+      if(e.target === modal) closeT12StatusModalV7();
+    });
+  }
+
+  const saveBtn = document.getElementById("btnCloudSave");
+  if(saveBtn){
+    saveBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      manualT12CloudSaveV7();
     };
   }
 });
