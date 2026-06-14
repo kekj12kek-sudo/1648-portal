@@ -417,6 +417,110 @@ header > .goal{
   }
 }
 
+
+/* ===== v4 final fixes ===== */
+header{
+  min-height:58px !important;
+  padding:8px 10px !important;
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  align-items:center !important;
+}
+header strong{
+  font-size:16px !important;
+  width:auto !important;
+}
+header .goal,
+header > button.goal{
+  display:none !important;
+}
+#saveStatus{
+  display:none !important;
+}
+#btnCloudSave{
+  display:none !important;
+}
+.header-user,
+#headerUser,
+.portal-user{
+  grid-column:2 !important;
+  display:grid !important;
+  grid-template-columns:auto auto !important;
+  grid-template-areas:
+    "name btn"
+    "alliance btn" !important;
+  align-items:center !important;
+  column-gap:8px !important;
+  row-gap:2px !important;
+  padding:6px 8px !important;
+  border-radius:12px !important;
+  border:1px solid rgba(245,158,11,.55) !important;
+  background:rgba(18,8,0,.72) !important;
+}
+#headerUsername,
+.header-username{
+  grid-area:name !important;
+  font-size:12px !important;
+  line-height:1.2 !important;
+  max-width:118px !important;
+}
+.portal-alliance,
+#headerAlliance{
+  grid-area:alliance !important;
+  font-size:11px !important;
+}
+#btnT12Status,
+.portal-mini-btn{
+  grid-area:btn !important;
+  padding:7px 10px !important;
+  border-radius:10px !important;
+  border:1px solid #22c55e !important;
+  background:#166534 !important;
+  color:#dcfce7 !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+.goal-select-box{
+  margin-top:8px !important;
+}
+.mypage-summary,
+#myPageSummary,
+#t12SummaryPanel,
+.t12-summary-panel,
+.profile-summary,
+.t12-profile-box,
+.summary-box,
+[data-summary="t12"],
+[data-block="mypage-summary"]{
+  display:none !important;
+}
+
+
+.t12-modal-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:10px;
+}
+.t12-modal-save{
+  flex:0 0 auto;
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid #22c55e;
+  background:#166534;
+  color:#dcfce7;
+  font-weight:900;
+  font-size:13px;
+}
+.t12-modal-save-status{
+  flex:1;
+  color:#c9a87c;
+  font-size:12px;
+  font-weight:800;
+  text-align:right;
+}
+
 </style>
 </head>
 <body>
@@ -463,15 +567,11 @@ header > .goal{
 <header>
 <strong class="portal-title">1648 T12 Planner</strong>
 <div class="goal-tabs">
-  <button class="goal active" data-goal="unlock">T12解放まで</button>
-  <button class="goal" data-goal="skill">スキル3解放まで</button>
-  <button class="goal" data-goal="capacity">容量3解放まで</button>
-  <button class="goal" data-goal="max">カンストまで</button>
 </div>
 <div class="header-user" id="headerUser">
   <div class="header-user-main" id="headerUsername">👤 -</div>
   <div class="header-user-sub" id="headerAlliance">🛡 -</div>
-  <a class="btn-mypage" id="btnMyPage" href="#">研究状況</a><button id="btnCloudSave" class="portal-mini-btn" type="button">DB保存</button>
+  <button id="btnT12Status" class="portal-mini-btn" type="button">研究状況</button>
   <div class="save-status" id="saveStatus">保存準備中</div>
 </div>
 </header>
@@ -480,11 +580,10 @@ header > .goal{
 <section>
   <div class="t12-summary-box" id="t12SummaryBox">
     <div class="t12-summary-head">
-      <div class="t12-summary-title">🧭 マイページ保存用 T12研究状況</div>
-      <div class="t12-summary-note">研究済みの現在Lvから自動判定</div>
-    </div>
+      
     <div class="t12-summary-grid" id="t12SummaryGrid"></div>
   </div>
+
   
   <div class="goal-select-box">
     <div class="goal-select-title">目標選択</div>
@@ -579,6 +678,7 @@ header > .goal{
 </div>
 
 
+
 <div id="t12StatusModal" class="t12-modal-backdrop">
   <div class="t12-modal">
     <div class="t12-modal-head">
@@ -597,6 +697,10 @@ header > .goal{
       <div class="t12-status-row">
         <div class="t12-status-name">槍</div>
         <div class="t12-status-value" id="modalT12Spear">未解放</div>
+      </div>
+      <div class="t12-modal-actions">
+        <button id="btnCloudSave" class="t12-modal-save" type="button">DB保存</button>
+        <div id="modalSaveStatus" class="t12-modal-save-status">保存状態：未保存</div>
       </div>
       <div class="t12-status-date" id="modalT12SavedAt">最終保存：未保存</div>
       <div class="t12-status-note">※この研究状況はアンケート回答時に利用できます。<br>自分専用の研究進捗データとして保存されます。</div>
@@ -1870,6 +1974,44 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const modal = document.getElementById("t12StatusModal");
   if(modal) modal.addEventListener("click", (e)=>{ if(e.target === modal) closeT12StatusModal(); });
 });
+
+
+// ===== v4 final force bindings =====
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll("a,button").forEach(el=>{
+    const txt = (el.textContent || "").trim();
+    if(txt === "研究状況"){
+      el.removeAttribute("href");
+      el.setAttribute("type","button");
+      el.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        openT12StatusModal();
+      });
+    }
+  });
+
+  const saveBtn = document.getElementById("btnCloudSave");
+  if(saveBtn){
+    saveBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      manualT12CloudSave();
+      const s = document.getElementById("modalSaveStatus");
+      if(s) s.textContent = "保存状態：保存中...";
+      setTimeout(updateT12StatusModal, 800);
+    });
+  }
+});
+
+const __oldSetSaveStatus = typeof setSaveStatus === "function" ? setSaveStatus : null;
+if(__oldSetSaveStatus){
+  setSaveStatus = function(text, type){
+    __oldSetSaveStatus(text, type);
+    const s = document.getElementById("modalSaveStatus");
+    if(s) s.textContent = "保存状態：" + text;
+  };
+}
 
 </script>
 </body>
