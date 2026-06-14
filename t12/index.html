@@ -752,6 +752,11 @@ header > strong{display:none !important}
   display:inline-flex !important;
 }
 
+
+/* ===== v8 save fix / portal-only user ===== */
+#userOverlay{display:none !important}
+#saveStatus{display:none !important}
+
 </style>
 </head>
 <body>
@@ -943,6 +948,7 @@ let portalDiscordId = "";
 let portalAlliance = "";
 let portalGameId = "";
 let t12ApiReady = false;
+let t12Db = null;
 let isBooting = true;
 let cloudSaveTimer = null;
 
@@ -988,16 +994,41 @@ function getSessionDiscordId(){
 function getSessionAlliance(){ return portalSession?.user?.alliance || ""; }
 function getSessionGameId(){ return portalSession?.user?.gameId || ""; }
 
-function initT12Firestore(){
+function getPortalUserName(){
   try{
-    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    t12Db = firebase.firestore();
-    return true;
+    const raw = localStorage.getItem("discord_user");
+    if(!raw) return "メンバー";
+    const data = JSON.parse(raw);
+    return (
+      data?.user?.playerName ||
+      data?.discord?.globalName ||
+      data?.discord?.username ||
+      data?.user?.discordName ||
+      data?.globalName ||
+      data?.discordName ||
+      "メンバー"
+    );
   }catch(e){
-    console.warn("Firestore init failed", e);
-    setSaveStatus("DB接続失敗", "err");
-    return false;
+    return "メンバー";
   }
+}
+
+function getPortalAlliance(){
+  try{
+    const raw = localStorage.getItem("discord_user");
+    if(!raw) return "";
+    const data = JSON.parse(raw);
+    return data?.user?.alliance || data?.alliance || "";
+  }catch(e){
+    return "";
+  }
+}
+
+
+function initT12Cloud(){
+  t12ApiReady = true;
+  setSaveStatus("DB接続準備OK", "");
+  return true;
 }
 
 function getSaveKey(){
@@ -1024,25 +1055,47 @@ function saveState(){
   if(!currentUser) return;
   const data = buildSavePayload();
   localStorage.setItem(getSaveKey(), JSON.stringify(data));
-  renderT12SummaryBox();
-  if(isBooting || !portalDiscordId || !t12Db) return;
+  if(typeof renderT12SummaryBox === "function") renderT12SummaryBox();
+  if(isBooting || !portalDiscordId || !t12ApiReady) return;
   clearTimeout(cloudSaveTimer);
   setSaveStatus("保存待機中", "");
   cloudSaveTimer = setTimeout(()=>saveStateToCloud(data), 700);
 }
 
 async function saveStateToCloud(data){
-  if(!t12Db || !portalDiscordId) return;
+  if(!portalDiscordId || !t12ApiReady) {
+    setSaveStatus("DB保存不可", "err");
+    return false;
+  }
+
   try{
     setSaveStatus("保存中...", "");
-    await t12Db.collection(T12_COLLECTION).doc(portalDiscordId).set({
+    const res = await fetch(SAVE_T12_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        discordId: portalDiscordId,
+        progress: data
+      })
+    });
+
+    const result = await res.json().catch(()=>({ok:false,error:"bad_json"}));
+    if(!res.ok || !result.ok){
+      throw new Error(result.error || "save_failed");
+    }
+
+    const saved = {
       ...data,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, {merge:true});
+      updatedAtText: new Date().toISOString()
+    };
+    localStorage.setItem(getSaveKey(), JSON.stringify(saved));
+
     setSaveStatus("DB保存済み", "ok");
+    return true;
   }catch(e){
     console.warn("T12 cloud save failed", e);
     setSaveStatus("DB保存失敗", "err");
+    return false;
   }
 }
 
@@ -1079,15 +1132,34 @@ function loadState(){
 }
 
 async function loadStateFromCloud(){
-  if(!t12Db || !portalDiscordId) return false;
+  if(!portalDiscordId || !t12ApiReady) return false;
+
   try{
     setSaveStatus("DB読込中...", "");
-    const snap = await t12Db.collection(T12_COLLECTION).doc(portalDiscordId).get();
-    if(!snap.exists){ setSaveStatus("新規データ", ""); return false; }
-    const data = snap.data() || {};
-    localStorage.setItem(getSaveKey(), JSON.stringify(data));
+    const res = await fetch(GET_T12_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({discordId: portalDiscordId})
+    });
+
+    const result = await res.json().catch(()=>({ok:false,error:"bad_json"}));
+
+    if(!res.ok || !result.ok){
+      if(result.error === "not_found"){
+        setSaveStatus("新規データ", "");
+        return false;
+      }
+      throw new Error(result.error || "load_failed");
+    }
+
+    if(!result.progress){
+      setSaveStatus("新規データ", "");
+      return false;
+    }
+
+    localStorage.setItem(getSaveKey(), JSON.stringify(result.progress));
     setSaveStatus("DB読込済み", "ok");
-    return applySavedData(data);
+    return applySavedData(result.progress);
   }catch(e){
     console.warn("T12 cloud load failed", e);
     setSaveStatus("DB読込失敗", "err");
@@ -1096,16 +1168,24 @@ async function loadStateFromCloud(){
 }
 
 function initPortalUser(){
-  currentUser = getSessionUserName().trim();
+  currentUser = getSessionUserName().trim() || getPortalUserName() || "メンバー";
   portalDiscordId = getSessionDiscordId();
-  portalAlliance = getSessionAlliance();
+  portalAlliance = getSessionAlliance() || getPortalAlliance();
   portalGameId = getSessionGameId();
+
   localStorage.setItem("t12_lastUser", currentUser);
-  document.getElementById("headerUsername").textContent = "👤 " + currentUser;
-  document.getElementById("headerAlliance").textContent = "🛡 " + (portalAlliance || "-");
-  document.getElementById("headerUser").style.display = "flex";
-  document.getElementById("btnMyPage").href = MYPAGE_URL;
-  document.getElementById("userOverlay").classList.add("hidden");
+
+  const headerUsername = document.getElementById("headerUsername");
+  if(headerUsername) headerUsername.textContent = "👤 " + currentUser;
+
+  const headerAlliance = document.getElementById("headerAlliance");
+  if(headerAlliance) headerAlliance.textContent = "🛡 " + (portalAlliance || "-");
+
+  const headerUser = document.getElementById("headerUser");
+  if(headerUser) headerUser.style.display = "grid";
+
+  const userOverlay = document.getElementById("userOverlay");
+  if(userOverlay) userOverlay.classList.add("hidden");
 }
 
 function initUser(name){
@@ -2147,14 +2227,7 @@ function closeT12StatusModal(){
 }
 
 function manualT12CloudSave(){
-  if(typeof buildSavePayload === "function"){
-    const data = buildSavePayload();
-    if(typeof saveStateToCloud === "function"){
-      saveStateToCloud(data);
-      return;
-    }
-  }
-  if(typeof saveState === "function") saveState();
+  return manualT12CloudSaveV7();
 }
 
 document.addEventListener("DOMContentLoaded", ()=>{
@@ -2371,22 +2444,19 @@ async function manualT12CloudSaveV7(){
   try{
     setModalSaveStatus("保存中...");
 
-    if(typeof saveState === "function"){
-      saveState();
+    if(typeof buildSavePayload !== "function"){
+      throw new Error("buildSavePayload_missing");
     }
 
-    let data = null;
-    if(typeof buildSavePayload === "function"){
-      data = buildSavePayload();
+    const data = buildSavePayload();
+    localStorage.setItem(getSaveKey(), JSON.stringify(data));
+
+    let ok = false;
+    if(typeof saveStateToCloud === "function"){
+      ok = await saveStateToCloud(data);
     }
 
-    if(data && typeof saveStateToCloud === "function"){
-      await saveStateToCloud(data);
-    }else if(typeof saveStateToCloud === "function" && typeof buildSavePayload === "function"){
-      await saveStateToCloud(buildSavePayload());
-    }
-
-    setModalSaveStatus("DB保存済み");
+    setModalSaveStatus(ok ? "DB保存済み" : "DB保存失敗");
     updateT12StatusModalV7();
   }catch(e){
     console.warn(e);
@@ -2426,6 +2496,31 @@ document.addEventListener("DOMContentLoaded", ()=>{
       e.preventDefault();
       e.stopPropagation();
       manualT12CloudSaveV7();
+    };
+  }
+});
+
+
+// ===== v8 final save binding =====
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn = document.getElementById("btnT12Status");
+  if(btn){
+    btn.textContent = "マイページ";
+    btn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openT12StatusModalV7 === "function") openT12StatusModalV7();
+      else if(typeof openT12StatusModal === "function") openT12StatusModal();
+    };
+  }
+
+  const saveBtn = document.getElementById("btnCloudSave");
+  if(saveBtn){
+    saveBtn.onclick = async (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof manualT12CloudSaveV7 === "function") await manualT12CloudSaveV7();
+      else if(typeof manualT12CloudSave === "function") await manualT12CloudSave();
     };
   }
 });
