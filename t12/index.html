@@ -1,0 +1,1502 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1648 T12 Planner</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#1a0a00;color:#fff;font-family:Arial,"Yu Gothic",Meiryo,sans-serif;font-size:15px}
+header{background:#2a1400;border-bottom:2px solid #7c4a00;padding:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+header strong{width:100%;font-size:16px;color:#f59e0b}
+button,select{padding:10px 12px;border-radius:10px;border:1px solid #7c4a00;background:#2a1400;color:#fff;font-weight:700;font-size:14px;touch-action:manipulation}
+button.active{background:#b45309;border-color:#f59e0b}
+.goal.active{background:#92400e;border-color:#f59e0b}
+.main{display:block;padding:8px;max-width:600px;margin:0 auto}
+.stage{background:#0d0600;border:2px solid #7c4a00;border-radius:12px;overflow:hidden;padding:4px}
+#treeWrap{position:relative;display:block;line-height:0;width:100%}
+#treeImage{display:block;width:100%;height:auto}
+.marker{position:absolute;transform:translate(-50%,-50%);border-radius:50%;background:rgba(37,99,235,.20);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;font-size:8px;font-weight:900;color:#fff;text-shadow:0 1px 3px #000;cursor:pointer;z-index:5;padding:0}
+.marker:hover,.marker.selected{background:rgba(245,158,11,.55);border-color:#fde68a}
+.node-editor{display:none;position:fixed;z-index:200;background:#1a0a00;border:2px solid #f59e0b;border-radius:16px;padding:12px;box-shadow:0 8px 40px rgba(0,0,0,.8);width:300px;max-width:calc(100vw - 16px)}
+.node-editor.open{display:block}
+/* ポップアップ外タップで閉じるオーバーレイ */
+#editorOverlay{display:none;position:fixed;inset:0;z-index:199}
+#editorOverlay.open{display:block}
+.node-editor h3{margin:0 0 10px;color:#f59e0b}
+.editor-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.editor-row label{display:block;color:#fcd9a0;font-size:12px;margin-bottom:4px}
+.editor-row select{width:100%}
+.editor-actions{display:flex;gap:8px}
+.editor-actions button{flex:1;padding:10px}
+h2,h3{margin-top:0}
+.info{color:#c9a87c;line-height:1.6;font-size:13px}
+.goal-result{background:#120800;border:2px solid #7c4a00;border-radius:12px;padding:12px;margin-bottom:10px}
+.goal-result h3{margin:0 0 8px;font-size:15px;color:#f59e0b}
+.tree-troops{display:flex;gap:6px;margin:0 0 8px;flex-wrap:wrap}
+.total-box{background:#120800;border:2px solid #7c4a00;border-radius:12px;padding:12px;margin-bottom:10px}
+.result-table{width:100%;border-collapse:collapse;margin-top:8px}
+.result-table th,.result-table td{border-bottom:1px solid #7c4a00;padding:7px 3px;text-align:right;font-size:12px}
+.result-table th:first-child,.result-table td:first-child{text-align:left}
+.result-table th{color:#f59e0b;font-size:11px}
+.count-tabs{display:flex;gap:6px;margin:8px 0 12px}
+.count-tab{padding:8px 14px;border-radius:10px;border:1px solid #7c4a00;background:#2a1400;color:#fff;font-weight:800;cursor:pointer;touch-action:manipulation}
+.count-tab.active{background:#92400e;border-color:#f59e0b}
+.material-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.material-card{background:#1e0d00;border:1px solid #7c4a00;border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+.material-icon{width:32px;height:32px;object-fit:contain;flex:none;image-rendering:auto}
+.material-card .label{color:#c9a87c;font-size:11px}
+.material-card .value{font-size:18px;font-weight:900;margin-top:1px;color:#fff}
+.material-card.time-card{grid-column:1/-1}
+.quick-btn{touch-action:none;-webkit-user-select:none;user-select:none;position:absolute;transform:translate(-50%,-50%);border-radius:10px;border:2px solid #f59e0b;background:rgba(26,10,0,.88);color:#fff;font-weight:900;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;z-index:8;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.6)}
+.quick-btn.selected{background:rgba(180,83,9,.88);border-color:#fde68a}
+/* 兵種バー */
+.troop-bar{display:flex;gap:0;margin:0 0 6px;border-radius:12px;overflow:hidden;border:2px solid #7c4a00}
+.troop-bar .troop{flex:1;border-radius:0;border:none;border-right:1px solid #7c4a00;padding:8px 4px;font-size:13px;background:#2a1400;transition:background .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.troop-bar .troop:last-child{border-right:none}
+.troop-bar .troop.active{background:#92400e;color:#fde68a;font-weight:900}
+/* エディター */
+.editor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.editor-header h3{margin:0;color:#f59e0b;font-size:15px}
+.close-x{background:none;border:none;color:#94a3b8;font-size:20px;padding:4px 8px;cursor:pointer;border-radius:6px}
+.lv-block{padding:8px;border-radius:10px}
+.current-block{background:#0d2a0d;border:1px solid #166534}
+.current-block label{color:#86efac !important;font-weight:700}
+.target-block{background:#1a1200;border:1px solid #92400e}
+.target-block label{color:#fde68a !important;font-weight:700}
+.btn-current{width:100%;margin-top:8px;background:#166534;border-color:#22c55e;font-size:12px;padding:7px}
+.btn-target{width:100%;margin-top:8px;background:#92400e;border-color:#f59e0b;font-size:12px;padding:7px}
+/* 兵種カラー */
+.troop-bar .troop-shield.active{background:#14532d;border-color:#22c55e;color:#86efac}
+.troop-bar .troop-bow.active{background:#713f12;border-color:#eab308;color:#fef08a}
+.troop-bar .troop-spear.active{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd}
+.troop-bar .troop-shield:not(.active):hover{background:#166534}
+.troop-bar .troop-bow:not(.active):hover{background:#854d0e}
+.troop-bar .troop-spear:not(.active):hover{background:#1d4ed8}
+/* リセットボタン */
+.btn-reset{width:100%;margin-top:8px;background:#4c1d1d;border:1px solid #ef4444;color:#fca5a5;font-size:12px;padding:7px;border-radius:10px;font-weight:700;touch-action:manipulation}
+/* 使い方説明リスト */
+.info-list{margin:6px 0 10px;display:flex;flex-direction:column;gap:5px}
+.info-item{font-size:13px;color:#c9a87c;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:8px;border-left:3px solid #7c4a00;line-height:1.4}
+/* 進捗バー */
+.troop-progress{width:100%;margin-top:4px}
+.progress-count{font-size:10px;color:#94a3b8;margin-bottom:2px;font-weight:600}
+.troop-shield.active .progress-count{color:#86efac}
+.troop-bow.active .progress-count{color:#fef08a}
+.troop-spear.active .progress-count{color:#93c5fd}
+.progress-bar-bg{width:100%;height:5px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;transition:width .3s ease}
+.troop-shield .progress-bar-fill{background:#22c55e}
+.troop-bow .progress-bar-fill{background:#eab308}
+.troop-spear .progress-bar-fill{background:#3b82f6}
+/* テーブルアイコン */
+.th-icon{width:16px;height:16px;vertical-align:middle;margin-right:2px;object-fit:contain}
+.troop-img{width:44px;height:44px;object-fit:contain}
+/* 手持ち素材入力 */
+.stock-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.stock-card{background:#1e0d00;border:1px solid #7c4a00;border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+.stock-card input{background:#0d0600;border:1px solid #7c4a00;border-radius:8px;color:#fff;font-size:15px;font-weight:700;padding:4px 6px;width:100%;text-align:right;min-width:0}
+.stock-card input:focus{outline:none;border-color:#f59e0b}
+.stock-card .label{color:#c9a87c;font-size:11px;white-space:nowrap}
+.stock-card.time-card{grid-column:1/-1}
+/* 不足数ハイライト */
+.shortage{color:#f87171;font-weight:900}
+.surplus{color:#86efac}
+/* 警告バッジ */
+.warn-badge{display:inline-block;background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;font-size:10px;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+/* 兵種リセットボタン */
+.troop-reset-bar{display:flex;gap:6px;margin:6px 0 0}
+.btn-troop-reset{flex:1;padding:6px 4px;font-size:11px;background:#4c1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:8px;cursor:pointer;touch-action:manipulation}
+/* エクスポートボタン */
+.btn-export{width:100%;padding:10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;touch-action:manipulation}
+.btn-export:active{background:#1e293b}
+/* ポップアップサマリー */
+.editor-summary{font-size:12px;color:#94a3b8;margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.05);border-radius:8px}
+.editor-summary .warn-text{color:#f87171}
+/* ユーザー名オーバーレイ */
+#userOverlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+#userOverlay.hidden{display:none}
+.user-dialog{background:#1a0a00;border:2px solid #f59e0b;border-radius:16px;padding:24px;width:100%;max-width:340px;text-align:center}
+.user-dialog h2{color:#f59e0b;margin:0 0 8px;font-size:18px}
+.user-dialog p{color:#c9a87c;font-size:13px;margin:0 0 16px;line-height:1.6}
+.user-input{width:100%;padding:12px;border-radius:10px;border:2px solid #7c4a00;background:#2a1400;color:#fff;font-size:16px;margin-bottom:12px;text-align:center;font-weight:700}
+.user-input:focus{outline:none;border-color:#f59e0b}
+.btn-start{width:100%;padding:12px;border-radius:10px;border:none;background:#92400e;color:#fde68a;font-size:15px;font-weight:900;cursor:pointer;margin-bottom:8px;touch-action:manipulation}
+.btn-start:active{background:#b45309}
+.btn-skip{width:100%;padding:10px;border-radius:10px;border:1px solid #475569;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer;touch-action:manipulation}
+/* ヘッダーユーザー情報 */
+.header-user{display:flex;align-items:center;gap:8px;margin-left:auto}
+.header-username{color:#fde68a;font-size:13px;font-weight:700}
+.btn-user-reset{padding:5px 10px;font-size:11px;background:#4c1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:8px;cursor:pointer;touch-action:manipulation}
+
+/* ===== 1648 Portal Auth / MyPage / Research Markers ===== */
+.portal-gate-message{position:fixed;inset:0;z-index:9999;background:#0a0e1a;color:#fde68a;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;line-height:1.8;padding:24px}
+.header-user{margin-left:auto;background:rgba(15,23,42,.42);border:1px solid rgba(245,158,11,.36);border-radius:12px;padding:6px 8px;display:none;align-items:flex-end;gap:8px;flex-direction:column;min-width:116px}
+.header-user-main{color:#fde68a;font-size:12px;font-weight:900;line-height:1.25;text-align:right;width:100%}
+.header-user-sub{color:#c9a87c;font-size:11px;font-weight:700;line-height:1.25;text-align:right;width:100%}
+.btn-mypage{width:100%;padding:6px 8px;font-size:11px;background:#166534;border:1px solid #22c55e;color:#86efac;border-radius:8px;cursor:pointer;font-weight:900;touch-action:manipulation;text-decoration:none;text-align:center;display:block}
+.save-status{font-size:10px;color:#94a3b8;text-align:right;line-height:1.2;width:100%}
+.t12-summary-box{background:#120800;border:2px solid #7c4a00;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.t12-summary-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.t12-summary-title{font-size:13px;font-weight:900;color:#f59e0b}
+.t12-summary-note{font-size:10px;color:#94a3b8;text-align:right;line-height:1.3}
+.t12-summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.t12-summary-item{border:1px solid #7c4a00;background:#1e0d00;border-radius:10px;padding:8px 6px;text-align:center;min-width:0}
+.t12-summary-item .label{font-size:11px;color:#c9a87c;font-weight:900;margin-bottom:3px}
+.t12-summary-item .value{font-size:12px;color:#fff;font-weight:900;line-height:1.3;white-space:nowrap}
+.t12-summary-item.locked .value{color:#94a3b8}
+.t12-summary-item.unlocked .value{color:#fde68a}
+.t12-summary-item.skill .value{color:#93c5fd}
+.t12-summary-item.capacity .value{color:#86efac}
+.t12-summary-item.max .value{color:#fef08a}
+.marker.researched{background:rgba(34,197,94,.58);border-color:#86efac;box-shadow:0 0 0 2px rgba(34,197,94,.20),0 0 16px rgba(34,197,94,.55)}
+.marker.partial-researched{background:rgba(59,130,246,.45);border-color:#93c5fd;box-shadow:0 0 12px rgba(59,130,246,.32)}
+.marker .mk-lv{display:inline-block;margin-top:1px;font-size:9px;color:#fde68a;line-height:1;text-shadow:0 1px 3px #000}
+.marker.researched .mk-lv{color:#dcfce7}
+@media(max-width:420px){
+  header{align-items:flex-start}
+  header strong{width:calc(100% - 128px)}
+  .header-user{position:absolute;right:10px;top:8px;min-width:112px}
+  .t12-summary-grid{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ユーザー名入力オーバーレイ -->
+<div id="userOverlay">
+  <div class="user-dialog">
+    <h2>👤 ユーザー名を入力</h2>
+    <p>入力すると設定が自動保存され<br>次回から続きから始められます<br><small style="color:#64748b">※スキップすると保存なし</small></p>
+    <input id="userNameInput" class="user-input" type="text" placeholder="ゲーム内ネーム" maxlength="20">
+    <button class="btn-start" id="btnUserStart">✓ 記録を開始する</button>
+    <button class="btn-skip" id="btnUserSkip">保存なしで使用する</button>
+  </div>
+</div>
+
+<!-- エディターオーバーレイ（外タップで閉じる） -->
+<div id="editorOverlay"></div>
+
+<!-- マーカーポップアップエディター -->
+<div id="nodeEditor" class="node-editor">
+  <div class="editor-header">
+    <h3 id="editorTitle">研究設定</h3>
+    <button id="editorCloseX" class="close-x">✕</button>
+  </div>
+  <div class="editor-summary" id="editorSummary"></div>
+  <div class="editor-row">
+    <div class="lv-block current-block">
+      <label>📍 現在Lv</label>
+      <select id="editorCurrent"></select>
+      <button id="editorMaxCurrent" class="btn-current">✓ カンスト済み</button>
+    </div>
+    <div class="lv-block target-block">
+      <label>🎯 目標Lv</label>
+      <select id="editorTarget"></select>
+      <button id="editorMaxTarget" class="btn-target">↑ Lv MAX</button>
+    </div>
+  </div>
+  <div class="editor-actions">
+    <button id="editorCalc">📊 計算する</button>
+    <button id="editorClose">閉じる</button>
+  </div>
+</div>
+
+<header>
+<strong style="width:100%;font-size:16px">1648 T12 Planner</strong>
+<button class="goal active" data-goal="unlock">T12解放まで</button>
+<button class="goal" data-goal="skill">スキル解放まで</button>
+<button class="goal" data-goal="capacity">容量解放まで</button>
+<button class="goal" data-goal="max">カンストまで</button>
+<div class="header-user" id="headerUser">
+  <div class="header-user-main" id="headerUsername">👤 -</div>
+  <div class="header-user-sub" id="headerAlliance">🛡 -</div>
+  <a class="btn-mypage" id="btnMyPage" href="/1648-portal/mypage/">マイページ</a>
+  <div class="save-status" id="saveStatus">保存準備中</div>
+</div>
+</header>
+
+<div class="main">
+<section>
+  <div class="t12-summary-box" id="t12SummaryBox">
+    <div class="t12-summary-head">
+      <div class="t12-summary-title">🧭 マイページ保存用 T12研究状況</div>
+      <div class="t12-summary-note">研究済みの現在Lvから自動判定</div>
+    </div>
+    <div class="t12-summary-grid" id="t12SummaryGrid"></div>
+  </div>
+  <div class="goal-result">
+    <h3>大枠目標の必要素材</h3>
+    <div class="info-list">
+  <div class="info-item">📌 盾・弓・槍を<strong>同時に同じペースで育てる</strong>場合の必要素材目安です</div>
+  <div class="info-item">🔢 兵種数タブで1〜3兵種の合計素材を切替できます</div>
+  <div class="info-item">⚠️ 兵種ごとに進捗が異なる場合は下の詳細設定をご利用ください</div>
+</div>
+    <div class="count-tabs">
+      <button class="count-tab active" data-count="1">1兵種</button>
+      <button class="count-tab" data-count="2">2兵種</button>
+      <button class="count-tab" data-count="3">3兵種</button>
+    </div>
+    <div id="goalResult"></div>
+    <div style="margin-top:10px">
+      <div style="font-size:13px;color:#f59e0b;font-weight:700;margin-bottom:4px">📦 手持ち素材を入力（不足数を自動計算）</div>
+      <div class="stock-grid">
+        <div class="stock-card"><img class="material-icon" src="refined.png"><div style="flex:1"><div class="label">精錬火晶</div><input id="stock-refined" type="number" min="0" placeholder="0"></div></div>
+        <div class="stock-card"><img class="material-icon" src="particle.png"><div style="flex:1"><div class="label">火晶微粒子</div><input id="stock-particle" type="number" min="0" placeholder="0"></div></div>
+        <div class="stock-card time-card"><img class="material-icon" src="steel.png"><div style="flex:1"><div class="label">鋼材</div><input id="stock-steel" type="number" min="0" placeholder="0"></div></div>
+      </div>
+      <button id="btnStockReset" style="width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1px solid #7c4a00;background:#2a1400;color:#c9a87c;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">↩ 手持ち素材をリセット</button>
+    </div>
+  </div>
+  <div class="total-box" style="margin-bottom:12px">
+    <h3>詳細設定</h3>
+    <div class="info-list">
+      <div class="info-item">🗡 盾・弓・槍の<strong>進捗がバラバラな場合</strong>はここで兵種ごとに個別設定</div>
+      <div class="info-item">📍 マーカーをタップ → 現在Lv・目標Lvを設定して不足分を計算</div>
+      <div class="info-item">✅ ツリー上の「研究済」ボタンで段階ごとに一括入力できます</div>
+      <div class="info-item">🔁 同じマーカーを再タップでキャンセル</div>
+    </div>
+  </div>
+  <div class="troop-reset-bar">
+    <button class="btn-troop-reset" data-reset="shield">🛡 盾リセット</button>
+    <button class="btn-troop-reset" data-reset="bow">🏹 弓リセット</button>
+    <button class="btn-troop-reset" data-reset="spear">⚔️ 槍リセット</button>
+  </div>
+<div class="troop-bar">
+    <button class="troop troop-shield active" data-troop="shield">
+      <img src="shield_char.png" class="troop-img">
+      <span>🛡 盾兵</span>
+      <div class="troop-progress">
+        <div class="progress-count" id="prog-count-shield">0/15</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-bar-shield" style="width:0%"></div></div>
+      </div>
+    </button>
+    <button class="troop troop-bow" data-troop="bow">
+      <img src="bow_char.png" class="troop-img">
+      <span>🏹 弓兵</span>
+      <div class="troop-progress">
+        <div class="progress-count" id="prog-count-bow">0/15</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-bar-bow" style="width:0%"></div></div>
+      </div>
+    </button>
+    <button class="troop troop-spear" data-troop="spear">
+      <img src="spear_char.png" class="troop-img">
+      <span>⚔️ 槍兵</span>
+      <div class="troop-progress">
+        <div class="progress-count" id="prog-count-spear">0/15</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-bar-spear" style="width:0%"></div></div>
+      </div>
+    </button>
+  </div>
+  <div class="stage">
+  <div id="treeWrap">
+    <img id="treeImage" src="S__123273220_0.jpg" alt="T12研究ツリー">
+  </div>
+</div>
+
+  <div class="total-box" style="margin-top:8px">
+    <h3>目標LVまでの消費アイテム数</h3>
+    <div class="info-list">
+  <div class="info-item">📊 各兵種の現在Lv→目標Lvに必要な素材数</div>
+  <div class="info-item">➕ 合計行で盾・弓・槍の全合算を確認できます</div>
+</div>
+    <div id="totalResult"></div>
+    <button class="btn-export" id="btnExport">📋 設定内容をテキスト出力</button>
+  </div>
+
+</section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+
+// =========================================================
+// 1648 Portal連携 / Firestore保存 / LocalStorageフォールバック
+// =========================================================
+const PORTAL_URL = "/1648-portal/";
+const LOGIN_URL = "/1648-portal/auth/";
+const MYPAGE_URL = "/1648-portal/mypage/";
+const SAVE_KEY_PREFIX = "t12_";
+const T12_COLLECTION = "t12_progress";
+let currentUser = null;
+let portalSession = null;
+let portalDiscordId = "";
+let portalAlliance = "";
+let portalGameId = "";
+let t12Db = null;
+let isBooting = true;
+let cloudSaveTimer = null;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEELGkoD0E2BweLmt3ae8z622u2KFYeqQ",
+  authDomain: "yoyaku-4ec7c.firebaseapp.com",
+  projectId: "yoyaku-4ec7c",
+  storageBucket: "yoyaku-4ec7c.firebasestorage.app",
+  messagingSenderId: "753962945830",
+  appId: "1:753962945830:web:c74bb9bbef3ffdda9905e7"
+};
+
+function setSaveStatus(text, cls){
+  const el = document.getElementById("saveStatus");
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = cls === "ok" ? "#86efac" : cls === "err" ? "#fca5a5" : "#94a3b8";
+}
+
+function requirePortalEntry(){
+  const hasEntry = sessionStorage.getItem("portal_entry") === "1";
+  if(!hasEntry){
+    document.body.innerHTML = `<div class="portal-gate-message">1648ポータルから開いてください。<br>ポータルへ戻ります...</div>`;
+    setTimeout(()=>location.replace(PORTAL_URL), 500);
+    return false;
+  }
+  return true;
+}
+
+function getPortalSession(){
+  const raw = localStorage.getItem("discord_user");
+  if(!raw){ location.replace(PORTAL_URL); return null; }
+  try{
+    const data = JSON.parse(raw);
+    if(!data || !data.ok){ localStorage.removeItem("discord_user"); location.replace(PORTAL_URL); return null; }
+    if(data.status === "pending_profile"){ location.replace("/1648-portal/profile-setup/"); return null; }
+    if(data.status !== "active"){ localStorage.removeItem("discord_user"); location.replace(PORTAL_URL); return null; }
+    return data;
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    location.replace(PORTAL_URL);
+    return null;
+  }
+}
+
+function getSessionUserName(){
+  return portalSession?.user?.playerName || portalSession?.discord?.globalName || portalSession?.discord?.username || "メンバー";
+}
+function getSessionDiscordId(){
+  return portalSession?.user?.discordId || portalSession?.discord?.id || portalSession?.discordId || "";
+}
+function getSessionAlliance(){ return portalSession?.user?.alliance || ""; }
+function getSessionGameId(){ return portalSession?.user?.gameId || ""; }
+
+function initT12Firestore(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    t12Db = firebase.firestore();
+    return true;
+  }catch(e){
+    console.warn("Firestore init failed", e);
+    setSaveStatus("DB接続失敗", "err");
+    return false;
+  }
+}
+
+function getSaveKey(){
+  return SAVE_KEY_PREFIX + (portalDiscordId || currentUser || "guest");
+}
+
+function buildSavePayload(){
+  return {
+    discordId: portalDiscordId,
+    playerName: currentUser || "",
+    alliance: portalAlliance || "",
+    gameId: portalGameId || "",
+    detail: JSON.parse(JSON.stringify(state)),
+    summary: buildT12Summary(),
+    troop,
+    goal,
+    resultTroopCount,
+    stock: getStock(),
+    updatedAtText: new Date().toISOString()
+  };
+}
+
+function saveState(){
+  if(!currentUser) return;
+  const data = buildSavePayload();
+  localStorage.setItem(getSaveKey(), JSON.stringify(data));
+  renderT12SummaryBox();
+  if(isBooting || !portalDiscordId || !t12Db) return;
+  clearTimeout(cloudSaveTimer);
+  setSaveStatus("保存待機中", "");
+  cloudSaveTimer = setTimeout(()=>saveStateToCloud(data), 700);
+}
+
+async function saveStateToCloud(data){
+  if(!t12Db || !portalDiscordId) return;
+  try{
+    setSaveStatus("保存中...", "");
+    await t12Db.collection(T12_COLLECTION).doc(portalDiscordId).set({
+      ...data,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+    setSaveStatus("DB保存済み", "ok");
+  }catch(e){
+    console.warn("T12 cloud save failed", e);
+    setSaveStatus("DB保存失敗", "err");
+  }
+}
+
+function applySavedData(data){
+  if(!data) return false;
+  const savedState = data.detail || data.state;
+  ["shield","bow","spear"].forEach(t => {
+    if(savedState && savedState[t]){
+      Object.keys(nodeName).forEach(k => {
+        if(savedState[t][k]){
+          state[t][k].current = savedState[t][k].current || 0;
+          state[t][k].target  = savedState[t][k].target  || 0;
+        }
+      });
+    }
+  });
+  if(data.goal) goal = data.goal;
+  if(data.resultTroopCount) resultTroopCount = data.resultTroopCount;
+  if(data.troop) troop = data.troop;
+  if(data.stock){
+    const s = data.stock;
+    if(document.getElementById("stock-refined")) document.getElementById("stock-refined").value = s.refined || 0;
+    if(document.getElementById("stock-particle")) document.getElementById("stock-particle").value = s.particle || 0;
+    if(document.getElementById("stock-steel")) document.getElementById("stock-steel").value = s.steel || 0;
+  }
+  return true;
+}
+
+function loadState(){
+  const raw = localStorage.getItem(getSaveKey());
+  if(!raw) return false;
+  try{ return applySavedData(JSON.parse(raw)); }
+  catch(e){ return false; }
+}
+
+async function loadStateFromCloud(){
+  if(!t12Db || !portalDiscordId) return false;
+  try{
+    setSaveStatus("DB読込中...", "");
+    const snap = await t12Db.collection(T12_COLLECTION).doc(portalDiscordId).get();
+    if(!snap.exists){ setSaveStatus("新規データ", ""); return false; }
+    const data = snap.data() || {};
+    localStorage.setItem(getSaveKey(), JSON.stringify(data));
+    setSaveStatus("DB読込済み", "ok");
+    return applySavedData(data);
+  }catch(e){
+    console.warn("T12 cloud load failed", e);
+    setSaveStatus("DB読込失敗", "err");
+    return false;
+  }
+}
+
+function initPortalUser(){
+  currentUser = getSessionUserName().trim();
+  portalDiscordId = getSessionDiscordId();
+  portalAlliance = getSessionAlliance();
+  portalGameId = getSessionGameId();
+  localStorage.setItem("t12_lastUser", currentUser);
+  document.getElementById("headerUsername").textContent = "👤 " + currentUser;
+  document.getElementById("headerAlliance").textContent = "🛡 " + (portalAlliance || "-");
+  document.getElementById("headerUser").style.display = "flex";
+  document.getElementById("btnMyPage").href = MYPAGE_URL;
+  document.getElementById("userOverlay").classList.add("hidden");
+}
+
+function initUser(name){
+  currentUser = name.trim();
+  localStorage.setItem("t12_lastUser", currentUser);
+  document.getElementById("headerUsername").textContent = "👤 " + currentUser;
+  document.getElementById("headerAlliance").textContent = "🛡 " + (portalAlliance || "-");
+  document.getElementById("headerUser").style.display = "flex";
+  document.getElementById("userOverlay").classList.add("hidden");
+}
+
+function startWithoutSave(){
+  currentUser = null;
+  document.getElementById("userOverlay").classList.add("hidden");
+}
+
+// ユーザー名入力ボタン
+document.getElementById("btnUserStart").addEventListener("click", () => {
+  const name = document.getElementById("userNameInput").value.trim();
+  if(!name){ document.getElementById("userNameInput").focus(); return; }
+  initUser(name);
+  const loaded = loadState();
+  // 読み込み後にUIを反映
+  applyLoadedState();
+});
+
+document.getElementById("btnUserSkip").addEventListener("click", () => {
+  startWithoutSave();
+});
+
+const myPageBtn = document.getElementById("btnMyPage");
+if(myPageBtn){
+  myPageBtn.addEventListener("click", () => {
+    sessionStorage.setItem("portal_entry", "1");
+  });
+}
+
+// Enterキーで確定
+document.getElementById("userNameInput").addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    document.getElementById("btnUserStart").click();
+  }
+});
+
+function applyLoadedState(){
+  // goal ボタン反映
+  document.querySelectorAll(".goal").forEach(x =>
+    x.classList.toggle("active", x.dataset.goal === goal)
+  );
+  // 兵種ボタン反映
+  document.querySelectorAll(".troop").forEach(x =>
+    x.classList.toggle("active", x.dataset.troop === troop)
+  );
+  // 兵種数タブ反映
+  document.querySelectorAll(".count-tab").forEach(x =>
+    x.classList.toggle("active", x.dataset.count === String(resultTroopCount))
+  );
+  // ツリー画像切り替え
+  document.getElementById("treeImage").src = imageMap[troop];
+  renderGoalResult();
+  renderTotalResult();
+  renderMarkers();
+  renderTroopProgress();
+}
+
+// =========================================================
+// 手持ち素材
+// =========================================================
+function getStock(){
+  return {
+    refined:  Number(document.getElementById("stock-refined")?.value)  || 0,
+    particle: Number(document.getElementById("stock-particle")?.value) || 0,
+    steel:    Number(document.getElementById("stock-steel")?.value)    || 0,
+  };
+}
+
+// 手持ち入力変更時に再描画
+["stock-refined","stock-particle","stock-steel"].forEach(id=>{
+  document.getElementById(id)?.addEventListener("input", ()=>{
+    renderGoalResult();
+    renderTotalResult();
+    saveState();
+  });
+});
+
+// 固定日本語（多言語なし）
+function t(key){
+  const dict = {
+    refined:"精錬火晶", particle:"火晶微粒子", steel:"鋼材", time:"⏱研究時間",
+    shortage:"不足", surplus:"充足", shield:"盾", bow:"弓", spear:"槍", total:"合計",
+  };
+  return dict[key] || key;
+}
+
+// =========================================================
+// 兵種リセット
+// =========================================================
+document.querySelectorAll(".btn-troop-reset").forEach(b=>b.addEventListener("click",()=>{
+  const t = b.dataset.reset;
+  if(!confirm((t==="shield"?"盾":t==="bow"?"弓":"槍") + "兵の設定をリセットしますか？")) return;
+  Object.keys(nodeName).forEach(k=>{
+    state[t][k].current = 0;
+    state[t][k].target  = 0;
+  });
+  renderTotalResult();
+  renderMarkers();
+  saveState();
+}));
+
+// 手持ち素材リセット
+document.getElementById("btnStockReset")?.addEventListener("click", ()=>{
+  ["stock-refined","stock-particle","stock-steel"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = 0;
+  });
+  renderGoalResult();
+  renderTotalResult();
+  saveState();
+});
+
+// =========================================================
+// エクスポート
+// =========================================================
+document.getElementById("btnExport")?.addEventListener("click", ()=>{
+  const lines = ["1648 T12 Planner - 設定エクスポート", "=" .repeat(30)];
+  if(currentUser) lines.push("ユーザー: " + currentUser);
+  lines.push("出力日時: " + new Date().toLocaleString("ja-JP"));
+  lines.push("");
+
+  ["shield","bow","spear"].forEach(t=>{
+    const tName = {shield:"🛡 盾兵", bow:"🏹 弓兵", spear:"⚔️ 槍兵"}[t];
+    lines.push(tName);
+    const r = shortageForTroop(t);
+    lines.push("  精錬火晶: " + fmt(r.refined));
+    lines.push("  火晶微粒子: " + fmt(r.particle));
+    lines.push("  鋼材: " + fmt(r.steel));
+    if(r.time > 0) lines.push("  研究時間: " + fmtTime(r.time));
+    lines.push("");
+  });
+
+  const total = {refined:0, particle:0, steel:0, time:0};
+  ["shield","bow","spear"].forEach(t=>addCost(total, shortageForTroop(t)));
+  lines.push("【合計】");
+  const stock = getStock();
+  ["refined","particle","steel"].forEach(k=>{
+    const need = total[k];
+    const have = stock[k] || 0;
+    const diff = need - have;
+    lines.push("  " + {refined:"精錬火晶",particle:"火晶微粒子",steel:"鋼材"}[k] +
+      ": 必要 " + fmt(need) + " / 手持ち " + fmt(have) +
+      " → " + (diff > 0 ? "不足 " + fmt(diff) : "充足 +" + fmt(-diff)));
+  });
+  if(total.time > 0) lines.push("  研究時間合計: " + fmtTime(total.time));
+
+  const text = lines.join("\n");
+  // クリップボードにコピー
+  navigator.clipboard.writeText(text).then(()=>{
+    alert("クリップボードにコピーしました！");
+  }).catch(()=>{
+    // fallback: テキストエリアで表示
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    alert("クリップボードにコピーしました！");
+  });
+});
+
+const ICONS = {
+  refined: "refined.png",
+  particle: "particle.png",
+  steel: "steel.png"
+};
+
+function materialCard(key, label, value){
+  return `<div class="material-card">
+    <img class="material-icon" src="${ICONS[key]}" alt="${label}">
+    <div><div class="label">${label}</div><div class="value">${fmt(value)}</div></div>
+  </div>`;
+}
+
+function fmtTime(sec){
+  if(!sec || sec <= 0) return "";
+  sec = Math.round(sec);
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const hms = [h,m,s].map(v=>String(v).padStart(2,"0")).join(":");
+  return d > 0 ? d + "D " + hms : hms;
+}
+
+const GOAL_COSTS = {
+  unlock:   { label:"T12解放まで",   steel:1620000,  refined:440,  particle:3080,  time:0 },
+  skill:    { label:"スキル解放まで", steel:4263000,  refined:898,  particle:6235,  time:10087200 },
+  capacity: { label:"容量解放まで",   steel:10274250, refined:2456, particle:30504, time:24110640 },
+  max:      { label:"カンストまで",   steel:17774250, refined:3895, particle:67944, time:76814640 }
+};
+let resultTroopCount = 1;
+
+
+function materialCardWithStock(key, label, need, have){
+  const diff = need - have;
+  const diffText = diff > 0
+    ? `<span class="shortage">-${fmt(diff)}</span>`
+    : `<span class="surplus">+${fmt(-diff)}</span>`;
+  const showDiff = have > 0;
+  return `<div class="material-card">
+    <img class="material-icon" src="${ICONS[key]}" alt="${label}">
+    <div style="flex:1;min-width:0">
+      <div class="label">${label}</div>
+      <div class="value">${fmt(need)}</div>
+      ${showDiff ? `<div style="font-size:11px;margin-top:2px">${t("shortage")}：${diffText}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderGoalResult(){
+  const c = GOAL_COSTS[goal];
+  const count = resultTroopCount;
+  const stock = getStock();
+  document.getElementById("goalResult").innerHTML = `
+    <div class="material-grid">
+      ${materialCardWithStock("refined",  t("refined"),  c.refined  * count, stock.refined)}
+      ${materialCardWithStock("particle", t("particle"), c.particle * count, stock.particle)}
+      ${materialCardWithStock("steel",    t("steel"),    c.steel    * count, stock.steel)}
+      ${c.time ? `<div class="material-card time-card"><div><div class="label">${t("time")}</div><div class="value" style="font-size:16px">${fmtTime(c.time * count)}</div></div></div>` : ""}
+    </div>
+  `;
+}
+
+
+// 累積コストテーブル（Lv0=0, LvN=Lv1〜LvNの合計）
+const CUM_AB1_STEEL = [0, 15000, 30750, 47250, 64500, 82500, 101250, 120750, 141750, 164250, 188250, 213750, 240750, 269250, 299250, 330750, 363750, 398250, 434250, 471750, 510750];
+const CUM_AB1_REFINED = [0, 2, 4, 6, 8, 11, 14, 17, 20, 23, 27, 31, 35, 39, 44, 49, 54, 59, 65, 71, 77];
+const CUM_AB1_PARTICLE = [0, 16, 33, 50, 68, 87, 107, 128, 150, 174, 200, 227, 256, 286, 318, 352, 387, 424, 463, 503, 545];
+const CUM_AB1_TIME = [0, 36000, 73800, 113400, 154800, 198000, 243000, 289800, 340200, 394200, 451800, 513000, 577800, 646200, 718200, 793800, 873000, 955800, 1042200, 1132200, 1225800];
+const CUM_SK_STEEL = [0, 200000, 400000, 600000];
+const CUM_SK_REFINED = [0, 50, 100, 150];
+const CUM_SK_PARTICLE = [0, 325, 650, 975];
+const CUM_SK_TIME = [0, 1728000, 3456000, 5184000];
+const CUM_AB2_STEEL = [0, 18000, 36000, 54000, 72000, 90000, 108000, 126000, 144000, 162000, 180000, 202500, 225000, 247500, 270000, 292500, 315000, 337500, 360000, 382500, 405000, 432000, 459000, 486000, 513000, 540000, 567000, 594000, 621000, 648000, 675000, 706500, 738000, 769500, 801000, 832500, 864000, 895500, 927000, 958500, 990000, 1026000, 1062000, 1098000, 1134000, 1170000, 1206000, 1242000, 1278000, 1314000, 1350000];
+const CUM_AB2_REFINED = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 117, 124, 131, 138, 145, 152, 159, 166, 173, 180, 188, 196, 204, 212, 220, 228, 236, 244, 252, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360];
+const CUM_AB2_PARTICLE = [0, 75, 150, 225, 300, 375, 450, 525, 600, 675, 750, 843, 936, 1029, 1122, 1215, 1308, 1401, 1494, 1587, 1680, 1792, 1904, 2016, 2128, 2240, 2352, 2464, 2576, 2688, 2800, 2931, 3062, 3193, 3324, 3455, 3586, 3717, 3848, 3979, 4110, 4260, 4410, 4560, 4710, 4860, 5010, 5160, 5310, 5460, 5610];
+const CUM_AB2_TIME = [0, 43200, 86400, 129600, 172800, 216000, 259200, 302400, 345600, 388800, 432000, 486000, 540000, 594000, 648000, 702000, 756000, 810000, 864000, 918000, 972000, 1036800, 1101600, 1166400, 1231200, 1296000, 1360800, 1425600, 1490400, 1555200, 1620000, 1695600, 1771200, 1846800, 1922400, 1998000, 2073600, 2149200, 2224800, 2300400, 2376000, 2462400, 2548800, 2635200, 2721600, 2808000, 2894400, 2980800, 3067200, 3153600, 3240000];
+const CUM_CAP_STEEL = [0, 25000, 51250, 78750, 108750, 141250, 176250, 213750, 253750, 296250, 341250, 388750, 438750, 491250, 548750, 611250];
+const CUM_CAP_REFINED = [0, 5, 10, 15, 21, 27, 34, 41, 49, 57, 66, 75, 85, 95, 106, 118];
+const CUM_CAP_PARTICLE = [0, 75, 153, 235, 325, 422, 527, 639, 759, 886, 1021, 1163, 1313, 1471, 1643, 1830];
+const CUM_CAP_TIME = [0, 43200, 88560, 136080, 187920, 244080, 311760, 376560, 445680, 519120, 596880, 678960, 765360, 856080, 955440, 1063440];
+const CUM_AB3_STEEL = [0, 25000, 50000, 75000, 100000, 125000, 150000, 175000, 200000, 225000, 250000, 281250, 312500, 343750, 375000, 406250, 437500, 468750, 500000, 531250, 562500, 600000, 637500, 675000, 712500, 750000, 787500, 825000, 862500, 900000, 937500, 981250, 1025000, 1068750, 1112500, 1156250, 1200000, 1243750, 1287500, 1331250, 1375000, 1425000, 1475000, 1525000, 1575000, 1625000, 1675000, 1725000, 1775000, 1825000, 1875000];
+const CUM_AB3_REFINED = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 117, 124, 131, 138, 145, 152, 159, 166, 173, 180, 188, 196, 204, 212, 220, 228, 236, 244, 252, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360];
+const CUM_AB3_PARTICLE = [0, 125, 250, 375, 500, 625, 750, 875, 1000, 1125, 1250, 1406, 1562, 1718, 1874, 2030, 2186, 2342, 2498, 2654, 2810, 2997, 3184, 3371, 3558, 3745, 3932, 4119, 4306, 4493, 4680, 4898, 5116, 5334, 5552, 5770, 5988, 6206, 6424, 6642, 6860, 7110, 7360, 7610, 7860, 8110, 8360, 8610, 8860, 9110, 9360];
+const CUM_AB3_TIME = [0, 172800, 345600, 518400, 691200, 864000, 1036800, 1209600, 1382400, 1555200, 1728000, 1944000, 2160000, 2376000, 2592000, 2808000, 3024000, 3240000, 3456000, 3672000, 3888000, 4168800, 4449600, 4730400, 5011200, 5292000, 5572800, 5853600, 6134400, 6415200, 6696000, 6998400, 7300800, 7603200, 7905600, 8208000, 8510400, 8812800, 9115200, 9417600, 9720000, 10065600, 10411200, 10756800, 11102400, 11448000, 11793600, 12139200, 12484800, 12830400, 13176000];
+
+const COSTS = {
+  unlock:       { refined:440,  particle:3080,  steel:1620000, time:0 },
+  ability1_each:{ refined:77,   particle:545,   steel:510750,  time:1225800 },
+  skill:        { refined:150,  particle:975,   steel:600000,  time:5184000 },
+  ability2_each:{ refined:360,  particle:5610,  steel:1350000, time:3240000 },
+  capacity:     { refined:117,  particle:1829,  steel:611250,  time:1063440 },
+  ability3_each:{ refined:360,  particle:9360,  steel:1875000, time:13176000 }
+};
+
+function costForNode(key, lv){
+  lv = Math.round(Number(lv) || 0);
+  if(lv <= 0) return {refined:0, particle:0, steel:0, time:0};
+  if(key === "unlock"){
+    // T12解放はLv1固定・時間なし
+    return {refined: COSTS.unlock.refined, particle: COSTS.unlock.particle, steel: COSTS.unlock.steel, time: 0};
+  }
+  if(key.startsWith("ability1_")){
+    lv = Math.min(lv, 20);
+    return {steel: CUM_AB1_STEEL[lv], refined: CUM_AB1_REFINED[lv], particle: CUM_AB1_PARTICLE[lv], time: CUM_AB1_TIME[lv]};
+  }
+  if(key === "skill"){
+    lv = Math.min(lv, 3);
+    return {steel: CUM_SK_STEEL[lv], refined: CUM_SK_REFINED[lv], particle: CUM_SK_PARTICLE[lv], time: CUM_SK_TIME[lv]};
+  }
+  if(key.startsWith("ability2_")){
+    lv = Math.min(lv, 50);
+    return {steel: CUM_AB2_STEEL[lv], refined: CUM_AB2_REFINED[lv], particle: CUM_AB2_PARTICLE[lv], time: CUM_AB2_TIME[lv]};
+  }
+  if(key === "capacity"){
+    lv = Math.min(lv, 15);
+    return {steel: CUM_CAP_STEEL[lv], refined: CUM_CAP_REFINED[lv], particle: CUM_CAP_PARTICLE[lv], time: CUM_CAP_TIME[lv]};
+  }
+  if(key.startsWith("ability3_")){
+    lv = Math.min(lv, 50);
+    return {steel: CUM_AB3_STEEL[lv], refined: CUM_AB3_REFINED[lv], particle: CUM_AB3_PARTICLE[lv], time: CUM_AB3_TIME[lv]};
+  }
+  return {refined:0, particle:0, steel:0, time:0};
+}
+
+function scaleCost(c, rate){
+  return {
+    refined: c.refined * rate,
+    particle: c.particle * rate,
+    steel: c.steel * rate,
+    time: (c.time || 0) * rate
+  };
+}
+
+function addCost(a,b){
+  a.refined += b.refined || 0;
+  a.particle += b.particle || 0;
+  a.steel += b.steel || 0;
+  a.time += b.time || 0;
+  return a;
+}
+
+function fmt(n){
+  if(n >= 100000000) return (n/100000000).toFixed(2).replace(/\.00$/,"") + "億";
+  if(n >= 1000000) return (n/1000000).toFixed(2).replace(/\.00$/,"") + "M";
+  return Math.ceil(n).toLocaleString("ja-JP");
+}
+
+function normalizePrereqFor(type){
+  const s = state[troop];
+  const ab2keys = ["ability2_atk","ability2_def","ability2_leth","ability2_hp"];
+  const ab3keys = ["ability3_atk","ability3_def","ability3_leth","ability3_hp"];
+
+  // 能力Ⅱ以上 → 解放 + 能力Ⅰ4種MAX + スキルMAX
+  if(hasAny(type, [...ab2keys,"capacity",...ab3keys])){
+    s.unlock[type] = Math.max(s.unlock[type], 1);
+    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 20));
+    s.skill[type] = Math.max(s.skill[type], 3);
+  }
+
+  // スキルのみ → 解放 + 能力Ⅰ4種MAX
+  if(s.skill[type] > 0){
+    s.unlock[type] = Math.max(s.unlock[type], 1);
+    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 20));
+  }
+
+  // 容量の上限は能力Ⅱに連動
+  // 能力Ⅱの最大値から容量の上限を決定
+  const ab2max = Math.max(...ab2keys.map(k => s[k][type] || 0));
+  if(s.capacity[type] > 0){
+    // 容量Lv1-5 → 能力Ⅱ最低Lv30必要
+    // 容量Lv6-10 → 能力Ⅱ最低Lv40必要
+    // 容量Lv11-15 → 能力Ⅱ最低Lv50必要
+    const capLv = s.capacity[type];
+    const requiredAb2 = capLv >= 11 ? 50 : capLv >= 6 ? 40 : 30;
+    ab2keys.forEach(k => s[k][type] = Math.max(s[k][type], requiredAb2));
+  }
+
+  // 容量の上限を能力Ⅱに合わせてキャップ
+  if(s.capacity[type] > 0){
+    const ab2cur = Math.max(...ab2keys.map(k => s[k][type] || 0));
+    const capMax = ab2cur >= 50 ? 15 : ab2cur >= 40 ? 10 : ab2cur >= 30 ? 5 : 0;
+    s.capacity[type] = Math.min(s.capacity[type], capMax);
+  }
+
+  // 能力Ⅲ → 能力ⅡカンストLv50 + 容量カンストLv15
+  if(hasAny(type, ab3keys)){
+    ab2keys.forEach(k => s[k][type] = Math.max(s[k][type], 50));
+    s.capacity[type] = Math.max(s.capacity[type], 15);
+  }
+}
+
+function hasAny(type, keys){
+  return keys.some(k => state[troop][k][type] > 0);
+}
+
+function shortageForTroop(t){
+  const total = {refined:0, particle:0, steel:0, time:0};
+  Object.keys(nodeName).forEach(k=>{
+    const cur = state[t][k].current || 0;
+    const tar = state[t][k].target || 0;
+    const diff = Math.max(0, tar - cur);
+    const c1 = costForNode(k, cur);
+    const c2 = costForNode(k, cur + diff);
+    addCost(total, {
+      refined: c2.refined - c1.refined,
+      particle: c2.particle - c1.particle,
+      steel: c2.steel - c1.steel,
+      time: (c2.time || 0) - (c1.time || 0)
+    });
+  });
+  return total;
+}
+
+function renderTotalResult(){
+  const results = ["shield","bow","spear"].map(tr => shortageForTroop(tr));
+  const total = {refined:0, particle:0, steel:0, time:0};
+  results.forEach(r => addCost(total, r));
+  const stock = getStock();
+
+  // 全兵種の時間が0なら時間列を非表示
+  const showTime = results.some(r => r.time > 0) || total.time > 0;
+
+  // 兵種名多言語対応
+  const tn = {shield: t("shield"), bow: t("bow"), spear: t("spear")};
+
+  const rows = ["shield","bow","spear"].map((tr,i)=>{
+    const r = results[i];
+    // 警告：目標Lv < 現在Lv のノードがあるか
+    const hasWarn = Object.keys(nodeName).some(k =>
+      state[tr][k].target > 0 && state[tr][k].target < state[tr][k].current
+    );
+    const warnBadge = hasWarn ? `<span class="warn-badge">⚠</span>` : "";
+    const timeCell = showTime ? `<td>${r.time > 0 ? fmtTime(r.time) : "<span style='color:#475569'>ー</span>"}</td>` : "";
+    return `<tr><td>${tn[tr]}${warnBadge}</td><td>${fmt(r.refined)}</td><td>${fmt(r.particle)}</td><td>${fmt(r.steel)}</td>${timeCell}</tr>`;
+  }).join("");
+
+  // 合計行：手持ち引いた不足数
+  function diffCell(need, have){
+    if(have <= 0) return fmt(need);
+    const diff = need - have;
+    return diff > 0
+      ? `${fmt(need)}<br><span class="shortage" style="font-size:10px">-${fmt(diff)}</span>`
+      : `${fmt(need)}<br><span class="surplus" style="font-size:10px">+${fmt(-diff)}</span>`;
+  }
+
+  const timeHead = showTime ? `<th>⏱時間</th>` : "";
+  const timeFoot = showTime ? `<td>${fmtTime(total.time)}</td>` : "";
+
+  document.getElementById("totalResult").innerHTML = `
+    <table class="result-table">
+      <thead><tr><th>対象</th><th><img src="refined.png" class="th-icon">${t("refined")}</th><th><img src="particle.png" class="th-icon">${t("particle")}</th><th><img src="steel.png" class="th-icon">${t("steel")}</th>${timeHead}</tr></thead>
+      <tbody>
+        ${rows}
+        <tr style="font-weight:900;color:#86efac"><td>${t("total")}</td><td>${diffCell(total.refined,stock.refined)}</td><td>${diffCell(total.particle,stock.particle)}</td><td>${diffCell(total.steel,stock.steel)}</td>${timeFoot}</tr>
+      </tbody>
+    </table>
+  `;
+  renderTroopProgress();
+  saveState();
+}
+
+
+// =========================================================
+// T12マイページ用サマリー生成
+// =========================================================
+const T12_STAGE_LABELS = {
+  locked:"未解放",
+  unlocked:"解放済み",
+  skill_1:"スキルLv1",
+  skill_2:"スキルLv2",
+  skill_3:"スキルLv3",
+  capacity_1:"容量Lv1",
+  capacity_2:"容量Lv2",
+  capacity_3:"容量Lv3",
+  max:"カンスト"
+};
+
+function getT12Stage(t){
+  const s = state[t];
+  if(!s || !s.unlock || (s.unlock.current || 0) < 1) return "locked";
+
+  const ab3Keys = ["ability3_atk","ability3_def","ability3_leth","ability3_hp"];
+  if(ab3Keys.every(k => (s[k]?.current || 0) >= maxLv[k])) return "max";
+
+  const capLv = s.capacity?.current || 0;
+  if(capLv >= 11) return "capacity_3";
+  if(capLv >= 6) return "capacity_2";
+  if(capLv >= 1) return "capacity_1";
+
+  const skillLv = s.skill?.current || 0;
+  if(skillLv >= 3) return "skill_3";
+  if(skillLv >= 2) return "skill_2";
+  if(skillLv >= 1) return "skill_1";
+
+  return "unlocked";
+}
+
+function buildT12Summary(){
+  return {
+    shield: getT12Stage("shield"),
+    bow: getT12Stage("bow"),
+    spear: getT12Stage("spear")
+  };
+}
+
+function stageClass(stage){
+  if(stage === "locked") return "locked";
+  if(stage === "unlocked") return "unlocked";
+  if(stage.startsWith("skill")) return "skill";
+  if(stage.startsWith("capacity")) return "capacity";
+  if(stage === "max") return "max";
+  return "";
+}
+
+function renderT12SummaryBox(){
+  const grid = document.getElementById("t12SummaryGrid");
+  if(!grid || typeof state === "undefined") return;
+  const summary = buildT12Summary();
+  const names = {shield:"🛡 盾", bow:"🏹 弓", spear:"⚔️ 槍"};
+  grid.innerHTML = ["shield","bow","spear"].map(t=>{
+    const stage = summary[t];
+    return `<div class="t12-summary-item ${stageClass(stage)}">
+      <div class="label">${names[t]}</div>
+      <div class="value">${T12_STAGE_LABELS[stage] || stage}</div>
+    </div>`;
+  }).join("");
+}
+
+const layouts = {"shield": {"unlock": {"x": 50.11, "y": 6.99, "size": 160}, "ability1_atk": {"x": 11.56, "y": 23.97, "size": 139}, "ability1_def": {"x": 36.89, "y": 23.91, "size": 137}, "ability1_leth": {"x": 62.44, "y": 23.91, "size": 139}, "ability1_hp": {"x": 88.33, "y": 23.91, "size": 142}, "skill": {"x": 50, "y": 41.2, "size": 160}, "ability2_atk": {"x": 11.89, "y": 58.62, "size": 139}, "ability2_def": {"x": 37.11, "y": 58.56, "size": 136}, "ability2_leth": {"x": 62.56, "y": 58.68, "size": 139}, "ability2_hp": {"x": 88.22, "y": 58.56, "size": 141}, "capacity": {"x": 50.11, "y": 76.6, "size": 134}, "ability3_atk": {"x": 11.56, "y": 93.46, "size": 139}, "ability3_def": {"x": 37.11, "y": 93.27, "size": 137}, "ability3_leth": {"x": 62.67, "y": 93.46, "size": 142}, "ability3_hp": {"x": 88.33, "y": 93.46, "size": 142}}, "bow": {"unlock": {"x": 50.44, "y": 10.11, "size": 158}, "ability1_atk": {"x": 12.11, "y": 25.55, "size": 144}, "ability1_def": {"x": 37.56, "y": 25.42, "size": 147}, "ability1_leth": {"x": 62.89, "y": 25.42, "size": 143}, "ability1_hp": {"x": 88.33, "y": 25.61, "size": 149}, "skill": {"x": 50.44, "y": 42.54, "size": 158}, "ability2_atk": {"x": 12.22, "y": 59.09, "size": 141}, "ability2_def": {"x": 37.44, "y": 59.16, "size": 143}, "ability2_leth": {"x": 62.89, "y": 59.16, "size": 141}, "ability2_hp": {"x": 88, "y": 59.03, "size": 142}, "capacity": {"x": 50.22, "y": 76.08, "size": 141}, "ability3_atk": {"x": 12.11, "y": 92.45, "size": 141}, "ability3_def": {"x": 37.56, "y": 92.52, "size": 141}, "ability3_leth": {"x": 62.89, "y": 92.45, "size": 141}, "ability3_hp": {"x": 88.11, "y": 92.52, "size": 142}}, "spear": {"unlock": {"x": 49.89, "y": 10.13, "size": 160}, "ability1_atk": {"x": 12.11, "y": 26.58, "size": 143}, "ability1_def": {"x": 37.11, "y": 26.51, "size": 143}, "ability1_leth": {"x": 61.89, "y": 26.51, "size": 144}, "ability1_hp": {"x": 87.67, "y": 26.58, "size": 143}, "skill": {"x": 49.78, "y": 44.65, "size": 160}, "ability2_atk": {"x": 12.11, "y": 61.22, "size": 144}, "ability2_def": {"x": 37.11, "y": 61.16, "size": 144}, "ability2_leth": {"x": 61.56, "y": 61.28, "size": 144}, "ability2_hp": {"x": 87.44, "y": 61.28, "size": 144}, "capacity": {"x": 49.56, "y": 78.42, "size": 144}, "ability3_atk": {"x": 12.11, "y": 93.24, "size": 144}, "ability3_def": {"x": 37, "y": 93.18, "size": 144}, "ability3_leth": {"x": 61.78, "y": 93.18, "size": 144}, "ability3_hp": {"x": 87.44, "y": 93.05, "size": 144}}};
+const imageMap = {
+  shield:"S__123273220_0.jpg",
+  bow:"S__123273221_0.jpg",
+  spear:"S__123273222_0.jpg"
+};
+const troopName = {shield:"盾", bow:"弓", spear:"槍"};
+const nodeName = {
+  unlock:"T12解放",
+  ability1_atk:"能力Ⅰ 攻撃",
+  ability1_def:"能力Ⅰ 防御",
+  ability1_leth:"能力Ⅰ 殺傷",
+  ability1_hp:"能力Ⅰ HP",
+  skill:"スキル",
+  ability2_atk:"能力Ⅱ 攻撃",
+  ability2_def:"能力Ⅱ 防御",
+  ability2_leth:"能力Ⅱ 殺傷",
+  ability2_hp:"能力Ⅱ HP",
+  capacity:"容量",
+  ability3_atk:"能力Ⅲ 攻撃",
+  ability3_def:"能力Ⅲ 防御",
+  ability3_leth:"能力Ⅲ 殺傷",
+  ability3_hp:"能力Ⅲ HP"
+};
+const maxLv = {
+  unlock:1, skill:3, capacity:15,
+  ability1_atk:20, ability1_def:20, ability1_leth:20, ability1_hp:20,
+  ability2_atk:50, ability2_def:50, ability2_leth:50, ability2_hp:50,
+  ability3_atk:50, ability3_def:50, ability3_leth:50, ability3_hp:50
+};
+let troop = "shield";
+let selected = "unlock";
+let goal = "unlock";
+const state = {
+  shield: makeState(),
+  bow: makeState(),
+  spear: makeState()
+};
+
+function makeState(){
+  const s = {};
+  Object.keys(nodeName).forEach(k => s[k] = { current:0, target:0 });
+  return s;
+}
+
+const goalPreset = {
+  unlock: {
+    unlock:1,
+    ability1_atk:0, ability1_def:0, ability1_leth:0, ability1_hp:0,
+    skill:0,
+    ability2_atk:0, ability2_def:0, ability2_leth:0, ability2_hp:0,
+    capacity:0,
+    ability3_atk:0, ability3_def:0, ability3_leth:0, ability3_hp:0
+  },
+  skill: {
+    unlock:1,
+    ability1_atk:20, ability1_def:20, ability1_leth:20, ability1_hp:20,
+    skill:3,
+    ability2_atk:0, ability2_def:0, ability2_leth:0, ability2_hp:0,
+    capacity:0,
+    ability3_atk:0, ability3_def:0, ability3_leth:0, ability3_hp:0
+  },
+  capacity: {
+    unlock:1,
+    ability1_atk:20, ability1_def:20, ability1_leth:20, ability1_hp:20,
+    skill:3,
+    ability2_atk:50, ability2_def:50, ability2_leth:50, ability2_hp:50,
+    capacity:15,
+    ability3_atk:0, ability3_def:0, ability3_leth:0, ability3_hp:0
+  },
+  max: {
+    unlock:1,
+    ability1_atk:20, ability1_def:20, ability1_leth:20, ability1_hp:20,
+    skill:3,
+    ability2_atk:50, ability2_def:50, ability2_leth:50, ability2_hp:50,
+    capacity:15,
+    ability3_atk:50, ability3_def:50, ability3_leth:50, ability3_hp:50
+  }
+};
+
+const goalLabel = {
+  unlock: "T12解放まで",
+  skill: "スキル解放まで",
+  capacity: "容量解放まで",
+  max: "カンストまで"
+};
+
+function applyGoalToTroop(){
+  const preset = goalPreset[goal];
+  Object.keys(preset).forEach(k => {
+    state[troop][k].target = preset[k];
+  });
+  normalizePrereqFor("target");
+}
+
+function applyPresetTo(type, presetName){
+  const preset = goalPreset[presetName] || goalPreset.unlock;
+  Object.keys(preset).forEach(k => {
+    state[troop][k][type] = preset[k];
+  });
+  normalizePrereqFor(type);
+  renderTable();
+  focusRow(selected);
+}
+
+function setupPresetButtons(){
+  document.querySelectorAll(".current-set").forEach(b=>b.addEventListener("click",()=>{
+    applyPresetTo("current", b.dataset.current);
+  }));
+  document.querySelectorAll(".target-set").forEach(b=>b.addEventListener("click",()=>{
+    applyPresetTo("target", b.dataset.target);
+  }));
+}
+
+const wrap = document.getElementById("treeWrap");
+const img = document.getElementById("treeImage");
+
+
+const quickButtonName = {
+  ability1_max: "✓ 能力Ⅰ\n研究済",
+  skill_max: "✓ スキル\n研究済",
+  ability2_max: "✓ 能力Ⅱ\n研究済",
+  capacity_max: "✓ 容量\n研究済"
+};
+
+const quickButtonData = {
+  "shield": {
+    "ability1_max": {
+      "x": 49.66,
+      "y": 32.55,
+      "w": 82,
+      "h": 35
+    },
+    "skill_max": {
+      "x": 50.07,
+      "y": 49.96,
+      "w": 80,
+      "h": 36
+    },
+    "ability2_max": {
+      "x": 49.93,
+      "y": 67.53,
+      "w": 80,
+      "h": 35
+    },
+    "capacity_max": {
+      "x": 49.93,
+      "y": 84.48,
+      "w": 80,
+      "h": 32
+    }
+  },
+  "bow": {
+    "ability1_max": {
+      "x": 50.21,
+      "y": 34.18,
+      "w": 80,
+      "h": 33
+    },
+    "skill_max": {
+      "x": 50.21,
+      "y": 50.63,
+      "w": 80,
+      "h": 33
+    },
+    "ability2_max": {
+      "x": 50.07,
+      "y": 67.62,
+      "w": 80,
+      "h": 35
+    },
+    "capacity_max": {
+      "x": 50.34,
+      "y": 84.14,
+      "w": 80,
+      "h": 35
+    }
+  },
+  "spear": {
+    "ability1_max": {
+      "x": 49.93,
+      "y": 35.55,
+      "w": 80,
+      "h": 34
+    },
+    "skill_max": {
+      "x": 49.79,
+      "y": 52.53,
+      "w": 80,
+      "h": 30
+    },
+    "ability2_max": {
+      "x": 49.79,
+      "y": 70.36,
+      "w": 80,
+      "h": 32
+    },
+    "capacity_max": {
+      "x": 49.79,
+      "y": 85.4,
+      "w": 80,
+      "h": 30
+    }
+  }
+};
+
+let selectedQuick = "ability1_max";
+
+function initQuickSelect(){}
+
+function syncQuickControls(){}
+
+function updateQuickJson(){}
+
+
+function quickMap(key){
+  return {
+    ability1_max:["ability1_atk","ability1_def","ability1_leth","ability1_hp"],
+    skill_max:["skill"],
+    ability2_max:["ability2_atk","ability2_def","ability2_leth","ability2_hp"],
+    capacity_max:["capacity"]
+  }[key] || [];
+}
+
+function isQuickApplied(key){
+  return quickMap(key).every(n => state[troop][n].current >= maxLv[n]);
+}
+
+function renderQuickButtons(){
+  document.querySelectorAll(".quick-btn").forEach(x=>x.remove());
+
+  Object.keys(quickButtonName).forEach(k=>{
+    const d = quickButtonData[troop][k];
+    const b = document.createElement("button");
+    b.className = "quick-btn" + (isQuickApplied(k) ? " selected" : "");
+    b.dataset.key = k;
+    b.innerHTML = quickButtonName[k].replace("\\n", "<br>");
+    b.style.left = d.x + "%";
+    b.style.top = d.y + "%";
+    b.style.width = d.w + "px";
+    b.style.height = d.h + "px";
+    b.addEventListener("click", e=>{
+      e.stopPropagation();
+      applyQuickAction(k);
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function enableQuickDrag(btn){}
+
+function applyQuickAction(key){
+  const keys = quickMap(key);
+  const already = isQuickApplied(key);
+  keys.forEach(n=>{
+    state[troop][n].current = already ? 0 : maxLv[n];
+  });
+  normalizePrereqFor("current");
+  renderTotalResult();
+  renderQuickButtons();
+}
+
+
+function makeOptions(max){
+  let s="";
+  for(let i=0;i<=max;i++) s += `<option value="${i}">Lv${i}</option>`;
+  return s;
+}
+
+function renderMarkers(){
+  const imgEl = document.getElementById("treeImage");
+  if(!imgEl.clientWidth){
+    imgEl.addEventListener("load", renderMarkers, {once:true});
+    return;
+  }
+  document.querySelectorAll(".marker").forEach(m=>m.remove());
+  const layout = layouts[troop];
+  const scale = imgEl.clientWidth / 900;
+  Object.keys(nodeName).forEach(k=>{
+    const p = layout[k];
+    if(!p){ console.warn("layout missing: "+k); return; }
+    const m = document.createElement("button");
+    const curLvForMarker = state[troop][k].current || 0;
+    m.className = "marker" + (k===selected ? " selected" : "")
+      + (curLvForMarker >= maxLv[k] ? " researched" : curLvForMarker > 0 ? " partial-researched" : "");
+    m.dataset.key = k;
+    let markerLabel = nodeName[k].replace(" ","<br>");
+    if(curLvForMarker > 0){
+      markerLabel += `<br><span class="mk-lv">${curLvForMarker >= maxLv[k] ? "✓済" : "Lv" + curLvForMarker}</span>`;
+    }
+    m.innerHTML = markerLabel;
+    m.style.left = p.x + "%";
+    m.style.top = p.y + "%";
+    const displaySize = Math.max(32, p.size * scale);
+    m.style.width = displaySize + "px";
+    m.style.height = displaySize + "px";
+    m.addEventListener("click", e=>{
+      e.stopPropagation();
+      if(selected === k && document.getElementById("nodeEditor").classList.contains("open")){
+        selected = "";
+        closeEditor();
+        renderMarkers();
+        return;
+      }
+      selected = k;
+      renderMarkers();
+      focusRow(k, m);
+    });
+    wrap.appendChild(m);
+  });
+  renderQuickButtons();
+}
+
+function renderTable(){
+  renderTotalResult();
+}
+
+function renderTroopProgress(){
+  // 全ノードのMAX合計（current基準の達成率）
+  const nodeKeys = Object.keys(nodeName);
+  const totalMaxLv = nodeKeys.reduce((s,k) => s + maxLv[k], 0); // 全ノードMAX合計
+
+  ["shield","bow","spear"].forEach(t=>{
+    const s = state[t];
+    // 設定済みノード数（currentが1以上のノード数）
+    const settledNodes = nodeKeys.filter(k => s[k].current > 0).length;
+    const totalNodes = nodeKeys.length; // 15
+    // 達成率 = 現在Lv合計 / MAX合計
+    const curSum = nodeKeys.reduce((sum,k) => sum + (s[k].current||0), 0);
+    const pct = Math.round(curSum / totalMaxLv * 100);
+
+    const countEl = document.getElementById("prog-count-"+t);
+    const barEl   = document.getElementById("prog-bar-"+t);
+    if(countEl) countEl.textContent = settledNodes + "/" + totalNodes + " (" + pct + "%)";
+    if(barEl)   barEl.style.width = pct + "%";
+  });
+  renderT12SummaryBox();
+}
+
+function focusRow(k, triggerEl){
+  selected = k;
+  renderMarkers();
+  openEditor(k, triggerEl);
+}
+
+
+function makeEditorOptions(max, value){
+  let s = "";
+  for(let i=0;i<=max;i++){
+    s += `<option value="${i}" ${i===value ? "selected" : ""}>Lv${i}${i===0 ? "（未解放）" : ""}</option>`;
+  }
+  return s;
+}
+
+function openEditor(k, triggerEl){
+  const editor = document.getElementById("nodeEditor");
+  document.getElementById("editorTitle").textContent = nodeName[k];
+  // サマリー行
+  const cur_lv = state[troop][k].current;
+  const tar_lv = state[troop][k].target;
+  const summaryEl = document.getElementById("editorSummary");
+  if(summaryEl){
+    const warn = tar_lv > 0 && tar_lv < cur_lv;
+    summaryEl.innerHTML = `現在Lv <strong>${cur_lv}</strong> → 目標Lv <strong>${tar_lv}</strong>`
+      + (warn ? ` <span class="warn-text">⚠ 目標が現在より低い</span>` : "");
+  }
+  const cur = document.getElementById("editorCurrent");
+  const tar = document.getElementById("editorTarget");
+  cur.innerHTML = makeEditorOptions(maxLv[k], state[troop][k].current);
+  tar.innerHTML = makeEditorOptions(maxLv[k], state[troop][k].target);
+  cur.onchange = e => {
+    state[troop][k].current = Number(e.target.value);
+    normalizePrereqFor("current");
+    openEditor(k);
+    renderTotalResult();
+  };
+  tar.onchange = e => {
+    state[troop][k].target = Number(e.target.value);
+    normalizePrereqFor("target");
+    openEditor(k);
+    renderTotalResult();
+  };
+  const btnCur = document.getElementById("editorMaxCurrent");
+  const btnTar = document.getElementById("editorMaxTarget");
+  btnCur.textContent = state[troop][k].current >= maxLv[k] ? "↩ リセット" : "✓ カンスト済み";
+  btnCur.className = state[troop][k].current >= maxLv[k] ? "btn-reset" : "btn-current";
+  btnTar.textContent = state[troop][k].target >= maxLv[k] ? "↩ リセット" : "↑ Lv MAX";
+  btnTar.className = state[troop][k].target >= maxLv[k] ? "btn-reset" : "btn-target";
+  btnCur.onclick = () => {
+    state[troop][k].current = state[troop][k].current >= maxLv[k] ? 0 : maxLv[k];
+    normalizePrereqFor("current");
+    openEditor(k);
+    renderTotalResult();
+  };
+  btnTar.onclick = () => {
+    state[troop][k].target = state[troop][k].target >= maxLv[k] ? 0 : maxLv[k];
+    normalizePrereqFor("target");
+    openEditor(k);
+    renderTotalResult();
+  };
+  // ポップアップ位置計算
+  editor.classList.add("open");
+  document.getElementById("editorOverlay").classList.add("open");
+
+  // triggerElがあれば位置を計算、なければ画面中央
+  if(triggerEl){
+    const rect = triggerEl.getBoundingClientRect();
+    const ew = editor.offsetWidth || 300;
+    const eh = editor.offsetHeight || 200;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // マーカーの下に出す、はみ出す場合は上
+    let top = rect.bottom + 8;
+    if(top + eh > vh - 8) top = rect.top - eh - 8;
+    if(top < 8) top = 8;
+
+    // 横はマーカー中央、はみ出し補正
+    let left = rect.left + rect.width/2 - ew/2;
+    if(left + ew > vw - 8) left = vw - ew - 8;
+    if(left < 8) left = 8;
+
+    editor.style.top  = top + "px";
+    editor.style.left = left + "px";
+  } else {
+    // 画面中央
+    editor.style.top  = Math.max(8, (window.innerHeight - (editor.offsetHeight||200))/2) + "px";
+    editor.style.left = Math.max(8, (window.innerWidth  - (editor.offsetWidth ||300))/2) + "px";
+  }
+}
+
+function closeEditor(){
+  document.getElementById("nodeEditor").classList.remove("open");
+  document.getElementById("editorOverlay").classList.remove("open");
+}
+
+function calculateAndScroll(){
+  renderTotalResult();
+  closeEditor();
+  const result = document.getElementById("totalResult");
+  if(result){
+    result.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+}
+
+
+function switchTroop(t){
+  troop = t;
+  selected = "unlock";
+  img.src = imageMap[troop];
+  document.querySelectorAll(".troop").forEach(b=>{
+    b.classList.toggle("active", b.dataset.troop===troop);
+  });
+  renderTable();
+  renderMarkers();
+  syncQuickControls();
+  closeEditor();
+}
+
+document.querySelectorAll(".goal").forEach(b=>b.addEventListener("click",()=>{
+  goal = b.dataset.goal;
+  document.querySelectorAll(".goal").forEach(x=>x.classList.toggle("active", x.dataset.goal===goal));
+  renderGoalResult();
+  renderTable();
+}));
+
+document.querySelectorAll(".count-tab").forEach(b=>b.addEventListener("click",()=>{
+  resultTroopCount = Number(b.dataset.count);
+  document.querySelectorAll(".count-tab").forEach(x=>x.classList.toggle("active", x.dataset.count===String(resultTroopCount)));
+  renderGoalResult();
+}));
+
+document.querySelectorAll(".troop").forEach(b=>b.addEventListener("click",()=>switchTroop(b.dataset.troop)));
+document.getElementById("editorClose").addEventListener("click", closeEditor);
+document.getElementById("editorCloseX").addEventListener("click", ()=>{ selected=""; closeEditor(); renderMarkers(); });
+document.getElementById("editorOverlay").addEventListener("click", ()=>{ selected=""; closeEditor(); renderMarkers(); });
+document.getElementById("editorCalc").addEventListener("click", calculateAndScroll);
+setupPresetButtons();
+initQuickSelect();
+
+async function bootPlanner(){
+  if(!requirePortalEntry()) return;
+  portalSession = getPortalSession();
+  if(!portalSession) return;
+  initPortalUser();
+  initT12Firestore();
+
+  let loaded = await loadStateFromCloud();
+  if(!loaded) loaded = loadState();
+
+  applyLoadedState();
+  isBooting = false;
+  saveState();
+}
+
+bootPlanner();
+window.addEventListener("resize", renderMarkers);
+document.getElementById("treeImage").addEventListener("load", renderMarkers);
+</script>
+</body>
+</html>
+
+
