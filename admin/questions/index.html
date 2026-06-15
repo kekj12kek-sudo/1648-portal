@@ -154,7 +154,7 @@ function render(){
       <div class="panel-title" id="formTitle">新しい質問を作る</div>
       <div class="help-box">
         FC＝施設レベル、ティア＝兵質、T12＝研究進捗として分けて管理します。<br>
-        盾・槍・弓などをまとめて聞く場合は「セット質問」を使います。
+        乗り英雄カードは回答方式の一つです。使う場合はカテゴリーを「英雄育成」にしてください。
       </div>
 
       <label for="category">カテゴリー</label>
@@ -167,7 +167,6 @@ function render(){
         <option value="pet">ペット</option>
         <option value="power">戦力</option>
         <option value="time">参加時間</option>
-        <option value="office">官職予約</option>
       </select>
 
       <label for="title">質問タイトル</label>
@@ -186,7 +185,7 @@ function render(){
         ${typeRadio("time_select","時間プルダウン","21:00などの時刻を選ばせる")}
         ${typeRadio("time_range","時間範囲","開始時刻〜終了時刻を選ばせる")}
         ${typeRadio("time_hm","時:分入力","時と分を分けて選ばせる")}
-        ${typeRadio("hero_multi","英雄カード選択","英雄カードから複数選択させる")}
+        ${typeRadio("hero_multi","乗り英雄カード","乗り英雄カードから複数選択させる")}
         ${typeRadio("text","文章で入力","連絡事項や補足を書かせる")}
       </div>
 
@@ -199,7 +198,7 @@ function render(){
       <label>画像</label>
       <div class="image-placeholder">
         画像アップロードは次の工程で追加します。<br>
-        英雄カードは英雄管理画面から登録済みのカードを使用します。
+        乗り英雄カードは英雄管理画面から登録済みのカードを使用します。
       </div>
 
       <div class="preview">
@@ -374,7 +373,7 @@ function renderDynamicArea(){
 
   if(t==="hero_multi"){
     a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">英雄カード選択です</div>
+      <div class="dynamic-title">乗り英雄カードです</div>
       <div class="dynamic-desc">英雄管理に登録されている英雄カードを回答画面に表示します。</div>
       <div class="example-box">例：条件を満たしている英雄にチェック<br>条件：★4以上 かつ 遠征スキルLv5</div>
     </div>`;
@@ -474,7 +473,7 @@ function renderPreview(){
   }else if(t==="time_hm"){
     ans=`<div class="time-preview"><div class="fake-input">時</div><div class="time-sep">:</div><div class="fake-input">分</div></div>`;
   }else if(t==="hero_multi"){
-    ans=`<div class="choice"><span class="fake-check"></span><span>英雄カードを表示</span></div>`;
+    ans=`<div class="choice"><span class="fake-check"></span><span>乗り英雄カードを表示</span></div>`;
   }else{
     ans=`<div class="fake-input">${escapeHtml(placeholder||"文章を入力")}</div>`;
   }
@@ -691,7 +690,7 @@ function typeLabel(t){
     time_select:"時間プルダウン",
     time_range:"時間範囲",
     time_hm:"時:分入力",
-    hero_multi:"英雄カード選択",
+    hero_multi:"乗り英雄カード",
     text:"文章で入力"
   }[t]||t;
 }
@@ -705,8 +704,7 @@ function categoryLabel(c){
     hero:"英雄育成",
     pet:"ペット",
     power:"戦力",
-    time:"参加時間",
-    office:"官職予約"
+    time:"参加時間"
   }[c]||c||"自由質問";
 }
 
