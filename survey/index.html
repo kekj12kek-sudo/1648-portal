@@ -649,6 +649,7 @@ function refreshQuestionBars(){questions.forEach(q=>{const box=document.querySel
 function setSelectTemplate(q,value){const current=value&&typeof value==="object"?value:{};const items=Array.isArray(q.setItems)&&q.setItems.length?q.setItems:[{id:"shield",label:"盾"},{id:"spear",label:"槍"},{id:"bow",label:"弓"}];const opts=Array.isArray(q.options)?q.options:[];return items.map(item=>`<div class="set-answer-row"><div class="set-answer-label">${escapeHtml(item.label||item.id)}</div><select data-qset="${escapeAttr(q.id)}" data-qset-field="${escapeAttr(item.id)}"><option value="">選択してください</option>${opts.map(opt=>`<option value="${escapeAttr(opt)}" ${current[item.id]===opt?"selected":""}>${escapeHtml(opt)}</option>`).join("")}</select></div>`).join("")}
 
 
+function getSession(){
   const raw = localStorage.getItem("discord_user");
 
   if(!raw){
@@ -959,11 +960,7 @@ function questionTemplate(q, value){
       ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
     `;
 
-  }else if(q.type === "set_select"){
-      const setValue = {};
-      document.querySelectorAll(`[data-qset='${cssEscape(q.id)}']`).forEach(el => { setValue[el.dataset.qsetField] = el.value || ""; });
-      answers[q.id] = setValue;
-    }else if(q.type === "time_select"){
+  }else if(q.type === "time_select"){
     html += timeSelectTemplate(q, value, "");
     if(placeholder) html += `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>`;
 
@@ -1089,10 +1086,6 @@ async function saveAnswer(){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
     }else if(q.type === "hero_multi"){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`)).map(v => v.value);
-    }else if(q.type === "set_select"){
-      const setValue = {};
-      document.querySelectorAll(`[data-qset='${cssEscape(q.id)}']`).forEach(el => { setValue[el.dataset.qsetField] = el.value || ""; });
-      answers[q.id] = setValue;
     }else if(q.type === "time_select"){
       answers[q.id] = document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "";
     }else if(q.type === "time_range"){
