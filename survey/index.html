@@ -697,14 +697,10 @@ function getAutoFillForQuestion(q){
 }
 function applyAutoFillOnOpen(q){
   const fill=getAutoFillForQuestion(q);
-  if(!fill || !fill.value) return;
+  if(!fill || fill.value===undefined || fill.value===null) return;
   if(questionStates[q.id]==="done") return;
 
-  if(q.type==="set_select" && typeof fill.value==="object"){
-    Object.entries(fill.value).forEach(([field,value])=>{
-      const el=document.querySelector(`[data-qset="${cssEscape(q.id)}"][data-qset-field="${cssEscape(field)}"]`);
-      if(el && !el.value) el.value=value||"";
-    });
+  const showAutoFillNote=()=>{
     const panel=document.querySelector(`[data-qbox="${cssEscape(q.id)}"] .qpanel`);
     if(panel && !panel.querySelector(".auto-fill-note")){
       const note=document.createElement("div");
@@ -712,9 +708,119 @@ function applyAutoFillOnOpen(q){
       note.textContent=fill.source==="planner" ? "T12 Plannerの保存データを引用しています。内容が異なる場合は修正してください。" : "前回回答データを引用しています。内容が異なる場合は修正してください。";
       panel.prepend(note);
     }
-    if(isQuestionAnswered(q)) questionStates[q.id]="auto";
+  };
+
+  if(q.type==="set_select" && typeof fill.value==="object" && !Array.isArray(fill.value)){
+    Object.entries(fill.value).forEach(([field,value])=>{
+      const el=document.querySelector(`[data-qset="${cssEscape(q.id)}"][data-qset-field="${cssEscape(field)}"]`);
+      if(el && !el.value) el.value=value||"";
+    });
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="single_select"){
+    const current=document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`);
+    const radio=Array.from(document.querySelectorAll(`input[name='q_${cssEscape(q.id)}']`))
+      .find(el=>String(el.value)===String(fill.value));
+
+    if(radio && !current){
+      radio.checked=true;
+    }
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="multi_select" && Array.isArray(fill.value)){
+    fill.value.forEach(v=>{
+      const ch=Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']`))
+        .find(el=>String(el.value)===String(v));
+      if(ch) ch.checked=true;
+    });
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="hero_multi" && Array.isArray(fill.value)){
+    fill.value.forEach(v=>{
+      const ch=Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']`))
+        .find(el=>String(el.value)===String(v));
+      if(ch){
+        ch.checked=true;
+        const label=ch.closest(".hero-option");
+        if(label) label.classList.add("selected");
+      }
+    });
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="number" || q.type==="number_unit" || q.type==="text"){
+    const input=document.querySelector(`[data-qinput='${cssEscape(q.id)}']`);
+    if(input && !String(input.value||"").trim()){
+      input.value=fill.value||"";
+    }
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="time_select"){
+    const el=document.querySelector(`[data-qtime='${cssEscape(q.id)}']`);
+    if(el && !el.value) el.value=fill.value||"";
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="time_range" && typeof fill.value==="object" && !Array.isArray(fill.value)){
+    const start=document.querySelector(`[data-qtime-start='${cssEscape(q.id)}']`);
+    const end=document.querySelector(`[data-qtime-end='${cssEscape(q.id)}']`);
+    if(start && !start.value) start.value=fill.value.start||"";
+    if(end && !end.value) end.value=fill.value.end||"";
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
+    return;
+  }
+
+  if(q.type==="time_hm" && typeof fill.value==="object" && !Array.isArray(fill.value)){
+    const hour=document.querySelector(`[data-qhour='${cssEscape(q.id)}']`);
+    const minute=document.querySelector(`[data-qminute='${cssEscape(q.id)}']`);
+    if(hour && !hour.value) hour.value=fill.value.hour||"";
+    if(minute && !minute.value) minute.value=fill.value.minute||"";
+
+    if(isQuestionAnswered(q)){
+      showAutoFillNote();
+      questionStates[q.id]="auto";
+    }
   }
 }
+
 function markEditedByElement(el){
   const qid=el.dataset.qset||el.dataset.qinput||el.dataset.qtime||el.dataset.qtimeStart||el.dataset.qtimeEnd||el.dataset.qhour||el.dataset.qminute||el.dataset.qmulti||el.dataset.qhero||"";
   if(qid && questionStates[qid]==="auto") questionStates[qid]="done";
