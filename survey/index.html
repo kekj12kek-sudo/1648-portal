@@ -3,713 +3,1179 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>質問カード管理</title>
+<title>アンケートRoom</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
-body{padding:16px 16px 32px}
-.header{position:sticky;top:0;z-index:20;margin:-16px -16px 16px;padding:14px 16px;background:linear-gradient(180deg,rgba(7,11,18,.98),rgba(7,11,18,.86));border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
-h1{font-size:20px;color:#c084fc}
-.sub{margin-top:4px;font-size:12px;opacity:.75;line-height:1.7}
-.back{display:inline-flex;margin-top:12px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:800}
-.panel{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:14px;margin-bottom:14px}
-.panel-title{font-size:16px;font-weight:900;margin-bottom:10px;color:#e9d5ff}
-.help-box{border:1px solid rgba(96,165,250,.25);background:rgba(59,130,246,.08);color:#bfdbfe;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
-label{display:block;font-size:13px;font-weight:900;margin:14px 0 7px;color:#e5e7eb}
-input,textarea,select{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit}
-select option{color:#111827}
-textarea{min-height:92px;resize:vertical;line-height:1.6}
-.type-grid{display:grid;grid-template-columns:1fr;gap:8px}
-.type-btn{display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);border-radius:14px;padding:12px;cursor:pointer}
-.type-btn.active{border-color:rgba(192,132,252,.8);background:rgba(126,34,206,.22)}
-.type-btn input{width:18px;height:18px;flex-shrink:0}
-.type-name{font-size:14px;font-weight:900}
-.type-desc{font-size:11px;opacity:.68;margin-top:2px}
-.dynamic-box{margin-top:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);border-radius:16px;padding:13px}
-.dynamic-title{font-size:14px;font-weight:900;color:#fde68a;margin-bottom:6px}
-.dynamic-desc{font-size:12px;line-height:1.7;opacity:.78;margin-bottom:10px}
-.option-list{display:flex;flex-direction:column;gap:8px}
-.option-row{display:flex;gap:8px;align-items:center}
-.option-row input{flex:1}
-.option-remove{width:42px;height:42px;border:none;border-radius:12px;background:rgba(248,113,113,.16);color:#fecaca;font-weight:900;font-size:18px}
-.add-option{width:100%;margin-top:10px;border:none;border-radius:13px;background:rgba(59,130,246,.18);color:#bfdbfe;font-size:13px;font-weight:900;padding:11px}
-.example-box{border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);border-radius:12px;padding:11px;font-size:12px;line-height:1.7;color:#cbd5e1}
-.image-placeholder{border:1px dashed rgba(255,255,255,.25);background:rgba(255,255,255,.04);border-radius:14px;padding:14px;font-size:12px;line-height:1.7;color:#cbd5e1}
-.preview{border:1px solid rgba(34,197,94,.24);background:rgba(34,197,94,.06);border-radius:18px;padding:14px;margin-top:14px}
-.preview-head{font-size:13px;font-weight:900;color:#86efac;margin-bottom:10px}
-.preview-card{border:1px solid rgba(255,255,255,.13);background:rgba(0,0,0,.22);border-radius:16px;padding:13px}
-.preview-title{font-size:16px;font-weight:900;margin-bottom:6px}
-.preview-body{font-size:13px;line-height:1.7;opacity:.82;margin:10px 0 12px}
-.choice{display:flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:12px;padding:10px;margin-top:8px;font-size:14px}
-.fake-radio,.fake-check{width:18px;height:18px;border:2px solid rgba(255,255,255,.45);flex-shrink:0}
-.fake-radio{border-radius:50%}
-.fake-check{border-radius:5px}
-.fake-input{height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);display:flex;align-items:center;padding:0 12px;color:rgba(255,255,255,.5)}
-.set-preview-row{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;margin-top:8px}
-.set-preview-label{font-size:13px;font-weight:900;color:#bfdbfe}
-.unit-preview{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
-.unit-chip{min-width:42px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fde68a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:950;padding:0 10px}
-.time-preview{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
-.time-sep{color:#cbd5e1;font-size:14px;font-weight:900}
-.category-badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:900;background:rgba(59,130,246,.16);color:#bfdbfe;margin-top:4px}
-.btn{width:100%;min-height:52px;margin-top:14px;border:none;border-radius:15px;background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;font-size:16px;font-weight:900;cursor:pointer}
-.btn:disabled{opacity:.55;cursor:not-allowed}
-.btn-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e5e7eb}
-.msg{font-size:12px;line-height:1.7;margin-top:10px;text-align:center}
-.ok{color:#86efac}
+
+html,body{
+  width:100%;
+  min-height:100%;
+  background:#070b12;
+  color:#fff;
+  font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+}
+
+body{
+  padding:16px;
+  padding-bottom:32px;
+}
+
+/* =========================
+   背景動画：Roomホーム専用
+========================= */
+.bg-video{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center center;
+  background:#070b12;
+  z-index:0;
+  opacity:1;
+  pointer-events:none;
+}
+
+.bg-shade{
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(7,11,18,.24) 0%,rgba(7,11,18,.16) 45%,rgba(7,11,18,.06) 100%),
+    linear-gradient(180deg,rgba(7,11,18,.22) 0%,rgba(7,11,18,.12) 50%,rgba(7,11,18,.25) 100%);
+}
+
+#app{
+  position:relative;
+  z-index:2;
+}
+
+/* 回答画面では動画を消して読みやすい固定背景 */
+body.answer-mode{
+  background:
+    radial-gradient(circle at 18% 0%,rgba(34,197,94,.12),transparent 28%),
+    radial-gradient(circle at 95% 6%,rgba(96,165,250,.10),transparent 26%),
+    #070b12;
+}
+
+body.answer-mode .bg-video,
+body.answer-mode .bg-shade{
+  display:none;
+}
+
+/* =========================
+   共通ヘッダー
+========================= */
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  margin:-16px -16px 10px;
+  padding:12px 14px 6px;
+  min-height:94px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  grid-template-areas:
+    "title user"
+    "back user";
+  column-gap:12px;
+  align-items:start;
+  background:linear-gradient(180deg,rgba(7,11,18,.58),rgba(7,11,18,.10));
+  border-bottom:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+body.answer-mode .header{
+  background:linear-gradient(180deg,rgba(7,11,18,.96),rgba(7,11,18,.80));
+}
+
+.header h1{
+  grid-area:title;
+  font-size:23px;
+  line-height:1.15;
+  color:#86efac;
+  font-weight:950;
+}
+
+.header .sub{
+  display:none;
+}
+
+.back{
+  grid-area:back;
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  margin-top:6px;
+  color:#93c5fd;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:900;
+}
+
+.room-user-mini{
+  grid-area:user;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+}
+
+.room-user-line{
+  min-width:104px;
+  border:1px solid rgba(134,239,172,.50);
+  background:rgba(8,34,22,.34);
+  color:#fff;
+  border-radius:12px 0 0 12px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:950;
+  line-height:1.2;
+  text-align:left;
+  box-shadow:0 0 16px rgba(34,197,94,.10);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+body.answer-mode .room-user-line{
+  background:rgba(8,34,22,.62);
+}
+
+.room-user-line.alliance{
+  margin-right:8px;
+}
+
+/* =========================
+   アンケートRoom 一覧
+========================= */
+.user-box{
+  display:none;
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+  margin-top:3vh;
+}
+
+.survey-card{
+  width:min(88vw,410px);
+  min-height:70px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:15px;
+  display:grid;
+  grid-template-columns:1fr 96px;
+  grid-template-areas:
+    "main status"
+    "main button";
+  gap:7px 9px;
+  align-items:center;
+  text-align:left;
+  background:rgba(18,24,31,.34);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  box-shadow:0 14px 24px rgba(0,0,0,.18);
+}
+
+.survey-card.todo-card{
+  border-color:rgba(251,146,60,.78);
+  background:rgba(42,22,8,.34);
+  box-shadow:0 0 16px rgba(251,146,60,.24),0 14px 24px rgba(0,0,0,.20);
+}
+
+.survey-card.done-card{
+  border-color:rgba(134,239,172,.42);
+  background:rgba(8,34,22,.30);
+  box-shadow:0 0 10px rgba(34,197,94,.10),0 14px 24px rgba(0,0,0,.18);
+}
+
+.status-row{
+  grid-area:status;
+  display:flex;
+  justify-content:flex-end;
+  margin:0;
+}
+
+.status{
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:10px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.status.todo{
+  background:rgba(251,146,60,.22);
+  color:#fed7aa;
+  border:1px solid rgba(251,146,60,.35);
+}
+
+.status.done{
+  background:rgba(34,197,94,.20);
+  color:#bbf7d0;
+  border:1px solid rgba(134,239,172,.32);
+}
+
+.survey-title{
+  grid-area:main;
+  font-size:15px;
+  font-weight:950;
+  line-height:1.35;
+  color:#fff;
+  margin:0 0 5px;
+  text-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+
+.note{
+  display:none;
+}
+
+.meta-box{
+  grid-area:main;
+  margin-top:27px;
+  text-align:left;
+}
+
+.meta-line{
+  padding:0;
+  border:none;
+  background:transparent;
+}
+
+.meta-label{
+  display:inline;
+  font-size:10px;
+  font-weight:900;
+  margin-right:5px;
+  color:#cbd5e1;
+}
+
+.meta-value{
+  display:inline;
+  font-size:12px;
+  font-weight:950;
+  color:#fde68a;
+}
+
+.btn{
+  grid-area:button;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  text-decoration:none;
+  width:100%;
+  min-height:35px;
+  border:none;
+  border-radius:11px;
+  margin:0;
+  padding:0 7px;
+  background:linear-gradient(135deg,#f97316,#fdba74);
+  color:#431407;
+  font-size:12px;
+  font-weight:950;
+  cursor:pointer;
+}
+
+.todo-card .btn{
+  box-shadow:0 0 16px rgba(251,146,60,.35);
+}
+
+.done-card .btn{
+  background:linear-gradient(135deg,#16a34a,#86efac);
+  color:#052e16;
+}
+
+.empty-room{
+  width:min(88vw,410px);
+  margin-left:auto;
+  margin-top:3vh;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(30,35,42,.28);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  border-radius:16px;
+  padding:22px 14px;
+  text-align:center;
+  font-size:16px;
+  font-weight:950;
+  color:rgba(255,255,255,.88);
+}
+
+.empty-room-icon{
+  font-size:28px;
+  opacity:.74;
+  margin-bottom:8px;
+}
+
+.empty{
+  font-size:13px;
+  line-height:1.7;
+  opacity:.72;
+  text-align:center;
+  padding:28px 8px;
+}
+
+.loading{
+  display:none;
+}
+
 .error{color:#fca5a5}
-.card-list{display:flex;flex-direction:column;gap:10px}
-.q-card{border:1px solid rgba(255,255,255,.13);background:linear-gradient(135deg,rgba(30,41,59,.95),rgba(15,23,42,.95));border-radius:16px;padding:13px}
-.q-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.q-title{font-size:15px;font-weight:900;line-height:1.4}
-.q-meta{font-size:10px;opacity:.65;margin-top:4px}
-.q-desc{font-size:12px;line-height:1.6;opacity:.75;margin-top:8px}
-.q-options{font-size:11px;line-height:1.6;margin-top:8px;color:#bfdbfe}
-.q-actions{display:flex;gap:8px;margin-top:10px}
-.small-btn{border:none;border-radius:999px;padding:8px 11px;font-size:11px;font-weight:900;cursor:pointer}
-.edit{background:rgba(59,130,246,.18);color:#bfdbfe}
-.delete{background:rgba(248,113,113,.16);color:#fecaca}
-.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:900;background:rgba(255,255,255,.1);color:#e5e7eb;white-space:nowrap}
-.empty{font-size:13px;line-height:1.7;opacity:.72;text-align:center;padding:20px 8px}
-@media(min-width:700px){.type-grid{grid-template-columns:1fr 1fr}}
+.ok{color:#86efac}
+
+/* =========================
+   回答画面
+========================= */
+.answer-page{
+  padding-top:4px;
+}
+
+.question{
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:14px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.qtitle{
+  font-size:16px;
+  font-weight:900;
+  line-height:1.4;
+}
+
+.qbody{
+  font-size:13px;
+  line-height:1.7;
+  opacity:.82;
+  margin-top:8px;
+}
+
+.choice{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  border-radius:12px;
+  padding:11px;
+  margin-top:8px;
+  font-size:14px;
+}
+
+.choice input{
+  width:19px;
+  height:19px;
+  flex-shrink:0;
+}
+
+input[type='number'],textarea{
+  width:100%;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-size:16px;
+  padding:12px;
+  outline:none;
+  font-family:inherit;
+  margin-top:10px;
+}
+
+textarea{
+  min-height:92px;
+  resize:vertical;
+  line-height:1.6;
+}
+
+.hero-option{
+  position:relative;
+  display:block;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045);
+  border-radius:17px;
+  margin-top:12px;
+  padding:10px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.hero-option.selected{
+  border-color:rgba(134,239,172,.42);
+  background:rgba(34,197,94,.10);
+}
+
+.hero-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:34px;
+  margin-bottom:8px;
+}
+
+.hero-option input{
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  accent-color:#22c55e;
+}
+
+.hero-label{
+  font-size:15px;
+  font-weight:950;
+  line-height:1.4;
+}
+
+.hero-option img{
+  width:100%;
+  display:block;
+  border-radius:13px;
+  border:2px solid transparent;
+  background:rgba(255,255,255,.08);
+  transition:.15s;
+}
+
+.hero-option.selected img{
+  border-color:#86efac;
+  box-shadow:0 0 0 1px rgba(134,239,172,.22),0 0 22px rgba(34,197,94,.32);
+}
+
+.progress-box{
+  border:1px solid rgba(96,165,250,.24);
+  background:rgba(37,99,235,.10);
+  border-radius:15px;
+  padding:10px 12px;
+  margin-bottom:14px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#bfdbfe;
+}
+
+.progress-bar{
+  height:8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  overflow:hidden;
+  margin-top:8px;
+}
+
+.progress-fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#2563eb,#86efac);
+  transition:.18s;
+}
+
+.save{
+  width:100%;
+  min-height:52px;
+  border:none;
+  border-radius:15px;
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.save:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.msg{
+  font-size:12px;
+  line-height:1.7;
+  margin-top:10px;
+  text-align:center;
+}
+
+.answer-note{
+  border:1px solid rgba(250,204,21,.25);
+  background:rgba(250,204,21,.08);
+  color:#fde68a;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.7;
+  margin-bottom:14px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.complete-card{
+  border:1px solid rgba(134,239,172,.28);
+  background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(15,23,42,.72));
+  border-radius:20px;
+  padding:18px;
+  text-align:center;
+  margin-top:18px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.complete-title{
+  font-size:22px;
+  font-weight:950;
+  color:#86efac;
+  line-height:1.35;
+}
+
+.complete-body{
+  margin-top:10px;
+  font-size:13px;
+  line-height:1.8;
+  color:#dbeafe;
+  opacity:.9;
+}
+
+.complete-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:52px;
+  margin-top:16px;
+  border-radius:15px;
+  text-decoration:none;
+  background:linear-gradient(135deg,#16a34a,#86efac);
+  color:#052e16;
+  font-size:15px;
+  font-weight:950;
+}
+
+/* =========================
+   小型端末
+========================= */
+@media(max-width:390px){
+  .header{
+    min-height:88px;
+    padding:11px 13px 5px;
+  }
+
+  .header h1{
+    font-size:22px;
+  }
+
+  .room-user-line{
+    min-width:98px;
+    font-size:11px;
+    padding:6px 9px;
+  }
+
+  .list{
+    margin-top:2.5vh;
+  }
+
+  .survey-card{
+    width:90vw;
+    grid-template-columns:1fr 90px;
+  }
+
+  .survey-title{
+    font-size:14px;
+  }
+
+  .btn{
+    font-size:11px;
+  }
+}
+
+/* =========================
+   追加回答形式
+========================= */
+.unit-input-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.unit-label{min-width:42px;padding:12px 10px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fde68a;font-size:13px;font-weight:950;text-align:center}
+select{width:100%;border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:16px;padding:12px;outline:none;font-family:inherit;margin-top:10px}
+select option{color:#111827}
+.time-range{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:10px}
+.time-range-sep{color:#cbd5e1;font-size:14px;font-weight:900}
+.placeholder-hint{margin-top:6px;color:#94a3b8;font-size:11px;line-height:1.5}
+
+
+.question-accordion{margin-bottom:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045)}.qbar{width:100%;border:none;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;padding:12px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.qbar.no-answer{border-left:5px solid #fb923c}.qbar.active{border-left:5px solid #60a5fa}.qbar.done{border-left:5px solid #22c55e}.qno{font-size:12px;font-weight:950;color:#fde68a}.qbar-title{font-size:14px;font-weight:950;line-height:1.35}.qbar-state{font-size:11px;font-weight:950;opacity:.78}.qpanel{display:none;padding:12px}.question-accordion.open .qpanel{display:block}.set-answer-row{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;margin-top:10px}.set-answer-label{font-size:13px;font-weight:950;color:#bfdbfe}.set-answer-row select{margin-top:0}
 </style>
 </head>
 <body>
+<video class="bg-video" autoplay muted loop playsinline preload="auto">
+  <source src="/1648-portal/survey/bg.mp4" type="video/mp4">
+</video>
+<div class="bg-shade"></div>
 <div id="app"></div>
+
 <script>
-const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
-const ADMIN_URL="/1648-portal/admin/";
-const SAVE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveQuestionCard";
-const LIST_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/listQuestionCards";
-const DELETE_URL="https://us-central1-yoyaku-4ec7c.cloudfunctions.net/deleteQuestionCard";
+const LOGIN_URL =
+  "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
 
-let session=null;
-let editingCardId="";
-let optionValues=[""];
-let setItems=[];
+const PORTAL_URL = "/1648-portal/";
 
-const SET_PRESETS={
-  fc_barracks:{
-    category:"fc",
-    setKind:"fc_barracks",
-    items:[{id:"shield",label:"盾兵舎"},{id:"spear",label:"槍兵舎"},{id:"bow",label:"弓兵舎"}],
-    options:["FC10","FC9","FC8","FC7"]
-  },
-  tier_troops:{
-    category:"tier",
-    setKind:"tier_troops",
-    items:[{id:"shield",label:"盾兵"},{id:"spear",label:"槍兵"},{id:"bow",label:"弓兵"}],
-    options:["T12","T11","T10"]
-  },
-  t12_status:{
-    category:"t12",
-    setKind:"t12_status",
-    items:[{id:"shield",label:"盾T12"},{id:"spear",label:"槍T12"},{id:"bow",label:"弓T12"}],
-    options:["未解放","T12解放済","スキル3済","容量MAX済","カンスト"]
-  }
-};
+const LIST_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getOpenSurveysForUser";
+const GET_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/getSurveyForAnswer";
+const SAVE_URL =
+  "https://us-central1-yoyaku-4ec7c.cloudfunctions.net/saveSurveyAnswer";
+
+let session = null;
+let surveyId = "";
+let survey = null;
+let questions = [];
+let oldAnswer = null;
+
+
+function toggleQuestionBox(id){const box=document.querySelector(`[data-qbox="${cssEscape(id)}"]`);if(box)box.classList.toggle("open")}
+function questionStatusClass(q){return isQuestionAnswered(q)?"done":"no-answer"}
+function questionStatusText(q){return isQuestionAnswered(q)?"回答済み":"未回答"}
+function refreshQuestionBars(){questions.forEach(q=>{const box=document.querySelector(`[data-qbox="${cssEscape(q.id)}"]`);if(!box)return;const bar=box.querySelector(".qbar"),state=box.querySelector(".qbar-state");if(bar){bar.classList.remove("done","no-answer");bar.classList.add(questionStatusClass(q))}if(state)state.textContent=questionStatusText(q)})}
+function setSelectTemplate(q,value){const current=value&&typeof value==="object"?value:{};const items=Array.isArray(q.setItems)&&q.setItems.length?q.setItems:[{id:"shield",label:"盾"},{id:"spear",label:"槍"},{id:"bow",label:"弓"}];const opts=Array.isArray(q.options)?q.options:[];return items.map(item=>`<div class="set-answer-row"><div class="set-answer-label">${escapeHtml(item.label||item.id)}</div><select data-qset="${escapeAttr(q.id)}" data-qset-field="${escapeAttr(item.id)}"><option value="">選択してください</option>${opts.map(opt=>`<option value="${escapeAttr(opt)}" ${current[item.id]===opt?"selected":""}>${escapeHtml(opt)}</option>`).join("")}</select></div>`).join("")}
+
 
 function getSession(){
-  const raw=localStorage.getItem("discord_user");
-  if(!raw){location.replace(LOGIN_URL);return null}
+  const raw = localStorage.getItem("discord_user");
+
+  if(!raw){
+    window.location.replace(LOGIN_URL);
+    return null;
+  }
+
   try{
-    const d=JSON.parse(raw);
-    if(!d.ok){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
-    if(d.status==="pending_profile"){location.replace("/1648-portal/profile-setup/");return null}
-    if(d.status!=="active"){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
-    return d;
+    const data = JSON.parse(raw);
+
+    if(!data.ok){
+      localStorage.removeItem("discord_user");
+      window.location.replace(LOGIN_URL);
+      return null;
+    }
+
+    if(data.status === "pending_profile"){
+      window.location.replace("/1648-portal/profile-setup/");
+      return null;
+    }
+
+    if(data.status !== "active"){
+      localStorage.removeItem("discord_user");
+      window.location.replace(LOGIN_URL);
+      return null;
+    }
+
+    return data;
   }catch(e){
     localStorage.removeItem("discord_user");
-    location.replace(LOGIN_URL);
+    window.location.replace(LOGIN_URL);
     return null;
   }
 }
 
 function getDiscordId(){
-  return session?.user?.discordId||session?.discord?.id||session?.discordId||"";
+  return (
+    session?.user?.discordId ||
+    session?.discord?.id ||
+    session?.discordId ||
+    ""
+  );
 }
 
-function getPermissionLevel(d){
-  const id=d?.user?.discordId||d?.discord?.id||d?.discordId||"";
-  if(id==="795152243883114527")return 3;
-  return ({developer:3,manager:2,technical:1,member:0})[d?.role||d?.user?.role||"member"]??0;
+function getUserName(){
+  return (
+    session?.user?.playerName ||
+    session?.discord?.globalName ||
+    session?.discord?.username ||
+    "メンバー"
+  );
 }
 
-function typeRadio(value,title,desc){
-  return `<label class="type-btn" data-type-wrap="${value}">
-    <input type="radio" name="answerType" value="${value}" ${value==="single_select"?"checked":""}>
-    <div><div class="type-name">${title}</div><div class="type-desc">${desc}</div></div>
-  </label>`;
+function getAlliance(){
+  return session?.user?.alliance || "";
 }
 
-function render(){
-  document.getElementById("app").innerHTML=`
+function setMode(mode){
+  document.body.classList.toggle("answer-mode", mode === "answer");
+}
+
+function renderHeader(title, sub, backUrl = PORTAL_URL){
+  const name = getUserName();
+  const alliance = getAlliance();
+
+  return `
     <div class="header">
-      <h1>質問カード管理</h1>
-      <div class="sub">よく使う質問をストックします。<br>アンケート作成時に、この一覧から選んで使えます。</div>
-      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title" id="formTitle">新しい質問を作る</div>
-      <div class="help-box">
-        FC＝施設レベル、ティア＝兵質、T12＝研究進捗として分けて管理します。<br>
-        英雄カードは回答方式の一つです。使う場合はカテゴリーを「英雄育成」にしてください。
+      <h1>${escapeHtml(title)}</h1>
+      <div class="sub">${escapeHtml(sub)}</div>
+      <a class="back" href="${backUrl}">← 戻る</a>
+      <div class="room-user-mini">
+        <div class="room-user-line">👤 ${escapeHtml(name)}</div>
+        <div class="room-user-line alliance">🛡 ${escapeHtml(alliance || "-")}</div>
       </div>
-
-      <label for="category">カテゴリー</label>
-      <select id="category">
-        <option value="general">自由質問</option>
-        <option value="fc">FC</option>
-        <option value="tier">ティア</option>
-        <option value="t12">T12</option>
-        <option value="hero">英雄育成</option>
-        <option value="pet">ペット</option>
-        <option value="power">戦力</option>
-        <option value="time">参加時間</option>
-      </select>
-
-      <label for="title">質問タイトル</label>
-      <input id="title" placeholder="例：盾・槍・弓兵舎のFCレベルについて">
-
-      <label for="content">質問内容</label>
-      <textarea id="content" placeholder="例：現在の盾兵舎・槍兵舎・弓兵舎のFCレベルを選択してください"></textarea>
-
-      <label>回答方式</label>
-      <div class="type-grid">
-        ${typeRadio("single_select","1つだけ選択","選択肢の中から1つだけ選ばせる")}
-        ${typeRadio("multi_select","複数選択","当てはまるものを複数選ばせる")}
-        ${typeRadio("set_select","セット質問","盾・槍・弓などを1セットで回答させる")}
-        ${typeRadio("number","数字で入力","出征数・容量など数字だけ入力させる")}
-        ${typeRadio("number_unit","数字＋単位","数字入力に「人」「万」などの単位を付ける")}
-        ${typeRadio("time_select","時間プルダウン","21:00などの時刻を選ばせる")}
-        ${typeRadio("time_range","時間範囲","開始時刻〜終了時刻を選ばせる")}
-        ${typeRadio("time_hm","時:分入力","時と分を分けて選ばせる")}
-        ${typeRadio("hero_multi","英雄カード選択","英雄カードから複数選択させる")}
-        ${typeRadio("text","文章で入力","連絡事項や補足を書かせる")}
-      </div>
-
-      <div id="dynamicArea"></div>
-
-      <label>入力例 / プレースホルダー</label>
-      <input id="placeholder" placeholder="例：1439710 / 21:00 / FC10">
-      <div class="sub">回答欄の薄い入力例として表示されます。</div>
-
-      <label>画像</label>
-      <div class="image-placeholder">
-        画像アップロードは次の工程で追加します。<br>
-        英雄カードは英雄管理画面から登録済みのカードを使用します。
-      </div>
-
-      <div class="preview">
-        <div class="preview-head">回答者にはこう表示されます</div>
-        <div id="answerPreview"></div>
-      </div>
-
-      <button class="btn" id="saveBtn">保存する</button>
-      <button class="btn btn-secondary" id="resetBtn" type="button">入力をリセット</button>
-      <div id="msg" class="msg"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title">質問ストック</div>
-      <div id="cardList" class="card-list"><div class="empty">読み込み中...</div></div>
     </div>
   `;
-
-  document.querySelectorAll("input[name='answerType']").forEach(r=>{
-    r.addEventListener("change",()=>{
-      refreshTypeUI();
-      renderDynamicArea();
-      renderPreview();
-    });
-  });
-
-  ["title","content","placeholder","category"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    el.addEventListener("input",renderPreview);
-    el.addEventListener("change",()=>{
-      if(id==="category"&&getSelectedType()==="set_select"){
-        applySetPreset(inferSetKind());
-      }
-      renderPreview();
-    });
-  });
-
-  document.getElementById("saveBtn").addEventListener("click",saveCard);
-  document.getElementById("resetBtn").addEventListener("click",resetForm);
-
-  refreshTypeUI();
-  renderDynamicArea();
-  renderPreview();
-  loadCards();
 }
 
-function getSelectedType(){
-  return document.querySelector("input[name='answerType']:checked")?.value||"text";
-}
-
-function refreshTypeUI(){
-  const t=getSelectedType();
-  document.querySelectorAll("[data-type-wrap]").forEach(el=>{
-    el.classList.toggle("active",el.dataset.typeWrap===t);
-  });
-}
-
-function inferSetKind(){
-  const cat=document.getElementById("category")?.value||"general";
-  if(cat==="fc")return "fc_barracks";
-  if(cat==="tier")return "tier_troops";
-  if(cat==="t12")return "t12_status";
-  return "fc_barracks";
-}
-
-function applySetPreset(kind){
-  const p=SET_PRESETS[kind]||SET_PRESETS.fc_barracks;
-  setItems=p.items.map(x=>({...x}));
-  optionValues=[...p.options];
-  const cat=document.getElementById("category");
-  if(cat)cat.value=p.category;
-}
-
-function renderDynamicArea(){
-  const t=getSelectedType();
-  const a=document.getElementById("dynamicArea");
-
-  if(t==="single_select"||t==="multi_select"||t==="time_select"){
-    const title=t==="time_select"?"時間選択肢":"選択肢";
-    const desc=t==="time_select"
-      ?"未入力の場合は0:00〜23:30を30分刻みで自動生成します。必要ならここで時間を指定できます。"
-      :"回答者が選ぶ項目です。必要な分だけ追加してください。";
-
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">${title}</div>
-      <div class="dynamic-desc">${desc}</div>
-      <div id="optionList" class="option-list"></div>
-      <button class="add-option" type="button" id="addOptionBtn">＋ 選択肢を追加</button>
-    </div>`;
-    renderOptionRows();
-    document.getElementById("addOptionBtn").addEventListener("click",()=>{
-      syncOptionValues();
-      optionValues.push("");
-      renderOptionRows();
-      renderPreview();
-    });
-    return;
-  }
-
-  if(t==="set_select"){
-    if(!setItems.length)applySetPreset(inferSetKind());
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">セット質問</div>
-      <div class="dynamic-desc">盾・槍・弓など、同じ選択肢で複数項目を回答させます。</div>
-      <label>セット種別</label>
-      <select id="setKind">
-        <option value="fc_barracks">FC：盾・槍・弓兵舎</option>
-        <option value="tier_troops">ティア：盾・槍・弓兵</option>
-        <option value="t12_status">T12：盾・槍・弓研究</option>
-      </select>
-      <label>セット項目</label>
-      <div class="example-box" id="setItemDisplay"></div>
-      <label>選択肢</label>
-      <div id="optionList" class="option-list"></div>
-      <button class="add-option" type="button" id="addOptionBtn">＋ 選択肢を追加</button>
-    </div>`;
-    document.getElementById("setKind").value=inferSetKind();
-    document.getElementById("setKind").addEventListener("change",e=>{
-      applySetPreset(e.target.value);
-      renderDynamicArea();
-      renderPreview();
-    });
-    document.getElementById("setItemDisplay").innerHTML=setItems
-      .map(x=>`${escapeHtml(x.label)} <span style="opacity:.55">(${escapeHtml(x.id)})</span>`)
-      .join("<br>");
-    renderOptionRows();
-    document.getElementById("addOptionBtn").addEventListener("click",()=>{
-      syncOptionValues();
-      optionValues.push("");
-      renderOptionRows();
-      renderPreview();
-    });
-    return;
-  }
-
-  if(t==="number_unit"){
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">数字＋単位の質問です</div>
-      <div class="dynamic-desc">回答者は数字を入力し、右側に単位が表示されます。</div>
-      <label for="unit">単位</label>
-      <input id="unit" placeholder="例：人 / 万 / Lv / %" value="">
-      <div class="example-box">例：最大出征数<br>単位：人<br>入力例：197710</div>
-    </div>`;
-    document.getElementById("unit").addEventListener("input",renderPreview);
-    return;
-  }
-
-  if(t==="time_range"||t==="time_hm"){
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">時間入力の質問です</div>
-      <div class="dynamic-desc">参加可能時間や希望時間の確認に使います。</div>
-      <label for="timeStep">時間間隔</label>
-      <select id="timeStep">
-        <option value="10">10分</option>
-        <option value="15">15分</option>
-        <option value="30" selected>30分</option>
-        <option value="60">60分</option>
-      </select>
-      <label for="startHour">開始時</label>
-      <input id="startHour" type="number" min="0" max="23" value="0">
-      <label for="endHour">終了時</label>
-      <input id="endHour" type="number" min="0" max="23" value="23">
-      <div class="example-box">例：21:00〜23:00</div>
-    </div>`;
-    ["timeStep","startHour","endHour"].forEach(id=>{
-      document.getElementById(id).addEventListener("input",renderPreview);
-      document.getElementById(id).addEventListener("change",renderPreview);
-    });
-    return;
-  }
-
-  if(t==="hero_multi"){
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">英雄カード選択です</div>
-      <div class="dynamic-desc">英雄管理に登録されている英雄カードを回答画面に表示します。</div>
-      <div class="example-box">例：条件を満たしている英雄にチェック<br>条件：★4以上 かつ 遠征スキルLv5</div>
-    </div>`;
-    return;
-  }
-
-  if(t==="number"){
-    a.innerHTML=`<div class="dynamic-box">
-      <div class="dynamic-title">数字入力の質問です</div>
-      <div class="dynamic-desc">回答者は数字だけ入力します。</div>
-    </div>`;
-    return;
-  }
-
-  a.innerHTML=`<div class="dynamic-box">
-    <div class="dynamic-title">文章入力の質問です</div>
-    <div class="dynamic-desc">回答者は自由に文章を書きます。</div>
-  </div>`;
-}
-
-function renderOptionRows(){
-  const l=document.getElementById("optionList");
-  if(!l)return;
-  l.innerHTML=optionValues.map((v,i)=>`
-    <div class="option-row">
-      <input data-option-index="${i}" value="${escapeAttr(v)}" placeholder="選択肢 ${i+1}">
-      <button class="option-remove" type="button" data-remove-option="${i}">×</button>
+function renderUserBox(){
+  const alliance = getAlliance();
+  return `
+    <div class="user-box">
+      回答者：${escapeHtml(getUserName())}
+      ${alliance ? `<br>同盟：${escapeHtml(alliance)}` : ""}
     </div>
-  `).join("");
-  document.querySelectorAll("[data-option-index]").forEach(input=>{
-    input.addEventListener("input",()=>{
-      syncOptionValues();
-      renderPreview();
-    });
-  });
-  document.querySelectorAll("[data-remove-option]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      syncOptionValues();
-      optionValues.splice(Number(btn.dataset.removeOption),1);
-      if(optionValues.length===0)optionValues.push("");
-      renderOptionRows();
-      renderPreview();
-    });
-  });
+  `;
 }
 
-function syncOptionValues(){
-  const ins=document.querySelectorAll("[data-option-index]");
-  if(ins.length)optionValues=Array.from(ins).map(i=>i.value.trim());
-}
+async function renderList(){
+  setMode("home");
 
-function getPlaceholderValue(){
-  return document.getElementById("placeholder")?.value.trim()||"";
-}
+  document.getElementById("app").innerHTML =
+    renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+    + `<div class="empty loading">読み込み中...</div>`;
 
-function getUnitValue(){
-  return document.getElementById("unit")?.value.trim()||"人";
-}
-
-function renderSetPreviewRows(){
-  const opts=optionValues.map(v=>v.trim()).filter(Boolean);
-  return (setItems.length?setItems:[{label:"盾兵舎"}]).map(it=>`
-    <div class="set-preview-row">
-      <div class="set-preview-label">${escapeHtml(it.label)}</div>
-      <div class="fake-input">${escapeHtml(opts[0]||"選択してください")}</div>
-    </div>
-  `).join("");
-}
-
-function renderPreview(){
-  syncOptionValues();
-  const title=document.getElementById("title")?.value.trim()||"質問タイトル";
-  const content=document.getElementById("content")?.value.trim()||"質問内容がここに表示されます";
-  const t=getSelectedType();
-  const opts=optionValues.map(v=>v.trim()).filter(Boolean);
-  const placeholder=getPlaceholderValue();
-  let ans="";
-
-  if(t==="single_select"){
-    (opts.length?opts:["選択肢1","選択肢2"]).forEach(v=>{
-      ans+=`<div class="choice"><span class="fake-radio"></span><span>${escapeHtml(v)}</span></div>`;
-    });
-  }else if(t==="multi_select"){
-    (opts.length?opts:["選択肢1","選択肢2"]).forEach(v=>{
-      ans+=`<div class="choice"><span class="fake-check"></span><span>${escapeHtml(v)}</span></div>`;
-    });
-  }else if(t==="set_select"){
-    ans=renderSetPreviewRows();
-  }else if(t==="number"){
-    ans=`<div class="fake-input">${escapeHtml(placeholder||"数字を入力")}</div>`;
-  }else if(t==="number_unit"){
-    ans=`<div class="unit-preview"><div class="fake-input">${escapeHtml(placeholder||"数字を入力")}</div><div class="unit-chip">${escapeHtml(getUnitValue())}</div></div>`;
-  }else if(t==="time_select"){
-    ans=`<div class="fake-input">${escapeHtml(placeholder||"21:00")}</div>`;
-  }else if(t==="time_range"){
-    ans=`<div class="time-preview"><div class="fake-input">開始</div><div class="time-sep">〜</div><div class="fake-input">終了</div></div>`;
-  }else if(t==="time_hm"){
-    ans=`<div class="time-preview"><div class="fake-input">時</div><div class="time-sep">:</div><div class="fake-input">分</div></div>`;
-  }else if(t==="hero_multi"){
-    ans=`<div class="choice"><span class="fake-check"></span><span>英雄カードを表示</span></div>`;
-  }else{
-    ans=`<div class="fake-input">${escapeHtml(placeholder||"文章を入力")}</div>`;
-  }
-
-  const cat=categoryLabel(document.getElementById("category")?.value||"general");
-  document.getElementById("answerPreview").innerHTML=`
-    <div class="preview-card">
-      <div class="preview-title">${escapeHtml(title)}</div>
-      <div class="category-badge">${escapeHtml(cat)}</div>
-      <div class="preview-body">${escapeHtml(content)}</div>
-      ${ans}
-    </div>`;
-}
-
-async function loadCards(){
-  const l=document.getElementById("cardList");
-  l.innerHTML=`<div class="empty">読み込み中...</div>`;
   try{
-    const r=await fetch(LIST_URL,{
+    const res = await fetch(LIST_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({discordId:getDiscordId()})
     });
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||"load_failed");
-    if(!d.cards.length){
-      l.innerHTML=`<div class="empty">まだ質問カードがありません。</div>`;
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "load_failed");
+    }
+
+    if(!data.surveys.length){
+      document.getElementById("app").innerHTML =
+        renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+        + `<div class="empty-room"><div class="empty-room-icon">☑</div>アンケートはありません。</div>`;
       return;
     }
-    l.innerHTML=d.cards.map(cardTemplate).join("");
-    document.querySelectorAll("[data-edit]").forEach(b=>{
-      b.addEventListener("click",()=>fillForm(JSON.parse(decodeURIComponent(b.dataset.edit))));
-    });
-    document.querySelectorAll("[data-delete]").forEach(b=>{
-      b.addEventListener("click",()=>deleteCard(b.dataset.delete));
-    });
-  }catch(e){
-    l.innerHTML=`<div class="empty error">読み込み失敗：${escapeHtml(e.message)}</div>`;
+
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+      + `<div class="list">`
+      + data.surveys.map(surveyCard).join("")
+      + `</div>`;
+
+  }catch(err){
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケートRoom", "公開中のアンケートを選んで回答できます。")
+      + `<div class="empty error">読み込み失敗：${escapeHtml(errorLabel(err.message))}</div>`;
   }
 }
 
-function cardTemplate(c){
-  const opts=(c.options||[]).join(" / ");
-  return `<div class="q-card">
-    <div class="q-top">
-      <div>
-        <div class="q-title">${escapeHtml(c.title||"無題")}</div>
-        <div class="q-meta">${typeLabel(c.type)} / ${escapeHtml(categoryLabel(c.category))}</div>
+function surveyCard(s){
+  const btnText = s.answered ? "回答を修正" : "回答する";
+  const statusText = s.answered ? "🟢 回答済み" : "🟠 未回答";
+  const statusClass = s.answered ? "done" : "todo";
+  const cardClass = s.answered ? "done-card" : "todo-card";
+
+  return `
+    <div class="survey-card ${cardClass}">
+      <div class="status-row">
+        <span class="status ${statusClass}">${statusText}</span>
       </div>
-      <span class="badge">ストック済み</span>
+
+      <div class="survey-title">${escapeHtml(s.title)}</div>
+
+      <div class="meta-box">
+        ${s.closeAt ? `
+          <div class="meta-line">
+            <span class="meta-label">締切</span>
+            <span class="meta-value deadline">${escapeHtml(formatDateTime(s.closeAt))}</span>
+          </div>
+        ` : ""}
+      </div>
+
+      <a class="btn" href="/1648-portal/survey/?id=${encodeURIComponent(s.id)}">${btnText}</a>
     </div>
-    ${c.description?`<div class="q-desc">${escapeHtml(c.description)}</div>`:""}
-    ${opts?`<div class="q-options">選択肢：${escapeHtml(opts)}</div>`:""}
-    ${c.setItems?.length?`<div class="q-options">セット項目：${escapeHtml(c.setItems.map(i=>i.label).join(" / "))}</div>`:""}
-    ${c.placeholder?`<div class="q-options">入力例：${escapeHtml(c.placeholder)}</div>`:""}
-    ${c.unit?`<div class="q-options">単位：${escapeHtml(c.unit)}</div>`:""}
-    <div class="q-actions">
-      <button class="small-btn edit" data-edit="${encodeURIComponent(JSON.stringify(c))}">編集</button>
-      <button class="small-btn delete" data-delete="${escapeAttr(c.id)}">削除</button>
-    </div>
-  </div>`;
+  `;
 }
 
-async function saveCard(){
-  const msg=document.getElementById("msg");
-  const btn=document.getElementById("saveBtn");
-  msg.className="msg";
-  msg.textContent="";
-  btn.disabled=true;
-  btn.textContent="保存中...";
+async function renderAnswer(){
+  setMode("answer");
 
-  const t=getSelectedType();
-  syncOptionValues();
-
-  const opts=(t==="single_select"||t==="multi_select"||t==="time_select"||t==="set_select")
-    ? optionValues.map(v=>v.trim()).filter(Boolean)
-    : [];
-
-  const card={
-    id:editingCardId,
-    title:document.getElementById("title").value.trim(),
-    description:document.getElementById("content").value.trim(),
-    type:t,
-    options:opts,
-    setItems:t==="set_select"?setItems:[],
-    setKind:t==="set_select"?inferSetKind():"",
-    placeholder:getPlaceholderValue(),
-    example:getPlaceholderValue(),
-    unit:document.getElementById("unit")?.value.trim()||"",
-    timeStep:Number(document.getElementById("timeStep")?.value||30),
-    startHour:Number(document.getElementById("startHour")?.value||0),
-    endHour:Number(document.getElementById("endHour")?.value||23),
-    imageUrl:"",
-    saveToProfile:false,
-    profileField:"",
-    category:document.getElementById("category")?.value||"general",
-    enabled:true
-  };
-
-  if(!card.title){
-    msg.className="msg error";
-    msg.textContent="質問タイトルを入力してください。";
-    btn.disabled=false;
-    btn.textContent="保存する";
-    return;
-  }
-
-  if(!card.description){
-    msg.className="msg error";
-    msg.textContent="質問内容を入力してください。";
-    btn.disabled=false;
-    btn.textContent="保存する";
-    return;
-  }
-
-  if((t==="single_select"||t==="multi_select"||t==="set_select")&&!card.options.length){
-    msg.className="msg error";
-    msg.textContent="選択式の場合は、選択肢を1つ以上入力してください。";
-    btn.disabled=false;
-    btn.textContent="保存する";
-    return;
-  }
+  document.getElementById("app").innerHTML =
+    renderHeader("アンケート", "読み込み中...", "/1648-portal/survey/")
+    + `<div class="empty">読み込み中...</div>`;
 
   try{
-    const r=await fetch(SAVE_URL,{
+    const res = await fetch(GET_URL, {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId:getDiscordId(),card})
+      body:JSON.stringify({
+        discordId:getDiscordId(),
+        surveyId
+      })
     });
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||"save_failed");
-    msg.className="msg ok";
-    msg.textContent="保存しました。質問ストックに追加されています。";
-    resetForm(false);
-    await loadCards();
-  }catch(e){
-    msg.className="msg error";
-    msg.textContent="保存失敗："+e.message;
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "load_failed");
+    }
+
+    survey = data.survey;
+    questions = data.questions || [];
+    oldAnswer = data.answer || null;
+
+    const old = oldAnswer?.answers || {};
+    const editNote = oldAnswer
+      ? `<div class="answer-note">前回の回答を読み込みました。変更がある場合だけ修正してください。</div>`
+      : `<div class="answer-note">ゲーム内の現在の状態を確認して回答してください。</div>`;
+
+    document.getElementById("app").innerHTML =
+      renderHeader(survey.title, survey.note || "1ページで最後まで回答できます。", "/1648-portal/survey/")
+      + `<div class="answer-page">`
+      + editNote
+      + progressTemplate()
+      + questions.map((q,idx) => questionAccordionTemplate(q, idx, old[q.id] !== undefined ? old[q.id] : q.defaultValue)).join("")
+      + `<button class="save" id="saveBtn">回答を保存</button><div id="msg" class="msg"></div>`
+      + `</div>`;
+
+    document.querySelectorAll("[data-qhero]").forEach(ch => {
+      ch.addEventListener("change", () => {
+        const label = ch.closest(".hero-option");
+        if(label) label.classList.toggle("selected", ch.checked);
+        updateProgress();
+      });
+    });
+
+    document.querySelectorAll("input, textarea, select").forEach(el => {
+      el.addEventListener("change", () => { updateProgress(); refreshQuestionBars(); });
+      el.addEventListener("input", () => { updateProgress(); refreshQuestionBars(); });
+    });
+
+    updateProgress();
+
+    document.getElementById("saveBtn").addEventListener("click", saveAnswer);
+
+  }catch(err){
+    document.getElementById("app").innerHTML =
+      renderHeader("アンケート", "読み込み失敗", "/1648-portal/survey/")
+      + `<div class="empty error">${escapeHtml(errorLabel(err.message))}</div>`;
+  }
+}
+
+
+function getQuestionPlaceholder(q){ return q.placeholder || q.example || ""; }
+function getQuestionUnit(q){ return q.unit || ""; }
+function getTimeOptions(q){
+  if(Array.isArray(q.options) && q.options.length) return q.options;
+  const step = Number(q.timeStep || 30);
+  const startHour = Number(q.startHour ?? 0);
+  const endHour = Number(q.endHour ?? 23);
+  const options = [];
+  for(let h=startHour; h<=endHour; h++){
+    for(let m=0; m<60; m+=step){
+      options.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+    }
+  }
+  return options;
+}
+function timeSelectTemplate(q, value, part){
+  const options = getTimeOptions(q);
+  const attr = part ? `data-qtime-${part}` : `data-qtime`;
+  const selected = value || "";
+  return `
+    <select ${attr}="${escapeAttr(q.id)}">
+      <option value="">選択してください</option>
+      ${options.map(t => `<option value="${escapeAttr(t)}" ${selected === t ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}
+    </select>
+  `;
+}
+
+function questionTemplate(q, value){
+  let html = `
+    <div class="question" data-question="${escapeAttr(q.id)}">
+      <div class="qtitle">${escapeHtml(q.title)}</div>
+      ${q.description ? `<div class="qbody">${escapeHtml(q.description)}</div>` : ""}
+  `;
+
+  if(q.imageUrl){
+    html += `<img src="${escapeAttr(q.imageUrl)}" alt="" style="width:100%;border-radius:14px;margin-top:10px;">`;
+  }
+
+  const placeholder = getQuestionPlaceholder(q);
+  const unit = getQuestionUnit(q);
+
+  if(q.type === "hero_multi"){
+    const arr = Array.isArray(value) ? value : [];
+    html += (q.options || []).map(hero => `
+      <label class="hero-option ${arr.includes(hero.id) ? "selected" : ""}" data-hero-choice="${escapeAttr(q.id)}">
+        <div class="hero-head">
+          <input type="checkbox" data-qhero="${escapeAttr(q.id)}" value="${escapeAttr(hero.id)}" ${arr.includes(hero.id) ? "checked" : ""}>
+          <div class="hero-label">${escapeHtml(hero.name)}</div>
+        </div>
+        ${hero.imageUrl ? `<img src="${escapeAttr(hero.imageUrl)}" alt="${escapeAttr(hero.name)}">` : ""}
+      </label>
+    `).join("");
+
+  }else if(q.type === "single_select"){
+    html += (q.options || []).map(opt => `
+      <label class="choice">
+        <input type="radio" name="q_${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${value === opt ? "checked" : ""}>
+        <span>${escapeHtml(opt)}</span>
+      </label>
+    `).join("");
+
+  }else if(q.type === "multi_select"){
+    const arr = Array.isArray(value) ? value : [];
+    html += (q.options || []).map(opt => `
+      <label class="choice">
+        <input type="checkbox" data-qmulti="${escapeAttr(q.id)}" value="${escapeAttr(opt)}" ${arr.includes(opt) ? "checked" : ""}>
+        <span>${escapeHtml(opt)}</span>
+      </label>
+    `).join("");
+
+  }else if(q.type === "set_select"){
+    html += setSelectTemplate(q, value);
+
+  }else if(q.type === "number_unit"){
+    html += `
+      <div class="unit-input-wrap">
+        <input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="${escapeAttr(placeholder || "数字を入力")}">
+        <div class="unit-label">${escapeHtml(unit || "単位")}</div>
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else if(q.type === "number"){
+    html += `
+      <input type="number" data-qinput="${escapeAttr(q.id)}" value="${escapeAttr(value || "")}" placeholder="${escapeAttr(placeholder || "数字を入力")}">
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else if(q.type === "time_select"){
+    html += timeSelectTemplate(q, value, "");
+    if(placeholder) html += `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>`;
+
+  }else if(q.type === "time_range"){
+    const range = value && typeof value === "object" ? value : {};
+    html += `
+      <div class="time-range">
+        ${timeSelectTemplate(q, range.start || "", "start")}
+        <div class="time-range-sep">〜</div>
+        ${timeSelectTemplate(q, range.end || "", "end")}
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else if(q.type === "time_hm"){
+    const hm = value && typeof value === "object" ? value : {};
+    const hour = hm.hour || "";
+    const minute = hm.minute || "";
+    html += `
+      <div class="time-range">
+        <select data-qhour="${escapeAttr(q.id)}">
+          <option value="">時</option>
+          ${Array.from({length:24},(_,i)=>String(i).padStart(2,"0")).map(h=>`<option value="${h}" ${hour === h ? "selected" : ""}>${h}</option>`).join("")}
+        </select>
+        <div class="time-range-sep">:</div>
+        <select data-qminute="${escapeAttr(q.id)}">
+          <option value="">分</option>
+          ${["00","10","20","30","40","50"].map(m=>`<option value="${m}" ${minute === m ? "selected" : ""}>${m}</option>`).join("")}
+        </select>
+      </div>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+
+  }else{
+    html += `
+      <textarea data-qinput="${escapeAttr(q.id)}" placeholder="${escapeAttr(placeholder || "入力してください")}">${escapeHtml(value || "")}</textarea>
+      ${placeholder ? `<div class="placeholder-hint">例：${escapeHtml(placeholder)}</div>` : ""}
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function questionAccordionTemplate(q,idx,value){return `<div class="question-accordion open" data-qbox="${escapeAttr(q.id)}"><button class="qbar ${questionStatusClass(q)}" type="button" onclick="toggleQuestionBox('${escapeAttr(q.id)}')"><span class="qno">Q${idx+1}</span><span class="qbar-title">${escapeHtml(q.title)}</span><span class="qbar-state">${questionStatusText(q)}</span></button><div class="qpanel">${questionTemplate(q,value)}</div></div>`}
+
+function progressTemplate(){
+  return `
+    <div class="progress-box">
+      <div class="progress-top">
+        <span>回答進捗</span>
+        <span id="progressText">0 / ${questions.length}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  `;
+}
+
+function isQuestionAnswered(q){
+  if(q.type === "single_select"){
+    return Boolean(document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`));
+  }
+  if(q.type === "multi_select"){
+    return document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`).length > 0;
+  }
+  if(q.type === "hero_multi"){
+    return document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`).length > 0;
+  }
+  if(q.type === "set_select"){
+    const fields = Array.from(document.querySelectorAll(`[data-qset='${cssEscape(q.id)}']`));
+    return fields.length > 0 && fields.every(el => Boolean(el.value));
+  }
+  if(q.type === "time_select"){
+    return Boolean(document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "");
+  }
+  if(q.type === "time_range"){
+    const start = document.querySelector(`[data-qtime-start='${cssEscape(q.id)}']`)?.value || "";
+    const end = document.querySelector(`[data-qtime-end='${cssEscape(q.id)}']`)?.value || "";
+    return Boolean(start && end);
+  }
+  if(q.type === "time_hm"){
+    const hour = document.querySelector(`[data-qhour='${cssEscape(q.id)}']`)?.value || "";
+    const minute = document.querySelector(`[data-qminute='${cssEscape(q.id)}']`)?.value || "";
+    return Boolean(hour && minute);
+  }
+  const input = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`);
+  return Boolean(input && String(input.value || "").trim());
+}
+
+function updateProgress(){
+  const total = questions.length || 0;
+  const answered = questions.filter(isQuestionAnswered).length;
+  const text = document.getElementById("progressText");
+  const fill = document.getElementById("progressFill");
+  if(text) text.textContent = `${answered} / ${total}`;
+  if(fill) fill.style.width = total ? `${Math.round(answered / total * 100)}%` : "0%";
+}
+
+function renderComplete(){
+  setMode("answer");
+
+  document.getElementById("app").innerHTML =
+    renderHeader("回答完了", "回答を保存しました。", "/1648-portal/survey/")
+    + `
+      <div class="complete-card">
+        <div class="complete-title">回答完了</div>
+        <div class="complete-body">
+          回答は正常に保存されました。<br>
+          締切まではアンケート一覧から再度開いて修正できます。
+        </div>
+        <a class="complete-btn" href="/1648-portal/survey/">アンケート一覧へ戻る</a>
+      </div>
+    `;
+}
+
+async function saveAnswer(){
+  const answers = {};
+
+  questions.forEach(q => {
+    if(q.type === "single_select"){
+      answers[q.id] = document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`)?.value || "";
+    }else if(q.type === "multi_select"){
+      answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else if(q.type === "hero_multi"){
+      answers[q.id] = Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else if(q.type === "time_select"){
+      answers[q.id] = document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "";
+    }else if(q.type === "time_range"){
+      answers[q.id] = {
+        start: document.querySelector(`[data-qtime-start='${cssEscape(q.id)}']`)?.value || "",
+        end: document.querySelector(`[data-qtime-end='${cssEscape(q.id)}']`)?.value || ""
+      };
+    }else if(q.type === "time_hm"){
+      answers[q.id] = {
+        hour: document.querySelector(`[data-qhour='${cssEscape(q.id)}']`)?.value || "",
+        minute: document.querySelector(`[data-qminute='${cssEscape(q.id)}']`)?.value || ""
+      };
+    }else{
+      answers[q.id] = document.querySelector(`[data-qinput='${cssEscape(q.id)}']`)?.value || "";
+    }
+  });
+
+  const msg = document.getElementById("msg");
+  const saveBtn = document.getElementById("saveBtn");
+
+  msg.className = "msg";
+  msg.textContent = "保存中...";
+  saveBtn.disabled = true;
+
+  try{
+    const res = await fetch(SAVE_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        discordId:getDiscordId(),
+        surveyId,
+        answers
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "save_failed");
+    }
+
+    renderComplete();
+
+  }catch(err){
+    msg.className = "msg error";
+    msg.textContent = "保存失敗：" + errorLabel(err.message);
   }finally{
-    btn.disabled=false;
-    btn.textContent="保存する";
+    saveBtn.disabled = false;
   }
 }
 
-function fillForm(c){
-  editingCardId=c.id||"";
-  document.getElementById("formTitle").textContent="質問を編集する";
-  document.getElementById("title").value=c.title||"";
-  document.getElementById("content").value=c.description||"";
-  const radio=document.querySelector(`input[name='answerType'][value='${c.type||"text"}']`);
-  if(radio)radio.checked=true;
-  optionValues=(c.options&&c.options.length)?c.options:[""];
-  setItems=(c.setItems&&c.setItems.length)?c.setItems:[];
-  const cat=document.getElementById("category");
-  if(cat)cat.value=c.category||"general";
-  refreshTypeUI();
-  renderDynamicArea();
-  const ph=document.getElementById("placeholder");
-  if(ph)ph.value=c.placeholder||c.example||"";
-  const unit=document.getElementById("unit");
-  if(unit)unit.value=c.unit||"";
-  const ts=document.getElementById("timeStep");
-  if(ts)ts.value=c.timeStep||30;
-  const sh=document.getElementById("startHour");
-  if(sh)sh.value=c.startHour??0;
-  const eh=document.getElementById("endHour");
-  if(eh)eh.value=c.endHour??23;
-  renderPreview();
-  scrollTo({top:0,behavior:"smooth"});
+function formatDateTime(value){
+  if(!value) return "";
+  const text = String(value);
+  const m = text.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if(m) return `${Number(m[2])}月${Number(m[3])}日 ${m[4]}:${m[5]}`;
+  return text.replace("T", " ");
 }
 
-function resetForm(clearMsg=true){
-  editingCardId="";
-  optionValues=[""];
-  setItems=[];
-  document.getElementById("formTitle").textContent="新しい質問を作る";
-  document.getElementById("title").value="";
-  document.getElementById("content").value="";
-  const cat=document.getElementById("category");
-  if(cat)cat.value="general";
-  const ph=document.getElementById("placeholder");
-  if(ph)ph.value="";
-  const r=document.querySelector("input[name='answerType'][value='single_select']");
-  if(r)r.checked=true;
-  refreshTypeUI();
-  renderDynamicArea();
-  renderPreview();
-  if(clearMsg)document.getElementById("msg").textContent="";
-}
-
-async function deleteCard(id){
-  if(!confirm("この質問を削除しますか？"))return;
-  try{
-    const r=await fetch(DELETE_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId:getDiscordId(),id})
-    });
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||"delete_failed");
-    await loadCards();
-  }catch(e){
-    alert("削除失敗："+e.message);
+function formatTimestamp(value){
+  if(!value) return "";
+  if(typeof value === "string") return value;
+  if(value._seconds){
+    return new Date(value._seconds * 1000).toLocaleString("ja-JP");
   }
+  if(value.seconds){
+    return new Date(value.seconds * 1000).toLocaleString("ja-JP");
+  }
+  return "";
 }
 
-function typeLabel(t){
+function errorLabel(code){
   return {
-    single_select:"1つだけ選択",
-    multi_select:"複数選択",
-    set_select:"セット質問",
-    number:"数字で入力",
-    number_unit:"数字＋単位",
-    time_select:"時間プルダウン",
-    time_range:"時間範囲",
-    time_hm:"時:分入力",
-    hero_multi:"英雄カード選択",
-    text:"文章で入力"
-  }[t]||t;
+    survey_not_open:"このアンケートは現在公開されていません。",
+    survey_before_open:"このアンケートはまだ公開開始前です。",
+    survey_closed:"このアンケートは締切済みです。",
+    survey_not_found:"アンケートが見つかりません。",
+    user_not_found:"ユーザー情報が見つかりません。再ログインしてください。"
+  }[code] || code;
 }
 
-function categoryLabel(c){
-  return {
-    general:"自由質問",
-    fc:"FC",
-    tier:"ティア",
-    t12:"T12",
-    hero:"英雄育成",
-    pet:"ペット",
-    power:"戦力",
-    time:"参加時間"
-  }[c]||c||"自由質問";
+function cssEscape(value){
+  if(window.CSS && CSS.escape){
+    return CSS.escape(value);
+  }
+  return String(value).replace(/'/g, "\\'");
 }
 
-function escapeHtml(s){
-  return String(s)
+function escapeHtml(str){
+  return String(str)
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
@@ -717,17 +1183,19 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-function escapeAttr(s){
-  return escapeHtml(s);
+function escapeAttr(str){
+  return escapeHtml(str);
 }
 
-session=getSession();
+session = getSession();
+
 if(session){
-  const level=getPermissionLevel(session);
-  if(level<1){
-    document.getElementById("app").innerHTML=`<div class="panel"><div class="panel-title">権限がありません</div><p class="sub">質問カード管理はテクニカルマネージャー以上が利用できます。</p><a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a></div>`;
+  surveyId = new URLSearchParams(location.search).get("id") || "";
+
+  if(surveyId){
+    renderAnswer();
   }else{
-    render();
+    renderList();
   }
 }
 </script>
