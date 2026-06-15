@@ -613,6 +613,20 @@ select option{color:#111827}
 
 
 .question-accordion{margin-bottom:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045)}.qbar{width:100%;border:none;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;padding:12px;background:rgba(255,255,255,.07);color:#fff;cursor:pointer}.qbar.no-answer{border-left:5px solid #fb923c}.qbar.active{border-left:5px solid #60a5fa}.qbar.done{border-left:5px solid #22c55e}.qno{font-size:12px;font-weight:950;color:#fde68a}.qbar-title{font-size:14px;font-weight:950;line-height:1.35}.qbar-state{font-size:11px;font-weight:950;opacity:.78}.qpanel{display:none;padding:12px}.question-accordion.open .qpanel{display:block}.set-answer-row{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;margin-top:10px}.set-answer-label{font-size:13px;font-weight:950;color:#bfdbfe}.set-answer-row select{margin-top:0}
+
+/* ===== 自動引用ステータス ===== */
+.qbar.auto{border-left:5px solid #60a5fa}
+.auto-fill-note{
+  border:1px solid rgba(96,165,250,.28);
+  background:rgba(37,99,235,.10);
+  color:#bfdbfe;
+  border-radius:14px;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.7;
+  margin:0 0 10px;
+}
+
 </style>
 </head>
 <body>
@@ -640,14 +654,71 @@ let surveyId = "";
 let survey = null;
 let questions = [];
 let oldAnswer = null;
+let autoFill = {};
+let questionStates = {};
 
 
-function toggleQuestionBox(id){const box=document.querySelector(`[data-qbox="${cssEscape(id)}"]`);if(box)box.classList.toggle("open")}
-function questionStatusClass(q){return isQuestionAnswered(q)?"done":"no-answer"}
-function questionStatusText(q){return isQuestionAnswered(q)?"回答済み":"未回答"}
-function refreshQuestionBars(){questions.forEach(q=>{const box=document.querySelector(`[data-qbox="${cssEscape(q.id)}"]`);if(!box)return;const bar=box.querySelector(".qbar"),state=box.querySelector(".qbar-state");if(bar){bar.classList.remove("done","no-answer");bar.classList.add(questionStatusClass(q))}if(state)state.textContent=questionStatusText(q)})}
+function toggleQuestionBox(id){
+  const box=document.querySelector(`[data-qbox="${cssEscape(id)}"]`);
+  if(!box)return;
+  box.classList.toggle("open");
+  const q=questions.find(item=>item.id===id);
+  if(q && box.classList.contains("open")) applyAutoFillOnOpen(q);
+  updateProgress();
+  refreshQuestionBars();
+}
+function questionStatusClass(q){
+  const state=questionStates[q.id]||"empty";
+  if(state==="auto")return "auto";
+  if(state==="done")return "done";
+  return isQuestionAnswered(q)?"done":"no-answer";
+}
+function questionStatusText(q){
+  const state=questionStates[q.id]||"empty";
+  if(state==="auto")return "自動引用";
+  if(state==="done")return "回答済み";
+  return isQuestionAnswered(q)?"回答済み":"未回答";
+}
+function refreshQuestionBars(){
+  questions.forEach(q=>{
+    const box=document.querySelector(`[data-qbox="${cssEscape(q.id)}"]`);
+    if(!box)return;
+    const bar=box.querySelector(".qbar"),state=box.querySelector(".qbar-state");
+    if(bar){bar.classList.remove("done","no-answer","auto");bar.classList.add(questionStatusClass(q))}
+    if(state)state.textContent=questionStatusText(q);
+  });
+}
 function setSelectTemplate(q,value){const current=value&&typeof value==="object"?value:{};const items=Array.isArray(q.setItems)&&q.setItems.length?q.setItems:[{id:"shield",label:"盾"},{id:"spear",label:"槍"},{id:"bow",label:"弓"}];const opts=Array.isArray(q.options)?q.options:[];return items.map(item=>`<div class="set-answer-row"><div class="set-answer-label">${escapeHtml(item.label||item.id)}</div><select data-qset="${escapeAttr(q.id)}" data-qset-field="${escapeAttr(item.id)}"><option value="">選択してください</option>${opts.map(opt=>`<option value="${escapeAttr(opt)}" ${current[item.id]===opt?"selected":""}>${escapeHtml(opt)}</option>`).join("")}</select></div>`).join("")}
 
+
+
+function getAutoFillForQuestion(q){
+  return autoFill && autoFill[q.id] ? autoFill[q.id] : null;
+}
+function applyAutoFillOnOpen(q){
+  const fill=getAutoFillForQuestion(q);
+  if(!fill || !fill.value) return;
+  if(questionStates[q.id]==="done") return;
+
+  if(q.type==="set_select" && typeof fill.value==="object"){
+    Object.entries(fill.value).forEach(([field,value])=>{
+      const el=document.querySelector(`[data-qset="${cssEscape(q.id)}"][data-qset-field="${cssEscape(field)}"]`);
+      if(el && !el.value) el.value=value||"";
+    });
+    const panel=document.querySelector(`[data-qbox="${cssEscape(q.id)}"] .qpanel`);
+    if(panel && !panel.querySelector(".auto-fill-note")){
+      const note=document.createElement("div");
+      note.className="auto-fill-note";
+      note.textContent=fill.source==="planner" ? "T12 Plannerの保存データを引用しています。内容が異なる場合は修正してください。" : "前回回答データを引用しています。内容が異なる場合は修正してください。";
+      panel.prepend(note);
+    }
+    if(isQuestionAnswered(q)) questionStates[q.id]="auto";
+  }
+}
+function markEditedByElement(el){
+  const qid=el.dataset.qset||el.dataset.qinput||el.dataset.qtime||el.dataset.qtimeStart||el.dataset.qtimeEnd||el.dataset.qhour||el.dataset.qminute||el.dataset.qmulti||el.dataset.qhero||"";
+  if(qid && questionStates[qid]==="auto") questionStates[qid]="done";
+}
 
 function getSession(){
   const raw = localStorage.getItem("discord_user");
@@ -832,6 +903,8 @@ async function renderAnswer(){
     survey = data.survey;
     questions = data.questions || [];
     oldAnswer = data.answer || null;
+    autoFill = data.autoFill || {};
+    questionStates = {};
 
     const old = oldAnswer?.answers || {};
     const editNote = oldAnswer
@@ -851,13 +924,15 @@ async function renderAnswer(){
       ch.addEventListener("change", () => {
         const label = ch.closest(".hero-option");
         if(label) label.classList.toggle("selected", ch.checked);
+        markEditedByElement(ch);
         updateProgress();
+        refreshQuestionBars();
       });
     });
 
     document.querySelectorAll("input, textarea, select").forEach(el => {
-      el.addEventListener("change", () => { updateProgress(); refreshQuestionBars(); });
-      el.addEventListener("input", () => { updateProgress(); refreshQuestionBars(); });
+      el.addEventListener("change", () => { markEditedByElement(el); updateProgress(); refreshQuestionBars(); });
+      el.addEventListener("input", () => { markEditedByElement(el); updateProgress(); refreshQuestionBars(); });
     });
 
     updateProgress();
@@ -1005,7 +1080,7 @@ function questionTemplate(q, value){
   return html;
 }
 
-function questionAccordionTemplate(q,idx,value){return `<div class="question-accordion open" data-qbox="${escapeAttr(q.id)}"><button class="qbar ${questionStatusClass(q)}" type="button" onclick="toggleQuestionBox('${escapeAttr(q.id)}')"><span class="qno">Q${idx+1}</span><span class="qbar-title">${escapeHtml(q.title)}</span><span class="qbar-state">${questionStatusText(q)}</span></button><div class="qpanel">${questionTemplate(q,value)}</div></div>`}
+function questionAccordionTemplate(q,idx,value){return `<div class="question-accordion" data-qbox="${escapeAttr(q.id)}"><button class="qbar ${questionStatusClass(q)}" type="button" onclick="toggleQuestionBox('${escapeAttr(q.id)}')"><span class="qno">Q${idx+1}</span><span class="qbar-title">${escapeHtml(q.title)}</span><span class="qbar-state">${questionStatusText(q)}</span></button><div class="qpanel">${questionTemplate(q,value)}</div></div>`}
 
 function progressTemplate(){
   return `
@@ -1020,6 +1095,7 @@ function progressTemplate(){
 }
 
 function isQuestionAnswered(q){
+  if(questionStates[q.id]==="auto"||questionStates[q.id]==="done") return true;
   if(q.type === "single_select"){
     return Boolean(document.querySelector(`input[name='q_${cssEscape(q.id)}']:checked`));
   }
@@ -1078,6 +1154,7 @@ function renderComplete(){
 
 async function saveAnswer(){
   const answers = {};
+  const answerSources = {};
 
   questions.forEach(q => {
     if(q.type === "single_select"){
@@ -1086,6 +1163,12 @@ async function saveAnswer(){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qmulti='${cssEscape(q.id)}']:checked`)).map(v => v.value);
     }else if(q.type === "hero_multi"){
       answers[q.id] = Array.from(document.querySelectorAll(`[data-qhero='${cssEscape(q.id)}']:checked`)).map(v => v.value);
+    }else if(q.type === "set_select"){
+      const setValue = {};
+      document.querySelectorAll(`[data-qset='${cssEscape(q.id)}']`).forEach(el => {
+        setValue[el.dataset.qsetField] = el.value || "";
+      });
+      answers[q.id] = setValue;
     }else if(q.type === "time_select"){
       answers[q.id] = document.querySelector(`[data-qtime='${cssEscape(q.id)}']`)?.value || "";
     }else if(q.type === "time_range"){
@@ -1103,6 +1186,8 @@ async function saveAnswer(){
     }
   });
 
+  questions.forEach(q=>{answerSources[q.id]=questionStates[q.id]==="auto"?"planner":"manual";});
+
   const msg = document.getElementById("msg");
   const saveBtn = document.getElementById("saveBtn");
 
@@ -1117,7 +1202,8 @@ async function saveAnswer(){
       body:JSON.stringify({
         discordId:getDiscordId(),
         surveyId,
-        answers
+        answers,
+        answerSources
       })
     });
 
