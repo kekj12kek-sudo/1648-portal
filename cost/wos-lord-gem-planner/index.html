@@ -34,8 +34,8 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
 /* ステージ共通 */
 .stage,.gearStage{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1;box-shadow:0 8px 24px #0009;border:1px solid #7bd3ff33;margin-top:8px}
 .stage{background:#0c2f4d}
-.stageImg{position:absolute;inset:0;background-image:url('gem_bg.webp');background-size:cover;background-position:center}
-.gearStage{background-image:url('gear_bg.webp');background-size:cover;background-position:center}
+.stageImg{position:absolute;inset:0;background-image:url('gem/gem_bg.webp');background-size:cover;background-position:center}
+.gearStage{background-image:url('gem/gear_bg.webp');background-size:cover;background-position:center}
 
 /* タップボタン */
 .gemHot{position:absolute;width:14%;aspect-ratio:1;border:0;padding:0;background:radial-gradient(circle,#ffffff18,transparent 70%);transform:translate(-50%,-50%);cursor:pointer;z-index:10;border-radius:50%;animation:tapPulse 2s ease-in-out infinite}
@@ -98,13 +98,14 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
 (function(){
   const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
   const PROFILE_SETUP_URL="/1648-portal/profile-setup/";
-  const raw=localStorage.getItem("discord_user");
-  if(!raw){ location.replace(LOGIN_URL); return; }
   try{
+    const raw=localStorage.getItem("discord_user");
+    if(!raw){ location.replace(LOGIN_URL); return; }
     const data=JSON.parse(raw);
     if(!data || data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
     if(data.status==="pending_profile"){ location.replace(PROFILE_SETUP_URL); return; }
     if(data.status!=="active"){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
+    sessionStorage.setItem("portal_entry","1");
   }catch(e){
     localStorage.removeItem("discord_user");
     location.replace(LOGIN_URL);
@@ -112,12 +113,33 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
 })();
 </script>
 
-<style>
-.portal-back-btn{position:fixed;left:10px;bottom:10px;z-index:9999;display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(125,211,252,.42);background:rgba(6,13,26,.74);color:#bfdbfe;text-decoration:none;font-size:11px;font-weight:900;backdrop-filter:blur(8px);box-shadow:0 8px 22px rgba(0,0,0,.32);font-family:system-ui,'Noto Sans JP',sans-serif}.portal-back-btn:active{transform:scale(.96)}
+<style id="portal-back-style">
+.portal-back-cost{
+  position:fixed;
+  left:10px;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+  z-index:99999;
+  min-height:36px;
+  padding:0 13px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(0,0,0,.72);
+  color:#fff;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  backdrop-filter:blur(8px);
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.portal-back-cost:active{transform:scale(.96);}
+body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 48px);}
 </style>
 </head>
 <body>
-<a id="portalBackBtn" class="portal-back-btn" href="/1648-portal/cost/">← コスト計算room</a>
 <div class="app">
   <div class="header">
     <div class="title" id="appTitle">宝石コスト計算</div>
@@ -151,23 +173,23 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
     <div class="card">
       <div class="cardTitle">所持素材</div>
       <div class="levelBox">
-        <div class="field"><label><img src="mat_gem_plan.png" class="matIcon"> 宝石図面</label><input id="havePlan" type="number" min="0" value="0"></div>
-        <div class="field"><label><img src="mat_gem_book.png" class="matIcon"> 宝石ハンドブック</label><input id="haveBook" type="number" min="0" value="0"></div>
-        <div class="field"><label><img src="mat_gem_secret.png" class="matIcon"> 宝石秘典</label><input id="haveSecret" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_gem_plan.png" class="matIcon"> 宝石図面</label><input id="havePlan" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_gem_book.png" class="matIcon"> 宝石ハンドブック</label><input id="haveBook" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_gem_secret.png" class="matIcon"> 宝石秘典</label><input id="haveSecret" type="number" min="0" value="0"></div>
       </div>
     </div>
     <div class="card">
       <div class="cardTitle">必要素材</div>
       <div class="totalBox3">
-        <div class="resultItem"><div class="resultLabel"><img src="mat_gem_plan.png" class="matIcon"> 宝石図面</div><div class="resultValue" id="needPlan">0</div></div>
-        <div class="resultItem"><div class="resultLabel"><img src="mat_gem_book.png" class="matIcon"> 宝石ハンドブック</div><div class="resultValue" id="needBook">0</div></div>
-        <div class="resultItem"><div class="resultLabel"><img src="mat_gem_secret.png" class="matIcon"> 宝石秘典</div><div class="resultValue" id="needSecret">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_gem_plan.png" class="matIcon"> 宝石図面</div><div class="resultValue" id="needPlan">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_gem_book.png" class="matIcon"> 宝石ハンドブック</div><div class="resultValue" id="needBook">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_gem_secret.png" class="matIcon"> 宝石秘典</div><div class="resultValue" id="needSecret">0</div></div>
       </div>
       <div class="cardTitle" style="margin-top:10px">不足素材</div>
       <div class="totalBox3">
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_gem_plan.png" class="matIcon"> 宝石図面</div><div class="resultValue" id="lackPlan">0</div></div>
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_gem_book.png" class="matIcon"> 宝石ハンドブック</div><div class="resultValue" id="lackBook">0</div></div>
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_gem_secret.png" class="matIcon"> 宝石秘典</div><div class="resultValue" id="lackSecret">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_gem_plan.png" class="matIcon"> 宝石図面</div><div class="resultValue" id="lackPlan">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_gem_book.png" class="matIcon"> 宝石ハンドブック</div><div class="resultValue" id="lackBook">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_gem_secret.png" class="matIcon"> 宝石秘典</div><div class="resultValue" id="lackSecret">0</div></div>
       </div>
       <button class="reset" id="resetGem">設定をリセット</button>
     </div>
@@ -192,26 +214,26 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
     <div class="card">
       <div class="cardTitle">所持素材</div>
       <div class="levelBox">
-        <div class="field"><label><img src="mat_alloy.png" class="matIcon"> 合金</label><input id="haveAlloy" type="number" min="0" value="0"></div>
-        <div class="field"><label><img src="mat_polish.png" class="matIcon"> 研磨剤</label><input id="havePolish" type="number" min="0" value="0"></div>
-        <div class="field"><label><img src="mat_plan.png" class="matIcon"> 設計図面</label><input id="havePlanG" type="number" min="0" value="0"></div>
-        <div class="field"><label><img src="mat_amber.png" class="matIcon"> 琥珀</label><input id="haveAmber" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_alloy.png" class="matIcon"> 合金</label><input id="haveAlloy" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_polish.png" class="matIcon"> 研磨剤</label><input id="havePolish" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_plan.png" class="matIcon"> 設計図面</label><input id="havePlanG" type="number" min="0" value="0"></div>
+        <div class="field"><label><img src="mat/mat_amber.png" class="matIcon"> 琥珀</label><input id="haveAmber" type="number" min="0" value="0"></div>
       </div>
     </div>
     <div class="card">
       <div class="cardTitle">必要素材</div>
       <div class="totalBox" style="grid-template-columns:repeat(2,1fr)">
-        <div class="resultItem"><div class="resultLabel"><img src="mat_alloy.png" class="matIcon"> 合金</div><div class="resultValue" id="needAlloy">0</div></div>
-        <div class="resultItem"><div class="resultLabel"><img src="mat_polish.png" class="matIcon"> 研磨剤</div><div class="resultValue" id="needPolish">0</div></div>
-        <div class="resultItem"><div class="resultLabel"><img src="mat_plan.png" class="matIcon"> 設計図面</div><div class="resultValue" id="needPlanG">0</div></div>
-        <div class="resultItem"><div class="resultLabel"><img src="mat_amber.png" class="matIcon"> 琥珀</div><div class="resultValue" id="needAmber">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_alloy.png" class="matIcon"> 合金</div><div class="resultValue" id="needAlloy">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_polish.png" class="matIcon"> 研磨剤</div><div class="resultValue" id="needPolish">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_plan.png" class="matIcon"> 設計図面</div><div class="resultValue" id="needPlanG">0</div></div>
+        <div class="resultItem"><div class="resultLabel"><img src="mat/mat_amber.png" class="matIcon"> 琥珀</div><div class="resultValue" id="needAmber">0</div></div>
       </div>
       <div class="cardTitle" style="margin-top:14px">不足素材</div>
       <div class="totalBox" style="grid-template-columns:repeat(2,1fr)">
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_alloy.png" class="matIcon"> 合金</div><div class="resultValue" id="lackAlloy">0</div></div>
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_polish.png" class="matIcon"> 研磨剤</div><div class="resultValue" id="lackPolish">0</div></div>
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_plan.png" class="matIcon"> 設計図面</div><div class="resultValue" id="lackPlanG">0</div></div>
-        <div class="resultItem lack"><div class="resultLabel"><img src="mat_amber.png" class="matIcon"> 琥珀</div><div class="resultValue" id="lackAmber">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_alloy.png" class="matIcon"> 合金</div><div class="resultValue" id="lackAlloy">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_polish.png" class="matIcon"> 研磨剤</div><div class="resultValue" id="lackPolish">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_plan.png" class="matIcon"> 設計図面</div><div class="resultValue" id="lackPlanG">0</div></div>
+        <div class="resultItem lack"><div class="resultLabel"><img src="mat/mat_amber.png" class="matIcon"> 琥珀</div><div class="resultValue" id="lackAmber">0</div></div>
       </div>
       <button class="reset" id="resetGear">設定をリセット</button>
     </div>
@@ -261,7 +283,7 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
     </div>
     <div class="spriteScroll">
       <div class="spriteWrap" id="gearSpriteWrap">
-        <img id="gearSpriteImg" src="gear_sprite.png" alt="">
+        <img id="gearSpriteImg" src="gem/gear_sprite.png" alt="">
         <div class="hlBar cur" id="gearHlCur" style="display:none"></div>
         <div class="hlBar tgt" id="gearHlTgt" style="display:none"></div>
         <div class="hlBar hover" id="gearHlHover" style="display:none"></div>
@@ -283,7 +305,7 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
 <script>
 // ===== 宝石データ =====
 const GEM_COSTS={0:{plan:5,book:5,secret:0},1:{plan:15,book:40,secret:0},2:{plan:40,book:60,secret:0},3:{plan:100,book:80,secret:0},4:{plan:200,book:100,secret:0},5:{plan:300,book:120,secret:0},6:{plan:400,book:140,secret:0},7:{plan:400,book:200,secret:0},8:{plan:400,book:300,secret:0},9:{plan:420,book:420,secret:0},10:{plan:420,book:560,secret:0},11:{plan:450,book:580,secret:15},12:{plan:450,book:580,secret:30},13:{plan:500,book:600,secret:45},14:{plan:500,book:600,secret:70},15:{plan:550,book:650,secret:100}};
-const GEM_INFO={shield:{name:"盾宝石",img:"gem_green.png"},lancer:{name:"槍宝石",img:"gem_blue.png"},marks:{name:"弓宝石",img:"gem_orange.png"}};
+const GEM_INFO={shield:{name:"盾宝石",img:"gem/gem_green.png"},lancer:{name:"槍宝石",img:"gem/gem_blue.png"},marks:{name:"弓宝石",img:"gem/gem_orange.png"}};
 const GEM_ROWS=16;
 
 // ===== 装備データ =====

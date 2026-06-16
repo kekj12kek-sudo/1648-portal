@@ -11,7 +11,7 @@ video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-inde
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:-1}
 
 .menu{
-  position:absolute;left:15px;top:50px;
+  position:absolute;left:15px;top:calc(env(safe-area-inset-top, 0px) + 92px);
   width:calc(100% - 30px);max-width:280px;
   display:flex;flex-direction:column;gap:8px
 }
@@ -57,13 +57,14 @@ video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-inde
 (function(){
   const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
   const PROFILE_SETUP_URL="/1648-portal/profile-setup/";
-  const raw=localStorage.getItem("discord_user");
-  if(!raw){ location.replace(LOGIN_URL); return; }
   try{
+    const raw=localStorage.getItem("discord_user");
+    if(!raw){ location.replace(LOGIN_URL); return; }
     const data=JSON.parse(raw);
     if(!data || data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
     if(data.status==="pending_profile"){ location.replace(PROFILE_SETUP_URL); return; }
     if(data.status!=="active"){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
+    sessionStorage.setItem("portal_entry","1");
   }catch(e){
     localStorage.removeItem("discord_user");
     location.replace(LOGIN_URL);
@@ -79,11 +80,11 @@ video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-inde
 <div class="menu">
   <div class="logo">コスト計算room</div>
 
-  <a class="tool-link" href="wos-hero-gear-planner/">
+  <a class="tool-link" href="./wos-hero-gear-planner/">
     <div class="title">英雄装備コスト計算</div>
     <div class="desc">神話装備・精錬鍛造・配能計算</div>
   </a>
-  <a class="tool-link" href="wos-lord-gem-planner/">
+  <a class="tool-link" href="./wos-lord-gem-planner/">
     <div class="title">宝石・領主装備コスト計算</div>
     <div class="desc">宝石LvUP・領主装備強化</div>
   </a>
