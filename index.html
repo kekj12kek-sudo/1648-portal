@@ -195,7 +195,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   animation:fadeOut .6s ease forwards;
 }
 
-/* ===== ログインユーザー表示 ===== */
+/* ===== ポータルヘッダー / マイページ ===== */
 #userBadge{
   position:fixed;
   top:12px;
@@ -204,8 +204,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   display:flex;
   align-items:center;
   gap:8px;
-  padding:9px 11px;
-  border-radius:14px;
+  padding:8px 10px;
+  border-radius:15px;
   border:1px solid rgba(255,255,255,.25);
   background:rgba(0,0,0,.62);
   color:#fff;
@@ -214,25 +214,132 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   font-weight:800;
   backdrop-filter:blur(8px);
   box-shadow:0 4px 18px rgba(0,0,0,.35);
-  max-width:min(340px, calc(100% - 28px));
+  max-width:min(380px, calc(100% - 28px));
+}
+#userBadgeMain{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
 }
 #welcomeName{
   max-width:210px;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  line-height:1.2;
 }
-#logoutBtn{
-  border:none;
+#unreadNotice{
+  display:none;
+  align-items:center;
+  gap:4px;
+  align-self:flex-start;
+  padding:3px 7px;
   border-radius:999px;
-  padding:5px 8px;
-  background:rgba(255,255,255,.16);
-  color:#fff;
-  font-size:11px;
-  font-weight:800;
+  border:1px solid rgba(251,191,36,.42);
+  background:rgba(251,191,36,.16);
+  color:#fde68a;
+  font-size:10px;
+  font-weight:900;
   cursor:pointer;
 }
-#logoutBtn:active{transform:scale(.96);}
+#unreadNotice.show{display:inline-flex;}
+#myPageBtn{
+  border:none;
+  border-radius:999px;
+  padding:6px 9px;
+  background:rgba(59,130,246,.22);
+  border:1px solid rgba(147,197,253,.28);
+  color:#bfdbfe;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+}
+#myPageBtn:active{transform:scale(.96);}
+#mypageOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:300;
+  background:rgba(0,0,0,.72);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+}
+#mypageOverlay.open{display:flex;}
+.mypageBox{
+  width:100%;
+  max-width:360px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(7,11,18,.98));
+  color:#fff;
+  box-shadow:0 20px 60px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+.mypageHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.mypageTitle{font-size:18px;font-weight:900;color:#facc15;}
+.mypageClose{
+  width:34px;height:34px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+.mypageBody{padding:14px 16px 16px;}
+.profileRow{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+.profileLabel{color:rgba(255,255,255,.58);font-weight:800;white-space:nowrap;}
+.profileValue{font-weight:900;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.roleBadgePopup{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.18);
+}
+.role-developer{background:rgba(168,85,247,.18);border-color:rgba(168,85,247,.45);color:#e9d5ff;}
+.role-admin,.role-manager{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fecaca;}
+.role-officer,.role-technical{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.45);color:#bfdbfe;}
+.role-member{background:rgba(148,163,184,.14);border-color:rgba(148,163,184,.32);color:#e2e8f0;}
+.mypageMenu{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.mypageMenuBtn{
+  width:100%;
+  min-height:44px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  text-align:left;
+  padding:0 12px;
+  cursor:pointer;
+}
+.mypageMenuBtn:active{transform:scale(.985);}
+.mypageMenuBtn.disabled{opacity:.45;cursor:not-allowed;}
+.mypageMenuBtn.logout{background:rgba(239,68,68,.13);border-color:rgba(239,68,68,.28);color:#fecaca;}
 @media(max-width:480px){
   #link-buttons{
     top:76px;
@@ -244,10 +351,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
     top:8px;
     right:8px;
     font-size:11px;
-    padding:8px 9px;
+    padding:7px 8px;
     max-width:calc(100% - 16px);
   }
-  #welcomeName{max-width:178px;}
+  #welcomeName{max-width:160px;}
+  #myPageBtn{padding:6px 8px;font-size:10px;}
 }
 
 /* ===== 管理者ページリンク予定地 ===== */
@@ -282,8 +390,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 <body>
 <!-- ログインユーザー表示 -->
 <div id="userBadge">
-  <span id="welcomeName">ようこそ</span>
-  <button id="logoutBtn" type="button">ログアウト</button>
+  <div id="userBadgeMain">
+    <span id="welcomeName">認証確認中</span>
+    <button id="unreadNotice" type="button" onclick="goPortalLink('/1648-portal/survey/', this)">🔔 未回答 0件</button>
+  </div>
+  <button id="myPageBtn" type="button">⚙ マイページ</button>
+</div>
+
+<!-- マイページ ポップアップ -->
+<div id="mypageOverlay" onclick="mypageOverlayClick(event)">
+  <div class="mypageBox">
+    <div class="mypageHead">
+      <div class="mypageTitle">マイページ</div>
+      <button class="mypageClose" type="button" onclick="closeMyPage()">×</button>
+    </div>
+    <div class="mypageBody">
+      <div class="profileRow"><span class="profileLabel">プレイヤー名</span><span class="profileValue" id="mypagePlayerName">-</span></div>
+      <div class="profileRow"><span class="profileLabel">同盟</span><span class="profileValue" id="mypageAlliance">-</span></div>
+      <div class="profileRow"><span class="profileLabel">権限</span><span class="profileValue" id="mypageRole">-</span></div>
+      <div class="profileRow"><span class="profileLabel">Discord認証</span><span class="profileValue" id="mypageDiscord">認証済み</span></div>
+      <div class="mypageMenu">
+        <button class="mypageMenuBtn disabled" type="button">📋 アンケート履歴（準備中）</button>
+        <button class="mypageMenuBtn disabled" type="button">🧊 T12保存状況（準備中）</button>
+        <button class="mypageMenuBtn logout" type="button" id="mypageLogoutBtn">ログアウト</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 管理者ページリンク -->
@@ -431,42 +563,109 @@ document.querySelectorAll('.tap-area').forEach(el=>{
   });
 });
 
-// ===== ログインユーザー表示 =====
-function getPortalUserName(){
+// ===== ログインユーザー表示 / マイページUI =====
+function getPortalSession(){
   try{
     const raw = localStorage.getItem("discord_user");
-    if(!raw) return "";
-    const data = JSON.parse(raw);
-    const name =
-      data?.user?.playerName ||
-      data?.discord?.globalName ||
-      data?.discord?.username ||
-      data?.user?.discordName ||
-      data?.globalName ||
-      data?.discordName ||
-      "メンバー";
-    return name;
+    if(!raw) return null;
+    return JSON.parse(raw);
   }catch(e){
-    return "メンバー";
+    return null;
   }
 }
-
+function getPortalUserName(){
+  const data = getPortalSession();
+  const name =
+    data?.user?.playerName ||
+    data?.discord?.globalName ||
+    data?.discord?.username ||
+    data?.user?.discordName ||
+    data?.globalName ||
+    data?.discordName ||
+    "メンバー";
+  return name;
+}
+function getPortalAlliance(){
+  const data = getPortalSession();
+  return data?.user?.alliance || data?.user?.allianceName || data?.alliance || data?.allianceName || "";
+}
+function getPortalRoleKey(){
+  const data = getPortalSession();
+  const discordId = data?.user?.discordId || data?.discord?.id || data?.discordId || "";
+  if(discordId === "795152243883114527") return "developer";
+  return data?.role || data?.user?.role || "member";
+}
+function getRoleDisplayName(role){
+  const map = {
+    developer:"Developer",
+    admin:"Admin",
+    manager:"Manager",
+    officer:"Officer",
+    technical:"Technical",
+    member:"Member"
+  };
+  return map[role] || "Member";
+}
+function getDisplayNameWithAlliance(){
+  const name = getPortalUserName();
+  const alliance = getPortalAlliance();
+  return alliance ? `[${alliance}] ${name}` : name;
+}
+function getUnreadSurveyCount(){
+  // UI先行版：Functions連携前は localStorage の値があれば表示。
+  // 後続工程で getOpenSurveysForUser の未回答件数に差し替える。
+  const n = Number(localStorage.getItem("portal_unanswered_count") || "0");
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+function logoutPortal(){
+  localStorage.removeItem("discord_user");
+  localStorage.removeItem("discord_auth_code");
+  location.href = "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+}
 function initUserBadge(){
   const welcomeName = document.getElementById("welcomeName");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const name = getPortalUserName();
+  const myPageBtn = document.getElementById("myPageBtn");
+  const unreadNotice = document.getElementById("unreadNotice");
+  const displayName = getDisplayNameWithAlliance();
   if(welcomeName){
-    welcomeName.textContent = `ようこそ ${name}さん`;
+    welcomeName.textContent = displayName;
   }
+  const unreadCount = getUnreadSurveyCount();
+  if(unreadNotice){
+    if(unreadCount > 0){
+      unreadNotice.textContent = `🔔 未回答 ${unreadCount}件`;
+      unreadNotice.classList.add("show");
+    }else{
+      unreadNotice.classList.remove("show");
+    }
+  }
+  if(myPageBtn){
+    myPageBtn.addEventListener("click", openMyPage);
+  }
+  const logoutBtn = document.getElementById("mypageLogoutBtn");
   if(logoutBtn){
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("discord_user");
-      localStorage.removeItem("discord_auth_code");
-      location.href = "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
-    });
+    logoutBtn.addEventListener("click", logoutPortal);
   }
 }
-
+function openMyPage(){
+  const overlay = document.getElementById("mypageOverlay");
+  const playerName = document.getElementById("mypagePlayerName");
+  const alliance = document.getElementById("mypageAlliance");
+  const roleBox = document.getElementById("mypageRole");
+  const role = getPortalRoleKey();
+  if(playerName) playerName.textContent = getPortalUserName();
+  if(alliance) alliance.textContent = getPortalAlliance() || "未設定";
+  if(roleBox){
+    roleBox.innerHTML = `<span class="roleBadgePopup role-${role}">${getRoleDisplayName(role)}</span>`;
+  }
+  if(overlay) overlay.classList.add("open");
+}
+function closeMyPage(){
+  document.getElementById("mypageOverlay")?.classList.remove("open");
+}
+function mypageOverlayClick(e){
+  if(e.target && e.target.id === "mypageOverlay") closeMyPage();
+}
 
 // ===== 権限レベル判定（Discordロール連携まではKさんをdeveloper固定） =====
 function getPortalPermissionLevel(){
