@@ -216,7 +216,7 @@ let IS_MASTER=false;
 
 function setMode(m){
   MODE=m;
-  IS_MASTER=sessionStorage.getItem(`master_${m}`)==='1';
+  IS_MASTER=portalIsDeveloper();
   const app=document.getElementById('app');
   const body=document.body;
   if(m==='svs'){
@@ -432,6 +432,7 @@ function fCalcHits(mems){
 // メインrender
 // ============================================================
 function render(){
+  IS_MASTER = portalIsDeveloper() || IS_MASTER;
   document.querySelectorAll('.tab').forEach(t=>{
     const active=(MODE==='svs'?SS.tab:FS.tab)===t.dataset.tab;
     t.classList.toggle('active',active);
@@ -1249,6 +1250,7 @@ function buildGameChatText(kind){
   return'';
 }
 function renderGameChatUI(mode){
+  IS_MASTER = portalIsDeveloper() || IS_MASTER;
   if(!IS_MASTER)return'';
   return`<div class="card" style="margin-top:10px;border-color:rgba(247,215,116,.5);box-shadow:0 0 18px rgba(247,215,116,.08)">
     <div class="sec">👑 MASTER — ゲームチャット送信</div>
@@ -1814,12 +1816,80 @@ function portalAlliance(data){
   return data?.user?.alliance || data?.profile_data?.alliance || "";
 }
 function portalRole(data){
-  return String(data?.role || data?.user?.role || data?.profile_data?.role || "member").toLowerCase();
+  const candidates = [
+    data?.role,
+    data?.roleName,
+    data?.roleKey,
+    data?.permissionRole,
+    data?.user?.role,
+    data?.user?.roleName,
+    data?.user?.roleKey,
+    data?.user?.permissionRole,
+    data?.profile_data?.role,
+    data?.profile_data?.roleName,
+    data?.profile_data?.roleKey,
+    data?.profileData?.role,
+    data?.profileData?.roleName,
+    data?.profileData?.roleKey
+  ];
+  const found = candidates.find(v => v !== undefined && v !== null && String(v).trim() !== "");
+  return String(found || "member").trim().toLowerCase();
+}
+function portalDiscordId(data){
+  return String(
+    data?.user?.discordId ||
+    data?.user?.id ||
+    data?.discord?.id ||
+    data?.discordId ||
+    data?.id ||
+    ""
+  );
 }
 function portalIsDeveloper(){
   const session=getPortalSession();
-  return portalRole(session)==="developer";
+  if(!session) return false;
+
+  const discordId = portalDiscordId(session);
+  const role = portalRole(session);
+  const raw = JSON.stringify(session).toLowerCase();
+
+  const flags = [
+    session?.isDeveloper,
+    session?.developer,
+    session?.isDev,
+    session?.user?.isDeveloper,
+    session?.user?.developer,
+    session?.user?.isDev,
+    session?.profile_data?.isDeveloper,
+    session?.profile_data?.developer,
+    session?.profileData?.isDeveloper,
+    session?.profileData?.developer
+  ];
+  if(flags.some(v => v === true || String(v).toLowerCase() === "true")) return true;
+
+  const levels = [
+    session?.permissionLevel,
+    session?.level,
+    session?.roleLevel,
+    session?.user?.permissionLevel,
+    session?.user?.level,
+    session?.user?.roleLevel,
+    session?.profile_data?.permissionLevel,
+    session?.profile_data?.level,
+    session?.profileData?.permissionLevel,
+    session?.profileData?.level
+  ].map(v => Number(v)).filter(v => !Number.isNaN(v));
+  if(levels.some(v => v >= 3)) return true;
+
+  if(role === "developer" || role === "dev" || role === "ディベロッパー" || role === "開発者") return true;
+
+  if(discordId === "795152243883114527" || raw.includes("795152243883114527")) return true;
+
+  if(raw.includes("developer") || raw.includes("ディベロッパー") || raw.includes("開発者")) return true;
+
+  return false;
 }
+
 function showPortalLock(title,msg,href,label){
   const box=document.getElementById("portalLock");
   if(!box)return;
@@ -1843,7 +1913,8 @@ function startPortalRaid(){
 
   sessionStorage.setItem("portal_entry","1");
 
-  if(portalIsDeveloper()){
+  IS_MASTER = portalIsDeveloper();
+  if(IS_MASTER){
     sessionStorage.setItem("master_svs","1");
     sessionStorage.setItem("master_frost","1");
   }else{
