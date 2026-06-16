@@ -263,21 +263,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   inset:0;
   z-index:300;
   background:rgba(0,0,0,.72);
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   padding:18px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   font-family:'Hiragino Sans','Yu Gothic',sans-serif;
 }
 #mypageOverlay.open{display:flex;}
 .mypageBox{
   width:100%;
   max-width:360px;
+  max-height:calc(100vh - 36px);
   border-radius:22px;
   border:1px solid rgba(255,255,255,.16);
   background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(7,11,18,.98));
   color:#fff;
   box-shadow:0 20px 60px rgba(0,0,0,.55);
   overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
 .mypageHead{
   display:flex;
@@ -298,7 +303,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   font-weight:900;
   cursor:pointer;
 }
-.mypageBody{padding:14px 16px 16px;}
+.mypageBody{
+  padding:14px 16px 16px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
 .profileRow{
   display:flex;
   justify-content:space-between;
@@ -402,18 +411,44 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 }
 .muteSurveyBtn{
   margin-top:8px;
-  min-height:32px;
+  min-height:34px;
   border:none;
   border-radius:999px;
-  padding:0 10px;
-  background:rgba(0,0,0,.28);
-  border:1px solid rgba(255,255,255,.16);
-  color:#e5e7eb;
+  padding:0 12px;
+  background:rgba(251,191,36,.14);
+  border:1px solid rgba(251,191,36,.38);
+  color:#fde68a;
   font-size:11px;
   font-weight:900;
   cursor:pointer;
 }
 .muteSurveyBtn:active{transform:scale(.97);}
+.muteSurveyBtn.done{
+  background:rgba(34,197,94,.18);
+  border-color:rgba(34,197,94,.45);
+  color:#86efac;
+  cursor:default;
+}
+.muteSurveyBtn:disabled{opacity:1;}
+.portalToast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  z-index:500;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(34,197,94,.45);
+  background:rgba(15,23,42,.96);
+  color:#86efac;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+.portalToast.show{opacity:1;}
 .t12Grid{
   display:grid;
   grid-template-columns:1fr;
@@ -787,7 +822,7 @@ function renderMyPageSurveyStatus(data){
       html += `<div class="pendingSurveyItem">
         <div class="pendingSurveyTitle">${escapeHtml(s.title || "アンケート")}</div>
         ${deadline ? `<div class="pendingSurveyDeadline">締切：${escapeHtml(deadline)}</div>` : ""}
-        <button class="muteSurveyBtn" type="button" onclick="muteSurveyNotification('${escapeAttr(s.id)}')">お知らせOFF</button>
+        <button class="muteSurveyBtn" type="button" onclick="muteSurveyNotification('${escapeAttr(s.id)}', this)">🔕 お知らせOFFにする</button>
       </div>`;
     });
     html += `</div>`;
@@ -845,15 +880,41 @@ async function loadMyPageData(){
   }
 }
 
-async function muteSurveyNotification(surveyId){
+function showPortalToast(message){
+  let toast = document.getElementById("portalToast");
+  if(!toast){
+    toast = document.createElement("div");
+    toast.id = "portalToast";
+    toast.className = "portalToast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>toast.classList.remove("show"), 1800);
+}
+
+async function muteSurveyNotification(surveyId, btn){
   const discordId = getPortalDiscordId();
   if(!discordId || !surveyId) return;
+  const oldText = btn ? btn.textContent : "";
+  if(btn){
+    btn.disabled = true;
+    btn.classList.add("done");
+    btn.textContent = "✓ お知らせOFF済み";
+  }
   try{
     await callPortalFunction("muteSurveyNotification", {discordId, surveyId});
+    showPortalToast("通知をOFFにしました");
     myPageDataCache = null;
-    await loadMyPageData();
+    setTimeout(()=>loadMyPageData(), 450);
   }catch(e){
     console.warn("muteSurveyNotification failed", e);
+    if(btn){
+      btn.disabled = false;
+      btn.classList.remove("done");
+      btn.textContent = oldText || "🔕 お知らせOFFにする";
+    }
     alert("お知らせOFFに失敗しました");
   }
 }
