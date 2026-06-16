@@ -689,14 +689,17 @@ function ensureSeatExists(surveyId){
 // 回答データから座席データを完全再構築する
 // これにより、同じ名前・同じ端末の再回答時も古い座席が必ず消える
 function buildSeatDataFromSubmissions(list){
-  const data = makeEmptySeatData();
+  // 1つの官職予約(roomId)ごとに座席表を持つ。
+  // 旧版は role 名をキーにしていたため、教育部長/副執政官の切替時に
+  // seats[currentRole] を参照してタップ不能になる原因になっていた。
+  const data = {};
+  ALL_SLOTS.forEach(t=>{ data[t] = [0,0,0]; });
   (list || []).forEach(sub=>{
     if(!sub || sub.omakase || !sub.reservations) return;
     [1,2,3].forEach(pref=>{
       const r = sub.reservations[pref];
-      if(!r || !r.role || !r.time) return;
-      if(!data[r.role] || !data[r.role][r.time]) return;
-      const arr = data[r.role][r.time];
+      if(!r || !r.time || !data[r.time]) return;
+      const arr = data[r.time];
       const openIdx = arr.indexOf(0);
       if(openIdx >= 0) arr[openIdx] = Number(pref);
     });
@@ -1092,6 +1095,8 @@ function renderSeats(){
 }
 
 function makeRow(time){
+  const sidForRow = currentSurveyId || currentRole;
+  ensureSeatExists(sidForRow);
   const row = document.createElement('div');
   row.className = 'time-row';
 
@@ -1132,7 +1137,7 @@ function makeRow(time){
   } else if(mySlotIdx >= 0){
     const badge = document.createElement('div');
     badge.className = 'my-badge';
-    badge.textContent = `第${seats[currentRole][time][mySlotIdx]}希望`;
+    { const sid = currentSurveyId || currentRole; badge.textContent = `第${seats[sid][time][mySlotIdx]}希望`; }
     block.appendChild(badge);
   } else if(!full){
     const badge = document.createElement('div');
@@ -1159,7 +1164,8 @@ function openPopup(time, mySlotIdx){
 
   document.getElementById('popupTitle').textContent = `${currentRole}　${time}`;
 
-  const existingPref = mySlotIdx >= 0 ? seats[currentRole][time][mySlotIdx] : null;
+  const sid = currentSurveyId || currentRole; ensureSeatExists(sid);
+  const existingPref = mySlotIdx >= 0 ? seats[sid][time][mySlotIdx] : null;
 
   [1,2,3].forEach(p => {
     const btn = document.getElementById(`prefBtn${p}`);
@@ -1440,14 +1446,15 @@ function goBackToSurveyList(){
 // 既存回答を同じ名前・同じ端末で上書きするとき、古い座席カウントを戻す
 function removeReservationCountsFromSeats(oldReservations){
   if(!oldReservations) return;
+  const sid = currentSurveyId || currentRole;
+  ensureSeatExists(sid);
   [1,2,3].forEach(p=>{
     const r = oldReservations[p];
-    if(!r || !r.role || !r.time) return;
-    if(!seats[r.role] || !seats[r.role][r.time]) return;
+    if(!r || !r.time || !seats[sid] || !seats[sid][r.time]) return;
     const pref = Number(p);
-    const idx = seats[r.role][r.time].indexOf(pref);
+    const idx = seats[sid][r.time].indexOf(pref);
     if(idx >= 0){
-      seats[r.role][r.time][idx] = 0;
+      seats[sid][r.time][idx] = 0;
     }
   });
   renderSeats();
@@ -1702,6 +1709,7 @@ function resetSurveyData(newId){
   // ローカルリセット
   ADMIN_CONFIG.activeRoles.forEach(role=>{
     ALL_SLOTS.forEach(t=>{
+      ensureSeatExists(role);
       seats[role][t] = [0,0,0];
       isMe[role][t]  = [false,false,false];
     });
@@ -2485,6 +2493,8 @@ function selectSurvey(surveyId){
   if(window._loadSurveyData) window._loadSurveyData(surveyId);
   buildRoleTabs();
   buildQuestions();
+  renderSeats();
+  updateDecideBtn();
 
   // 一覧を閉じて登録画面へ
   document.getElementById('registerOverlay').style.display = 'flex';
