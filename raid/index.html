@@ -1540,7 +1540,7 @@ function fetchMembers(){
 // パスワード認証 & モード切り替え
 // ============================================================
 function getPass(){return'1648';}
-function checkAuth(mode){return sessionStorage.getItem(`auth_${mode}`)==='ok';}
+function checkAuth(mode){return true;}
 
 const MODE_THEME={
   svs:{
@@ -1661,11 +1661,8 @@ function showAuth(mode){
   div.className='entrance-layer';
   div.style.cssText='position:fixed;top:62%;left:50%;transform:translate(-50%,-50%);z-index:12;width:86%;max-width:330px;display:flex;flex-direction:column;align-items:center;padding:18px 14px;border-radius:18px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 32px rgba(0,0,0,.18);';
   div.innerHTML=`
-    <div style="font-size:13px;color:#f5f7fb;margin-bottom:16px;text-shadow:0 0 10px rgba(0,0,0,1)">MASTERコード（任意）</div>
-    <input id="pw-input" type="password" placeholder="通常は空欄 / MASTERは #1648"
-      style="width:100%;height:50px;background:rgba(10,14,22,0.92);border:1.5px solid ${theme.border};border-radius:12px;color:#fff;font-size:18px;text-align:center;outline:none;margin-bottom:10px;letter-spacing:4px;-webkit-appearance:none;box-shadow:0 0 18px ${theme.glow};"
-      onkeydown="if(event.key==='Enter')startVideo('${mode}')"/>
-    <div style="display:flex;gap:8px;width:100%;margin-bottom:14px;">
+    <div style="font-size:13px;color:#f5f7fb;margin-bottom:12px;text-shadow:0 0 10px rgba(0,0,0,1)">共有キー（任意）</div>
+    <div style="display:flex;gap:8px;width:100%;margin-bottom:6px;">
       <input id="room-input" type="text" inputmode="numeric" maxlength="4" placeholder="room"
         value="${sessionStorage.getItem(`room_${mode}`)||sessionStorage.getItem('last_room_key')||''}"
         style="flex:0 0 calc(30% - 4px);min-width:0;height:48px;background:rgba(10,14,22,0.92);border:1.5px solid rgba(255,255,255,.22);border-radius:12px;color:#fff;font-size:18px;text-align:center;outline:none;letter-spacing:3px;-webkit-appearance:none;box-shadow:0 0 12px rgba(0,0,0,.35);"
@@ -1676,14 +1673,17 @@ function showAuth(mode){
         突撃！
       </button>
     </div>
-    <div id="pw-err" style="color:#ff5f56;font-size:13px;min-height:16px;text-shadow:0 0 8px rgba(0,0,0,1);margin-bottom:10px"></div>
+    <div style="width:100%;font-size:12px;opacity:.72;line-height:1.45;text-align:center;color:#fff;text-shadow:0 0 8px rgba(0,0,0,1);margin-bottom:14px">
+      同じ4桁キーでリアルタイム共同編集できます。<br>未入力の場合は個人用です。
+    </div>
+    ${portalIsDeveloper()?'<div style="font-size:11px;color:#f7d774;font-weight:900;margin-bottom:10px;text-shadow:0 0 8px rgba(0,0,0,1)">👑 Developer MASTER 自動付与</div>':''}
     <button onclick="switchMode('${other.key}')"
       style="width:100%;height:44px;background:rgba(10,14,22,0.78);border:1.5px solid ${other.border};border-radius:12px;color:${other.accentSoft};font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;box-shadow:0 0 16px ${other.glow};">
       ${other.icon} ${other.short}モードへ
     </button>
   `;
   document.body.appendChild(div);
-  setTimeout(()=>document.getElementById('pw-input')?.focus(),300);
+  setTimeout(()=>document.getElementById('room-input')?.focus(),300);
   window._authMode=mode;
 }
 
@@ -1712,40 +1712,49 @@ function switchMode(toMode){
 }
 
 function startVideo(mode){
-  const val=document.getElementById('pw-input')?.value?.trim();
   const rk=normalizeRoomKey(document.getElementById('room-input')?.value?.trim());
-  const masterPass='#'+getPass();
-  const masterLogin=val===masterPass;
-  if(val && !masterLogin){
-    const err=document.getElementById('pw-err');if(err)err.textContent='MASTERコードが違います。通常利用は空欄で進めます。';
-    const inp=document.getElementById('pw-input');if(inp){inp.style.borderColor='#f85149';setTimeout(()=>{inp.style.borderColor=mode==='svs'?'#ff8a00':'#38b6ff';},1000);inp.value='';inp.focus();}
-    return;
+
+  IS_MASTER=portalIsDeveloper();
+  if(IS_MASTER){
+    sessionStorage.setItem(`master_${mode}`,'1');
+  }else{
+    sessionStorage.removeItem(`master_${mode}`);
   }
-  sessionStorage.setItem(`auth_${mode}`,'ok');
-  if(masterLogin)sessionStorage.setItem(`master_${mode}`,'1');
-  else sessionStorage.removeItem(`master_${mode}`);
-  IS_MASTER=masterLogin;
-  document.getElementById('auth-screen')?.remove();document.getElementById('auth-bg')?.remove();document.getElementById('auth-bg-vid')?.remove();document.getElementById('auth-title-label')?.remove();
+
+  document.getElementById('auth-screen')?.remove();
+  document.getElementById('auth-bg')?.remove();
+  document.getElementById('auth-bg-vid')?.remove();
+  document.getElementById('auth-title-label')?.remove();
+
   const videoUrl=mode==='svs'?REPO_FROST+'intro.mp4':REPO_FROST+'frost_intro.mp4';
   const vwrap=document.createElement('div');
   vwrap.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:20;';
   const vid=document.createElement('video');
   vid.src=videoUrl;
   vid.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
-  vid.playsInline=true;vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');vid.muted=false;
+  vid.playsInline=true;
+  vid.setAttribute('playsinline','');
+  vid.setAttribute('webkit-playsinline','');
+  vid.muted=false;
+
   const goMain=()=>{
-    vwrap.style.transition='opacity 0.5s';vwrap.style.opacity='0';
+    vwrap.style.transition='opacity 0.5s';
+    vwrap.style.opacity='0';
     setTimeout(()=>{
       vwrap.remove();
       document.getElementById('app').style.display='flex';
       document.getElementById('app').style.opacity='0';
       document.getElementById('app').style.transition='opacity 0.4s';
       setTimeout(()=>{document.getElementById('app').style.opacity='1';},30);
-      setMode(mode);connectRoom(mode,rk);
+      setMode(mode);
+      connectRoom(mode,rk);
     },500);
   };
-  vid.onended=goMain;vid.onerror=goMain;
-  vwrap.appendChild(vid);document.body.appendChild(vwrap);
+
+  vid.onended=goMain;
+  vid.onerror=goMain;
+  vwrap.appendChild(vid);
+  document.body.appendChild(vwrap);
   vid.play().catch(goMain);
 }
 
@@ -1804,6 +1813,13 @@ function portalName(data){
 function portalAlliance(data){
   return data?.user?.alliance || data?.profile_data?.alliance || "";
 }
+function portalRole(data){
+  return String(data?.role || data?.user?.role || data?.profile_data?.role || "member").toLowerCase();
+}
+function portalIsDeveloper(){
+  const session=getPortalSession();
+  return portalRole(session)==="developer";
+}
 function showPortalLock(title,msg,href,label){
   const box=document.getElementById("portalLock");
   if(!box)return;
@@ -1821,21 +1837,23 @@ function startPortalRaid(){
 
   const lock=document.getElementById("portalLock");
   if(lock)lock.style.display="none";
+
   const topbar=document.getElementById("portalTopbar");
   if(topbar)topbar.style.display="flex";
+
   sessionStorage.setItem("portal_entry","1");
 
-  // 前回のセッションがあればそのモードで再開、なければモード選択画面
-  const lastMode=sessionStorage.getItem('last_mode');
-  const lastRoom=lastMode?(sessionStorage.getItem(`room_${lastMode}`)||sessionStorage.getItem('last_room_key')||''):'';
-  if(lastMode&&checkAuth(lastMode)){
-    document.getElementById('app').style.display='flex';
-    setMode(lastMode);
-    if(lastRoom)connectRoom(lastMode,lastRoom);
-    else fetchMembers();
-  } else {
-    showModeSelect();
+  if(portalIsDeveloper()){
+    sessionStorage.setItem("master_svs","1");
+    sessionStorage.setItem("master_frost","1");
+  }else{
+    sessionStorage.removeItem("master_svs");
+    sessionStorage.removeItem("master_frost");
   }
+
+  // 認証コードは撤廃。入口演出は毎回表示し、モード選択から開始。
+  document.getElementById('app').style.display='none';
+  showModeSelect();
 }
 
 // モード設定時にセッションに記録
@@ -1844,9 +1862,5 @@ window.setMode=function(m){sessionStorage.setItem('last_mode',m);_setMode(m);};
 
 startPortalRaid();
 </script>
-
-<div id="portal-room-note" style="position:fixed;bottom:52px;left:10px;font-size:12px;opacity:.7;z-index:299;">
-同じ4桁キーでリアルタイム共同編集できます。<br>未入力の場合は個人用です。
-</div>
 </body>
 </html>
