@@ -402,6 +402,7 @@ input:checked+.tsl:before{transform:translateX(22px);background:#fff;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 // ===================================================
 // Firebase 初期化
@@ -415,10 +416,11 @@ const firebaseConfig = {
   messagingSenderId: "753962945830",
   appId: "1:753962945830:web:c74bb9bbef3ffdda9905e7"
 };
-let fbApp = null, fbDb = null;
+let fbApp = null, fbDb = null, fbFs = null;
 try{
   fbApp = firebase.initializeApp(firebaseConfig);
   fbDb  = firebase.database();
+  fbFs  = firebase.firestore();
   console.log("Firebase: connected");
 }catch(e){ console.warn("Firebase init failed", e); }
 
@@ -699,14 +701,14 @@ function applySeatData(data){
   // 自分が選択中の希望は、表示上だけ my 扱いに戻す
   [1,2,3].forEach(pref=>{
     const r = myReservations[pref];
-    if(!r || !r.role || !r.time) return;
-    if(!isMe[r.role] || !isMe[r.role][r.time]) return;
-    const arr = seats[r.role][r.time] || [0,0,0];
+    if(!r || !r.time) return;
+    if(!isMe[sid] || !isMe[sid][r.time]) return;
+    const arr = seats[sid][r.time] || [0,0,0];
     let idx = arr.indexOf(Number(pref));
     if(idx < 0) idx = arr.indexOf(0);
     if(idx >= 0){
-      seats[r.role][r.time][idx] = Number(pref);
-      isMe[r.role][r.time][idx] = true;
+      seats[sid][r.time][idx] = Number(pref);
+      isMe[sid][r.time][idx] = true;
     }
   });
 }
@@ -1025,14 +1027,15 @@ function toggleOmakase(){
 }
 
 function resetReservations(){
-  ADMIN_CONFIG.activeRoles.forEach(role => {
-    ALL_SLOTS.forEach(t => {
-      [0,1,2].forEach(i => {
-        if(isMe[role][t][i]){
-          seats[role][t][i] = 0;
-          isMe[role][t][i] = false;
-        }
-      });
+  const sid = currentSurveyId || currentRole;
+  if(!sid || !isMe[sid] || !seats[sid]) return;
+  ALL_SLOTS.forEach(t => {
+    if(!isMe[sid][t]) return;
+    [0,1,2].forEach(i => {
+      if(isMe[sid][t][i]){
+        seats[sid][t][i] = 0;
+        isMe[sid][t][i] = false;
+      }
     });
   });
   myReservations[1]=null; myReservations[2]=null; myReservations[3]=null;
@@ -1330,8 +1333,8 @@ function showConfirm(){
   const record = {
     name: userName,
     displayName: userName,
-    userName: portalUser?.userName || userName,
-    allianceName: portalUser?.allianceName || "",
+    userName: portalUser?.playerName || userName,
+    alliance: portalUser?.alliance || "",
     discordId: portalUser?.discordId || "",
     gameId: portalUser?.gameId || "",
     identityKey: userIdentityKey(),
@@ -1354,7 +1357,7 @@ function showConfirm(){
     }).catch(e=>console.warn("submission save failed", e));
   } else {
     // オフライン：同じ名前なら上書きし、全回答から座席表を作り直す
-    const existingIdx = submissions.findIndex(s=>s.name===userName);
+    const existingIdx = submissions.findIndex(s=>s.identityKey===safeKey);
     if(existingIdx >= 0) submissions[existingIdx] = record;
     else submissions.push(record);
     rebuildSeatsFromSubmissions(submissions);
@@ -2625,14 +2628,18 @@ function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 
 
 
+
 // ===================================================
 // Portal連携（回答者版）
-// - Discord認証はPortal入口で済ませる
-// - この画面では localStorage / sessionStorage のPortalユーザー情報を参照する
-// - 内部キー: discordId + gameId
-// - 表示: [同盟名] user名
+// - Discord認証はPortal入口で1回のみ
+// - 正本DB: Firestore users/{discordId}
+// - 内部識別: discordId + gameId
+// - 表示: [alliance] playerName
 // ===================================================
 let portalUser = null;
+let portalBooting = false;
+let portalBootedSurveyId = '';
+
 function readJsonStorage(keys){
   for(const k of keys){
     for(const st of [localStorage, sessionStorage]){
@@ -2646,22 +2653,38 @@ function readJsonStorage(keys){
   }
   return null;
 }
-function getPortalUser(){
+function getStoredPortalObject(){
+  return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+}
+function getPortalDiscordId(){
   const q = new URLSearchParams(location.search);
-  const fromStorage = readJsonStorage([
-    '1648_portal_user','portalUser','currentUser','userProfile','authUser','user'
-  ]);
-  const u = fromStorage || {};
-  return {
-    discordId: q.get('discordId') || u.discordId || u.id || u.uid || '',
-    gameId: q.get('gameId') || u.gameId || u.gameID || u.playerId || '',
-    userName: q.get('userName') || u.userName || u.playerName || u.name || '',
-    allianceName: q.get('allianceName') || u.allianceName || u.alliance || u.guild || ''
+  const u = getStoredPortalObject();
+  return String(q.get('discordId') || u.discordId || u.id || u.uid || '').trim();
+}
+async function loadPortalUser(){
+  const discordId = getPortalDiscordId();
+  if(!discordId) return null;
+  let d = null;
+  if(fbFs){
+    try{
+      const doc = await fbFs.collection('users').doc(discordId).get();
+      if(doc.exists) d = doc.data() || {};
+    }catch(e){ console.warn('users/{discordId} read failed', e); }
+  }
+  // Firestoreが読めない時だけ、Portal側の保存済み情報を暫定利用
+  const st = getStoredPortalObject();
+  d = d || st || {};
+  const user = {
+    discordId: String(d.discordId || discordId || '').trim(),
+    gameId: String(d.gameId || d.gameID || d.playerId || '').trim(),
+    playerName: String(d.playerName || d.userName || d.globalName || d.name || '').trim(),
+    alliance: String(d.alliance || d.allianceName || d.guild || '').trim()
   };
+  return user;
 }
 function displayNameFromUser(u){
-  const ally = (u.allianceName || '').trim();
-  const name = (u.userName || '').trim();
+  const ally = (u?.alliance || '').trim();
+  const name = (u?.playerName || '').trim();
   return ally ? `[${ally}] ${name}` : name;
 }
 function userIdentityKey(){
@@ -2670,15 +2693,25 @@ function userIdentityKey(){
   return `${did}_${gid}`.replace(/[.#$\[\]/]/g,'_');
 }
 function hasPortalIdentity(){
-  return !!(portalUser && portalUser.discordId && portalUser.gameId && portalUser.userName);
+  return !!(portalUser && portalUser.discordId && portalUser.gameId && portalUser.playerName);
 }
 function showAccessError(message){
   document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">Portalから開いてください</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../survey/'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">アンケートRoomへ戻る</button></div></div>`;
 }
-function bootPortalAnswer(){
-  portalUser = getPortalUser();
+async function bootPortalAnswer(){
+  if(portalBooting) return false;
+  const q = new URLSearchParams(location.search);
+  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
+  if(!sid){
+    showAccessError('公開中アンケートのIDが指定されていません。アンケートRoomに表示されている官職予約から開いてください。');
+    return false;
+  }
+  if(portalBootedSurveyId === sid && surveySelected) return true;
+  portalBooting = true;
+  portalUser = await loadPortalUser();
+  portalBooting = false;
   if(!hasPortalIdentity()){
-    showAccessError('認証済みユーザー情報を確認できません。PortalでDiscord認証後、公開中のアンケートRoomから入り直してください。');
+    showAccessError('users/{discordId} の登録情報を確認できません。PortalでDiscord認証後、公開中のアンケートRoomから入り直してください。');
     return false;
   }
   userName = displayNameFromUser(portalUser);
@@ -2687,23 +2720,15 @@ function bootPortalAnswer(){
   const disp = document.getElementById('portalUserDisplay');
   if(disp) disp.textContent = userName;
 
-  const q = new URLSearchParams(location.search);
-  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
-  if(!sid){
-    showAccessError('公開中アンケートのIDが指定されていません。アンケートRoomに表示されている官職予約から開いてください。');
+  if(!surveysMap || !surveysMap[sid]) return true; // surveys読込待ち
+  if(surveysMap[sid].status !== 'open'){
+    showAccessError('この官職予約は現在公開中ではありません。');
     return false;
   }
-  // surveysMapが読み込まれた後にselectSurveyする
-  if(surveysMap && surveysMap[sid]){
-    if(surveysMap[sid].status !== 'open'){
-      showAccessError('この官職予約は現在公開中ではありません。');
-      return false;
-    }
-    selectSurvey(sid);
-  }
+  portalBootedSurveyId = sid;
+  selectSurvey(sid);
   return true;
 }
-
 // ===================================================
 // 初期化
 // ===================================================
@@ -2712,7 +2737,6 @@ buildQuestions();
 renderSeats();
 updateDecideBtn();
 // Firebase接続（読み込み完了後にrenderSurveyListが呼ばれて画面が更新される）
-portalUser = getPortalUser();
 initFirebase();
 
 
