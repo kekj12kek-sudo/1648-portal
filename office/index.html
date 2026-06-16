@@ -426,7 +426,7 @@ try{
 
 // DBパス
 const DB_CONFIG      = "config";           // 管理者設定・質問
-// DB_SURVEY 廃止済み（surveysコレクションで管理）
+// DB_SURVEY 廃止済み（office_roomsで管理）
 const DB_SEATS       = "seats";            // 座席データ（リアルタイム）
 const DB_SUBMISSIONS = "submissions";      // 回答データ
 const DB_MANUALPTS   = "manualPoints";     // 手動ポイント
@@ -569,8 +569,8 @@ function initFirebase(){
   if(!fbDb) return;
 
   // 設定を読み込み
-  // surveysコレクションをリアルタイム監視（メイン）
-  fbDb.ref('surveys').on('value', snap=>{
+  // office_roomsをリアルタイム監視（メイン）
+  fbDb.ref('office_rooms').on('value', snap=>{
     surveysMap = snap.val() || {};
     // 回答者：一覧を更新
     if(!adminLoggedIn && !surveySelected) renderSurveyList();
@@ -1608,7 +1608,7 @@ function setDeadlineMode(mode){
 // アンケートをDBに保存（複数対応）
 function saveSurveyToDB(surveyId, data){
   if(!fbDb || !surveyId) return;
-  fbDb.ref(`surveys/${surveyId}`).update(data).catch(e=>console.warn("survey save failed",e));
+  fbDb.ref(`office_rooms/${surveyId}`).update(data).catch(e=>console.warn("survey save failed",e));
 }
 
 // アンケートを新規作成してDBに保存
@@ -1616,7 +1616,7 @@ function createSurveyInDB(surveyData){
   const id = surveyData.id;
   surveysMap[id] = surveyData; // ローカルに即反映
   if(fbDb){
-    fbDb.ref(`surveys/${id}`).set(surveyData).catch(e=>console.warn("survey create failed",e));
+    fbDb.ref(`office_rooms/${id}`).set(surveyData).catch(e=>console.warn("survey create failed",e));
   }
   pruneOldSurveys();
   // 管理者ボードを更新
@@ -1630,7 +1630,7 @@ function pruneOldSurveys(){
   if(all.length <= 5) return;
   const toDelete = all.slice(5); // 古い方から削除
   toDelete.forEach(s=>{
-    fbDb.ref(`surveys/${s.id}`).remove();
+    fbDb.ref(`office_rooms/${s.id}`).remove();
     fbDb.ref(`${DB_SUBMISSIONS}/${s.id}`).remove();
   });
 }
@@ -1638,7 +1638,7 @@ function pruneOldSurveys(){
 // アンケートを削除
 function deleteSurveyFromDB(surveyId){
   if(!fbDb || !surveyId) return;
-  fbDb.ref(`surveys/${surveyId}`).remove();
+  fbDb.ref(`office_rooms/${surveyId}`).remove();
   fbDb.ref(`${DB_SUBMISSIONS}/${surveyId}`).remove();
 }
 
@@ -2654,6 +2654,17 @@ function readJsonStorage(keys){
   return null;
 }
 function getStoredPortalObject(){
+  const discordSession = readJsonStorage(['discord_user']);
+  if(discordSession && typeof discordSession === 'object'){
+    const u = discordSession.user || {};
+    const d = discordSession.discord || {};
+    return {
+      discordId: u.discordId || d.id || discordSession.discordId || '',
+      gameId: u.gameId || '',
+      playerName: u.playerName || d.globalName || d.username || '',
+      alliance: u.alliance || ''
+    };
+  }
   return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
 }
 function getPortalDiscordId(){
