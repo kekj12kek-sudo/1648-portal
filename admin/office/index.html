@@ -606,20 +606,36 @@ let finalResults = [];
 // ===================================================
 // Firebase リアルタイム同期
 // ===================================================
+async function loadAdminOfficeRooms(){
+  const discordId = getPortalDiscordId();
+  if(!discordId){ showAccessError('Portalのログイン情報がありません。管理ページから入り直してください。'); return; }
+  try{
+    const data = await callOfficeFunction('listOfficeRoomsAdmin', {discordId});
+    surveysMap = {};
+    (data.rooms || []).forEach(r=>{
+      const id = r.roomId || r.id;
+      const officeName = r.officeName || r.role || officeNameFromType(r.officeType);
+      surveysMap[id] = {
+        ...r, id, roomId:id, type:'office', role:officeName, officeName,
+        title: r.title || `${officeName}予約`,
+        deadline: r.deadline || r.closeAt || '',
+        reservedStart: r.reservedStart || r.openAt || ''
+      };
+    });
+    renderAdminSurveyList();
+    startSurveyTimer();
+  }catch(e){
+    console.warn('listOfficeRoomsAdmin failed', e);
+    showAccessError('官職予約一覧を読み込めません。Functionsのデプロイ状態を確認してください。');
+  }
+}
+
 function initFirebase(){
   if(!fbDb) return;
 
   // 設定を読み込み
-  // office_roomsをリアルタイム監視（メイン）
-  fbDb.ref('office_rooms').on('value', snap=>{
-    surveysMap = snap.val() || {};
-    // 回答者：一覧を更新
-    if(!adminLoggedIn && !surveySelected) renderSurveyList();
-    // 管理者：ボードを更新
-    if(adminLoggedIn) renderAdminSurveyList();
-    // タイマー起動
-    startSurveyTimer();
-  });
+  // office_rooms はFirestore正本。管理ページではFunctions経由で取得する。
+  loadAdminOfficeRooms();
 
   fbDb.ref(DB_CONFIG).on('value', snap=>{
     const d = snap.val();
@@ -803,10 +819,12 @@ function saveConfigToDB(){
 // 手動ポイントをDBに保存
 function saveManualPointsToDB(){
   const sid = adminEditSurveyId || currentSurveyId;
-  if(!fbDb || !sid) return;
-  fbDb.ref(`${DB_MANUALPTS}/${sid}`).set(manualPoints)
-    .catch(e=>console.warn("manualPts save failed",e));
+  if(!sid) return;
+  const discordId = getPortalDiscordId();
+  callOfficeFunction('saveOfficeManualPoints', {discordId, roomId:sid, points:manualPoints})
+    .catch(e=>console.warn('manualPts save failed', e));
 }
+
 
 // メンバーリストをDBに保存
 function saveMembersToDB(){
@@ -1463,21 +1481,40 @@ function setDeadlineMode(mode){
 }
 // アンケートをDBに保存（複数対応）
 function saveSurveyToDB(surveyId, data){
-  if(!fbDb || !surveyId) return;
-  fbDb.ref(`office_rooms/${surveyId}`).update(data).catch(e=>console.warn("survey save failed",e));
+  if(!surveyId) return;
+  const discordId = getPortalDiscordId();
+  const current = surveysMap[surveyId] || {};
+  const merged = {...current, ...(data||{}), id:surveyId, roomId:surveyId, type:'office'};
+  if(merged.role && !merged.officeName) merged.officeName = merged.role;
+  if(!merged.officeType) merged.officeType = officeTypeFromRole(merged.officeName || merged.role);
+  merged.officeName = merged.officeName || officeNameFromType(merged.officeType);
+  merged.role = merged.officeName;
+  surveysMap[surveyId] = merged;
+  callOfficeFunction('updateOfficeRoom', {discordId, roomId:surveyId, data:merged})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message||e)); });
 }
+
 
 // アンケートを新規作成してDBに保存
 function createSurveyInDB(surveyData){
-  const id = surveyData.id;
-  surveysMap[id] = surveyData; // ローカルに即反映
-  if(fbDb){
-    fbDb.ref(`office_rooms/${id}`).set(surveyData).catch(e=>console.warn("survey create failed",e));
-  }
-  pruneOldSurveys();
-  // 管理者ボードを更新
+  const id = surveyData.id || surveyData.roomId;
+  const discordId = getPortalDiscordId();
+  surveysMap[id] = surveyData;
+  const event = {
+    eventId: surveyData.eventId,
+    eventName: surveyData.eventName || 'バフ予約',
+    eventDate: surveyData.eventDate || eventDateFromInput(surveyData.openAt || surveyData.closeAt || surveyData.deadline),
+    status: surveyData.status || 'open',
+    openAt: surveyData.openAt || surveyData.reservedStart || surveyData.startedAt || '',
+    closeAt: surveyData.closeAt || surveyData.deadline || ''
+  };
+  callOfficeFunction('upsertOfficeRoom', {discordId, event, room:surveyData})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message||e)); });
   renderAdminSurveyList();
 }
+
 
 // 5件超の古いアンケートを自動削除
 function pruneOldSurveys(){
@@ -1493,10 +1530,13 @@ function pruneOldSurveys(){
 
 // アンケートを削除
 function deleteSurveyFromDB(surveyId){
-  if(!fbDb || !surveyId) return;
-  fbDb.ref(`office_rooms/${surveyId}`).remove();
-  fbDb.ref(`${DB_SUBMISSIONS}/${surveyId}`).remove();
+  if(!surveyId) return;
+  const discordId = getPortalDiscordId();
+  callOfficeFunction('deleteOfficeRoom', {discordId, roomId:surveyId})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message||e)); });
 }
+
 
 // 新アンケート開始時にseats・submissionsをリセット
 function resetSurveyData(newId){
@@ -1543,17 +1583,30 @@ function startSurveyNow(){
   if(!end){ alert('終了日時を入力してください'); return; }
   if(!confirm(`「${title}」を今すぐ開始しますか？`)) return;
 
-  const newId = newSurveyId();
+  const officeType = officeTypeFromRole(role);
+  const ymd = ymdFromInput(end);
+  const eventId = `buff_${ymd}`;
+  const newId = `buff_${ymd}_${officeType}_${Date.now()}`;
   const survey = {
     id        : newId,
+    roomId    : newId,
+    eventId,
+    eventName : 'バフ予約',
+    eventDate : eventDateFromInput(end),
+    type      : 'office',
     title     : title,
     role      : role,
+    officeName: role,
+    officeType,
     status    : 'open',
     startedAt : new Date().toISOString(),
+    openAt    : new Date().toISOString(),
+    closeAt   : end,
     deadline  : end,
     endedAt   : null,
     createdAt : new Date().toISOString(),
     questions : JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
+    bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems)),
   };
   surveysMap[newId] = survey;
   createSurveyInDB(survey);
@@ -1572,17 +1625,30 @@ function reserveSurvey(){
   if(new Date(start) >= new Date(end)){ alert('終了日時は開始日時より後にしてください'); return; }
   if(!confirm(`「${title}」を ${start.replace('T',' ')} に開始予約しますか？`)) return;
 
-  const newId = newSurveyId();
+  const officeType = officeTypeFromRole(role);
+  const ymd = ymdFromInput(start);
+  const eventId = `buff_${ymd}`;
+  const newId = `buff_${ymd}_${officeType}_${Date.now()}`;
   const survey = {
     id           : newId,
+    roomId       : newId,
+    eventId,
+    eventName    : 'バフ予約',
+    eventDate    : eventDateFromInput(start),
+    type         : 'office',
     title        : title,
     role         : role,
+    officeName   : role,
+    officeType,
     status       : 'reserved',
     reservedStart: start,
+    openAt       : start,
+    closeAt      : end,
     deadline     : end,
     endedAt      : null,
     createdAt    : new Date().toISOString(),
     questions    : JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
+    bonusItems   : JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems)),
   };
   surveysMap[newId] = survey;
   createSurveyInDB(survey);
@@ -2470,6 +2536,7 @@ function copyPostText(type){
   el.select(); el.setSelectionRange(0, 99999);
   navigator.clipboard?.writeText(el.value);
 }
+function showAccessError(message){ document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">読み込みできません</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`; }
 function escapeHtml(str){ return String(str).replace(/[&<>"]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
 function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 
@@ -2640,20 +2707,8 @@ function updateDecideBtn(){ /* admin/officeでは不要 */ }
 
 // Firestore office_rooms を管理画面の正本にする
 function initFirebase(){
-  if(!fbFs) return;
-  try{
-    fbFs.collection('office_rooms').onSnapshot(snap=>{
-      surveysMap = {};
-      snap.forEach(doc=>{
-        const d = normalizeOfficeRoom(doc.id, doc.data() || {});
-        surveysMap[d.id] = d;
-      });
-      if(adminLoggedIn) renderAdminSurveyList();
-      startSurveyTimer();
-    }, err=>console.warn('office_rooms snapshot failed', err));
-  }catch(e){ console.warn('office_rooms listener failed', e); }
-
-  // 既存のRTDB設定は使える場合だけ読む。失敗しても管理画面は止めない。
+  // Firestore直読みは禁止。管理画面もFunctions経由で office_rooms を読む。
+  loadAdminOfficeRooms();
   try{
     if(fbDb){
       fbDb.ref(DB_CONFIG).on('value', snap=>{
@@ -2667,21 +2722,15 @@ function initFirebase(){
   }catch(e){ console.warn('config read skipped', e); }
 
   let activeSubRef = null;
-  let activePtRef = null;
   window._loadSurveyData = function(surveyId){
     if(!fbDb || !surveyId) return;
     if(activeSubRef) fbDb.ref(activeSubRef).off();
-    if(activePtRef) fbDb.ref(activePtRef).off();
     activeSubRef = `${DB_SUBMISSIONS}/${surveyId}`;
-    activePtRef = `${DB_MANUALPTS}/${surveyId}`;
     fbDb.ref(activeSubRef).on('value', snap=>{
       submissions = snap.val() ? Object.values(snap.val()) : [];
       if(adminLoggedIn){ renderPriorityList(); buildResults(); buildPostText(); }
     });
-    fbDb.ref(activePtRef).on('value', snap=>{
-      manualPoints = snap.val() || {};
-      if(adminLoggedIn){ renderPriorityList(); buildResults(); buildPostText(); }
-    });
+    // manualPoints はFirestore保存を正とする。画面上はローカル状態を使う。
   };
 }
 
@@ -2694,32 +2743,45 @@ async function saveOfficeBundle(eventId, eventData, roomData){
 
 function saveSurveyToDB(surveyId, data){
   if(!surveyId) return;
-  officeFunctionCall('updateOfficeRoom', {roomId:surveyId, data})
-    .catch(e=>{
-      console.warn('office room save failed', e);
-      alert('保存に失敗しました：' + e.message);
-    });
+  const discordId = getPortalDiscordId();
+  const current = surveysMap[surveyId] || {};
+  const merged = {...current, ...(data||{}), id:surveyId, roomId:surveyId, type:'office'};
+  if(merged.role && !merged.officeName) merged.officeName = merged.role;
+  if(!merged.officeType) merged.officeType = officeTypeFromRole(merged.officeName || merged.role);
+  merged.officeName = merged.officeName || officeNameFromType(merged.officeType);
+  merged.role = merged.officeName;
+  surveysMap[surveyId] = merged;
+  callOfficeFunction('updateOfficeRoom', {discordId, roomId:surveyId, data:merged})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message||e)); });
 }
+
 function createSurveyInDB(surveyData){
   const id = surveyData.id || surveyData.roomId;
-  if(!id) return;
-  surveysMap[id] = normalizeOfficeRoom(id, surveyData);
-  // 新規作成本体は startSurveyNow / reserveSurvey の saveOfficeBundle でFunctions保存する。
+  const discordId = getPortalDiscordId();
+  surveysMap[id] = surveyData;
+  const event = {
+    eventId: surveyData.eventId,
+    eventName: surveyData.eventName || 'バフ予約',
+    eventDate: surveyData.eventDate || eventDateFromInput(surveyData.openAt || surveyData.closeAt || surveyData.deadline),
+    status: surveyData.status || 'open',
+    openAt: surveyData.openAt || surveyData.reservedStart || surveyData.startedAt || '',
+    closeAt: surveyData.closeAt || surveyData.deadline || ''
+  };
+  callOfficeFunction('upsertOfficeRoom', {discordId, event, room:surveyData})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message||e)); });
   renderAdminSurveyList();
 }
+
 function deleteSurveyFromDB(surveyId){
   if(!surveyId) return;
-  officeFunctionCall('deleteOfficeRoom', {roomId:surveyId})
-    .catch(e=>{
-      console.warn('office room delete failed', e);
-      alert('削除に失敗しました：' + e.message);
-    });
-  if(fbDb){
-    fbDb.ref(`${DB_SUBMISSIONS}/${surveyId}`).remove();
-    fbDb.ref(`${DB_MANUALPTS}/${surveyId}`).remove();
-    fbDb.ref(`seats/${surveyId}`).remove();
-  }
+  const discordId = getPortalDiscordId();
+  callOfficeFunction('deleteOfficeRoom', {discordId, roomId:surveyId})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message||e)); });
 }
+
 function getEditSurveyRole(){
   const b2 = document.getElementById('roleBtn-教育部長');
   return (b2 && b2.classList.contains('on')) ? '教育部長' : '副執政官';
