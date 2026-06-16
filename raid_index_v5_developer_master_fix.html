@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>突撃くん</title>
+<style>
+/* ============ 共通 ============ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{color:#e6edf3;font-family:'Hiragino Kana','Hiragino Sans','Yu Gothic',sans-serif;font-size:14px;overscroll-behavior:none}
+body.mode-svs{background:#060d1a}
+body.mode-frost{background:#060d1a}
+
+/* SVS カラー */
+.svs-mode{--bg:#060d1a;--bg2:#0d1829;--bg3:#142035;--bg4:#1c2e47;--border:#1c3050;--border2:#2a4570;--text:#e0eeff;--text2:#7a9cc0;--text3:#4a6a90;--accent:#38b6ff;--accent2:#0e8fd4;--green:#3fb950;--red:#f85149;--orange:#e3b341;--purple:#a371f7;--hi:#7dd3fc;}
+/* 霜竜 カラー */
+.frost-mode{--bg:#060d1a;--bg2:#0d1829;--bg3:#142035;--bg4:#1c2e47;--border:#1c3050;--border2:#2a4570;--text:#e0eeff;--text2:#7a9cc0;--text3:#4a6a90;--accent:#38b6ff;--accent2:#0e8fd4;--green:#3fb950;--red:#f85149;--orange:#e3b341;--purple:#a371f7;--hi:#7dd3fc;}
+
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:none;flex-direction:column;background:var(--bg)}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-size:15px;font-weight:700;color:var(--hi)}
+.tab-bar{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:50px;padding:10px 4px;text-align:center;font-size:11px;color:var(--text2);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.content{flex:1;padding:12px;overflow-y:auto}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.sec{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:1px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.btn{height:48px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:500;width:100%}
+.btn:active{filter:brightness(0.82)}
+.btn-primary{background:var(--accent2);border-color:var(--accent);color:#fff}
+.btn-success{background:#1a3a1f;border-color:var(--green);color:var(--green)}
+.btn-danger{background:#3a1a1a;border-color:var(--red);color:var(--red)}
+.btn-sm{height:36px;font-size:13px}
+.btn-xs{height:30px;font-size:12px;padding:0 10px}
+.inp{width:100%;height:40px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:0 10px;outline:none}
+.inp:focus{border-color:var(--accent)}
+.inp-num{width:80px;height:36px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:15px;font-weight:700;text-align:center;padding:0 6px;outline:none;-webkit-appearance:none;}
+.inp-num:focus{border-color:var(--accent)}
+select.inp{cursor:pointer}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.p-off{background:#21262d;color:var(--text2)}.p-on{background:#1a3a1f;color:var(--green)}
+.p-warn{background:#3a2a0a;color:var(--orange)}.p-low{background:#3a1a1a;color:var(--red)}
+.p-dead{background:#21262d;color:var(--text3)}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--bg4);color:var(--text2)}
+.chip[data-t="A"]{background:#1a2a3a;color:#58a6ff}.chip[data-t="B"]{background:#1a3a1a;color:var(--green)}
+.chip[data-t="C"]{background:#3a2a0a;color:var(--orange)}.chip[data-t="D"]{background:#3a1a1a;color:var(--red)}
+.chip[data-t="E"]{background:#2a1a3a;color:var(--purple)}
+.chip[data-t="未"]{background:#21262d;color:var(--text3)}
+.ptoggle{display:flex;background:var(--bg);border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.pbtn{flex:1;padding:10px 8px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);line-height:1.4}
+.pbtn.on{background:var(--accent2);color:#fff}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.sbtn{padding:10px 4px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);border-radius:8px;border:1px solid var(--border2);background:var(--bg3)}
+.sbtn.on-blue{background:#1a2a3a;border-color:var(--accent);color:var(--accent)}
+.empty{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+.cpbox{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px;font-family:monospace;font-size:13px;white-space:pre;overflow-x:auto;color:var(--text);margin-bottom:8px;line-height:1.8}
+.tgl{position:relative;width:48px;height:26px;flex-shrink:0}
+.tgl input{opacity:0;width:0;height:0}
+.tsl{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--bg4);border-radius:26px;transition:.2s}
+.tsl:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:var(--text2);border-radius:50%;transition:.2s}
+input:checked+.tsl{background:var(--green)}
+input:checked+.tsl:before{transform:translateX(22px);background:#fff}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#238636;color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:opacity 0.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.mov-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.78);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--bg2);border-radius:12px 12px 0 0;padding:16px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:1px solid var(--border2)}
+.row{display:flex;align-items:center;gap:8px}.fl1{flex:1}
+.bsec{background:var(--bg3);border-radius:8px;padding:8px 10px;border-left:3px solid var(--purple);margin-bottom:8px}
+.er{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border)}
+.ptp{background:var(--bg3);border-radius:8px;padding:10px;margin-top:8px;border:1px solid var(--border2)}
+.tinp{width:84px;height:36px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:15px;font-weight:700;text-align:center;padding:0 6px;outline:none}
+.face-label{font-size:11px;font-weight:700;padding:4px 8px;border-radius:4px;margin-bottom:6px;display:inline-block}
+.face1-label{background:#1a2a3a;color:var(--accent)}
+.face2-label{background:#2a1a3a;color:var(--purple)}
+.master-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:999px;background:rgba(247,215,116,.14);border:1px solid rgba(247,215,116,.55);color:#f7d774;font-size:11px;font-weight:900;letter-spacing:.5px;text-shadow:0 0 8px rgba(0,0,0,.85);margin-top:3px}
+
+/* ===== 1648 Portal 統合 ===== */
+.portal-topbar{
+  position:fixed;
+  left:10px;
+  bottom:10px;
+  z-index:300;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  pointer-events:none;
+}
+.portal-user{display:none;}
+.portal-home-btn{
+  pointer-events:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:0 12px;
+  border-radius:999px;
+  border:1px solid rgba(125,211,252,.42);
+  background:rgba(6,13,26,.74);
+  color:#bfdbfe;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:900;
+  backdrop-filter:blur(8px);
+  box-shadow:0 8px 22px rgba(0,0,0,.32);
+}
+.portal-home-btn:active{transform:scale(.96);}
+.portal-lock{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:#060d1a;
+  color:#e0eeff;
+}
+.portal-lock-box{
+  width:100%;
+  max-width:380px;
+  border:1px solid rgba(56,182,255,.28);
+  background:rgba(13,24,41,.96);
+  border-radius:18px;
+  padding:22px 18px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+.portal-lock-box h2{
+  color:#f7d774;
+  font-size:18px;
+  margin-bottom:10px;
+}
+.portal-lock-box p{
+  color:#7a9cc0;
+  font-size:13px;
+  line-height:1.7;
+  margin-bottom:14px;
+}
+.portal-lock-box a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  border-radius:12px;
+  background:#0e8fd4;
+  color:#fff;
+  text-decoration:none;
+  font-weight:900;
+}
+
+</style>
+</head>
+<body class="mode-svs">
+
+<div id="portalLock" class="portal-lock">
+  <div class="portal-lock-box">
+    <h2>認証確認中</h2>
+    <p>1648 Portalのログイン状態を確認しています。</p>
+    <a href="/1648-portal/auth/">ログインへ</a>
+  </div>
+</div>
+
+<div class="portal-topbar" id="portalTopbar" style="display:none">
+  <button class="portal-home-btn" type="button" onclick="goBackToPortalPrevious()">← 戻る</button>
+</div>
+
+<div id="app" class="svs-mode">
+  <div class="header">
+    <div>
+      <div class="header-title" id="hdr-title">突撃くん SVS版</div>
+      <div style="font-size:11px;color:var(--text3)" id="hdr-sub">WOS SVS 同時着弾管理</div>
+    </div>
+    <div style="font-size:11px;text-align:right;color:var(--text2);white-space:pre-line" id="hdr-info"></div>
+  </div>
+  <div class="tab-bar" id="tabs"></div>
+  <div class="content" id="content"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script>
+// ============================================================
+// Firebase リアルタイム共有
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyB2S7I657C_r_jqK-mCQljM5cvydHX2ToU",
+  authDomain: "totsugeki-web.firebaseapp.com",
+  databaseURL: "https://totsugeki-web-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "totsugeki-web",
+  storageBucket: "totsugeki-web.firebasestorage.app",
+  messagingSenderId: "545717856335",
+  appId: "1:545717856335:web:5caa28b344e868826fa23a"
+};
+let fbApp=null, fbDb=null, roomKey='', roomMode='', roomRef=null, isRemoteApplying=false, roomHasRemoteData=false, fbSaveTimer=null;
+try{fbApp=firebase.initializeApp(firebaseConfig);fbDb=firebase.database();}catch(e){console.warn('Firebase init failed',e);}
+
+// ============================================================
+// 共通定数
+// ============================================================
+const REPO_SVS='https://kekj12kek-sudo.github.io/frost-dragon-app/';
+const REPO_FROST='https://kekj12kek-sudo.github.io/frost-dragon-app/';
+const GAS_URL='https://script.google.com/macros/s/AKfycbyES7vlaVErWjcK7WAmcM4cHg1s6EL1kQIxsuELXLmf8GbGNLGfnel_Mp-Qg33BKDb8iQ/exec';
+const TEAMS=['未','A','B','C','D','E'];
+
+// SVS定数
+const M6=[43,39,36,36,39,43],M5=[40,37,36,37,40];
+const P6=[37,33,30,30,33,37],P5=[34,31,30,31,34];
+
+// ============================================================
+// モード管理
+// ============================================================
+let MODE='svs'; // 'svs' or 'frost'
+let IS_MASTER=false;
+
+function setMode(m){
+  MODE=m;
+  IS_MASTER=sessionStorage.getItem(`master_${m}`)==='1';
+  const app=document.getElementById('app');
+  const body=document.body;
+  if(m==='svs'){
+    app.className='svs-mode';body.className='mode-svs';
+    document.getElementById('hdr-title').textContent='突撃くん SVS版';
+    document.getElementById('hdr-sub').textContent='WOS SVS 同時着弾管理';
+  } else {
+    app.className='frost-mode';body.className='mode-frost';
+    document.getElementById('hdr-title').textContent='❄️ 突撃くん 霜竜版';
+    document.getElementById('hdr-sub').textContent='霜竜 同時着弾管理';
+  }
+  buildTabs();
+  render();
+}
+
+function buildTabs(){
+  const tabs=document.getElementById('tabs');
+  if(MODE==='svs'){
+    tabs.innerHTML=`
+      <div class="tab active" data-tab="setup">① 事前設定</div>
+      <div class="tab" data-tab="battle">② 当日参戦</div>
+      <div class="tab" data-tab="calc">同着計算</div>
+      <div class="tab" data-tab="copy">コピー</div>
+      <div class="tab" data-tab="enemy">敵情報</div>`;
+    SS.tab='battle';
+  } else {
+    tabs.innerHTML=`
+      <div class="tab active" data-tab="battle">② 当日参戦</div>
+      <div class="tab" data-tab="calc">同着計算</div>
+      <div class="tab" data-tab="copy">コピー</div>
+      <div class="tab" data-tab="enemy">敵情報</div>`;
+    FS.tab='battle';
+  }
+  document.getElementById('tabs').addEventListener('click',e=>{
+    const t=e.target.closest('[data-tab]');
+    if(!t)return;
+    if(MODE==='svs')SS.tab=t.dataset.tab;
+    else FS.tab=t.dataset.tab;
+    render();
+  },{once:true});
+  document.getElementById('tabs').addEventListener('click',e=>{
+    const t=e.target.closest('[data-tab]');if(!t)return;
+    if(MODE==='svs')SS.tab=t.dataset.tab;
+    else FS.tab=t.dataset.tab;
+    render();
+  });
+}
+
+// ============================================================
+// SVS STATE
+// ============================================================
+const SS={
+  tab:'battle',split:'lr',faction:'blue',placementA:'6',placementB:'6',
+  members:[],cityAssign:{},active:[],pet:{},petStart:{},enemies:[],
+  modal:null,selCity:null,now:Date.now(),
+  adjust:{},     // {memberId: {march:0, petMarch:0}} 個人調整値
+};
+
+// ============================================================
+// 霜竜 STATE
+// ============================================================
+const FS={
+  tab:'battle',
+  members:[],active:[],pet:{},petStart:{},enemies:[],now:Date.now(),
+  baseId:null,  // 基準メンバーID（nullの場合は最短行軍が自動選択）
+  calcMode:'sync', // 'sync' or 'delay'
+  delaySource:'same', // 'same' or 'custom'
+  delayOrder:['A','B','C','D'],
+  delayGaps:[0,2,2,2],
+  delayAssign:{}, // {memberId: '1'|'2'|'3'|'4'|'未'}
+  delayCopyMode:'group' // 'group' or 'mixed'
+};
+
+// ============================================================
+// 共通ユーティリティ
+// ============================================================
+function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
+function cp(txt){navigator.clipboard.writeText(txt).then(()=>toast('コピーしました！')).catch(()=>toast('コピー失敗'));}
+function tc(t){return{A:'#58a6ff',B:'#3fb950',C:'#e3b341',D:'#f85149',E:'#a371f7'}[t]||'#2f81f7';}
+function escAttr(v){return String(v??'').replace(/[&\"<>]/g,c=>({'&':'&amp;','\"':'&quot;','<':'&lt;','>':'&gt;'}[c]||c));}
+
+// ペット共通
+function petSt(id,state){
+  const pet=state.pet,petStart=state.petStart,now=state.now;
+  if(!pet[id])return'off';
+  const rem=120-(now-(petStart[id]||now))/60000;
+  if(rem<=0)return'dead';if(rem<=10)return'low';if(rem<=30)return'warn';return'on';
+}
+function petLbl(id,state){
+  if(!state.pet[id])return'⚪ 未使用';
+  const rem=120-(state.now-(state.petStart[id]||state.now))/60000;
+  if(rem<=0)return'⚫ 失効';
+  const m=Math.floor(rem),s=Math.floor((rem-m)*60);
+  return`${{on:'🟢',warn:'🟡',low:'🔴'}[petSt(id,state)]||'⚪'} ${m}:${String(s).padStart(2,'0')}`;
+}
+function fmtT(id,state){const t=new Date(state.petStart[id]||Date.now());return`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}
+function fmtE(id,state){const e=new Date((state.petStart[id]||Date.now())+7200000);return`${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`;}
+
+// ============================================================
+// SVS ロジック
+// ============================================================
+const FIXED_POS={
+  'lr_blue_A_6':[{"x":72.6,"y":23.08},{"x":61.25,"y":33.68},{"x":49.83,"y":44.73},{"x":37.81,"y":56.49},{"x":25.33,"y":68.82},{"x":11.47,"y":81.88}],
+  'lr_blue_B_6':[{"x":15.29,"y":31.52},{"x":28.61,"y":41.73},{"x":40.47,"y":51.04},{"x":53.1,"y":60.18},{"x":66.43,"y":70.24},{"x":79.06,"y":80.57}],
+  'lr_blue_A_5':[{"x":67.12,"y":28.87},{"x":55.37,"y":39.5},{"x":43.4,"y":50.45},{"x":30.52,"y":62.79},{"x":18.1,"y":74.58}],
+  'lr_blue_B_5':[{"x":21.68,"y":36.34},{"x":33.91,"y":46.39},{"x":47.29,"y":55.93},{"x":60.43,"y":65.52},{"x":72.9,"y":75.6}],
+  'lr_red_A_6':[{"x":31.04,"y":29.11},{"x":40.94,"y":36.94},{"x":51.2,"y":45.14},{"x":61.32,"y":52.54},{"x":71.9,"y":59.37},{"x":82.71,"y":67.56}],
+  'lr_red_B_6':[{"x":81.27,"y":24},{"x":71.07,"y":32.55},{"x":62.62,"y":39.96},{"x":53.11,"y":47.32},{"x":42.68,"y":54.77},{"x":32.71,"y":62.59}],
+  'lr_red_A_5':[{"x":34.69,"y":34.05},{"x":46.01,"y":41.34},{"x":55.96,"y":48.62},{"x":66.37,"y":56.13},{"x":78.15,"y":63.64}],
+  'lr_red_B_5':[{"x":76.47,"y":28.6},{"x":66.56,"y":36.91},{"x":56.65,"y":43.94},{"x":47.19,"y":51.74},{"x":37.05,"y":59.54}],
+  'ud_blue_A_6':[{"x":11.82,"y":80.8},{"x":24.54,"y":68.91},{"x":37.36,"y":56.24},{"x":49.41,"y":44.55},{"x":61.89,"y":33.42},{"x":73.13,"y":22.61}],
+  'ud_blue_B_6':[{"x":27.17,"y":20.8},{"x":36.68,"y":30.77},{"x":47.67,"y":39.32},{"x":57.9,"y":48.77},{"x":69.01,"y":58.17},{"x":81.4,"y":68.22}],
+  'ud_blue_A_5':[{"x":18.45,"y":75.35},{"x":31.01,"y":62.59},{"x":43.98,"y":50.78},{"x":55.95,"y":39.12},{"x":67.83,"y":29.25}],
+  'ud_blue_B_5':[{"x":33.11,"y":24.84},{"x":42.25,"y":35.31},{"x":53.39,"y":44.77},{"x":64.67,"y":53.63},{"x":76.1,"y":64.18}],
+  'ud_red_A_6':[{"x":15.71,"y":30.83},{"x":29.1,"y":41.31},{"x":41.23,"y":51.03},{"x":53.51,"y":60.25},{"x":66.22,"y":70.2},{"x":79.07,"y":79.92}],
+  'ud_red_B_6':[{"x":32.65,"y":63.41},{"x":43.3,"y":54.97},{"x":53.15,"y":47.03},{"x":61.78,"y":39.65},{"x":71.75,"y":31.82},{"x":81.4,"y":24.24}],
+  'ud_red_A_5':[{"x":22.33,"y":36.81},{"x":34.44,"y":46.54},{"x":46.95,"y":56.02},{"x":59.6,"y":65.97},{"x":73.08,"y":75.18}],
+  'ud_red_B_5':[{"x":37.21,"y":58.83},{"x":47.27,"y":51.9},{"x":57.04,"y":43.96},{"x":67.18,"y":36.38},{"x":76.32,"y":28.82}],
+};
+
+function sCityPos(faceKey){
+  const p=faceKey==='A'?SS.placementA:SS.placementB;
+  return FIXED_POS[`${SS.split}_${SS.faction}_${faceKey}_${p}`]||[];
+}
+function sMarchArr(faceKey){return(faceKey==='A'?SS.placementA:SS.placementB)==='6'?M6:M5;}
+function sPetArr(faceKey){return(faceKey==='A'?SS.placementA:SS.placementB)==='6'?P6:P5;}
+function sCityCount(faceKey){return parseInt(faceKey==='A'?SS.placementA:SS.placementB);}
+function sTotalCities(){return sCityCount('A')+sCityCount('B');}
+function sGetCityIdx(mid){for(const[k,v] of Object.entries(SS.cityAssign)){if(v===mid)return{face:k[0],idx:parseInt(k.slice(1))-1,key:k};}return null;}
+function sGetMarch(mid){
+  const info=sGetCityIdx(mid);if(!info)return null;
+  const ms=sMarchArr(info.face),pm=sPetArr(info.face);
+  const adj=SS.adjust[mid]||{march:0,petMarch:0};
+  const hasPet=SS.pet[mid]&&petSt(mid,SS)!=='dead';
+  return hasPet?(pm[info.idx]+(adj.petMarch||0)):(ms[info.idx]+(adj.march||0));
+}
+function sGetBaseMarch(mid){
+  const info=sGetCityIdx(mid);if(!info)return null;
+  return sMarchArr(info.face)[info.idx];
+}
+function sGetBasePetMarch(mid){
+  const info=sGetCityIdx(mid);if(!info)return null;
+  return sPetArr(info.face)[info.idx];
+}
+function sAdjust(mid,key,delta){
+  if(!SS.adjust[mid])SS.adjust[mid]={march:0,petMarch:0};
+  SS.adjust[mid][key]=(SS.adjust[mid][key]||0)+delta;
+  render();
+}
+function sFaceLabel(faceKey){
+  if(SS.split==='lr'){const side=SS.faction==='blue'?'左':'右';return faceKey==='A'?`${side}上エリア`:`${side}下エリア`;}
+  else{const side=SS.faction==='blue'?'上':'下';return faceKey==='A'?`${side}左エリア`:`${side}右エリア`;}
+}
+function sFactionLabel(){
+  if(SS.split==='lr')return SS.faction==='blue'?'左陣営（青）':'右陣営（赤）';
+  return SS.faction==='blue'?'上陣営（青）':'下陣営（赤）';
+}
+function sGetMapImg(faceKey){
+  const IMG={
+    'lr_blue_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_40%20(1).png',
+    'lr_blue_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_56%20(1).png',
+    'lr_red_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_08%20(1).png',
+    'lr_red_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_12%20(1).png',
+    'ud_blue_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_40%20(1).png',
+    'ud_blue_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2023_48_15%20(1).png',
+    'ud_red_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2023_47_59%20(1).png',
+    'ud_red_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_12%20(1).png',
+  };
+  return IMG[`${SS.split}_${SS.faction}_${faceKey}`]||'';
+}
+function sCalcHits(mems){
+  const wm=mems.map(m=>({...m,march:sGetMarch(m.id)})).filter(m=>m.march!==null);
+  if(!wm.length)return[];
+  const base=Math.min(...wm.map(m=>m.march));
+  return wm.map(m=>{
+    const diff=m.march-base;
+    return{...m,wait:diff,countLabel:diff>0?String(diff):diff<0?`+${Math.abs(diff)}`:'0'};
+  }).sort((a,b)=>b.wait-a.wait);
+}
+
+// ============================================================
+// 霜竜 ロジック
+// ============================================================
+function fGetMarch(mid){
+  const m=FS.members.find(m=>m.id===mid);if(!m)return null;
+  if(FS.pet[mid]&&petSt(mid,FS)!=='dead'&&m.petMarch)return m.petMarch;
+  return m.march||null;
+}
+function fGetBase(wm){
+  // FS.baseIdが設定されていればその行軍時間を基準に、なければ最短
+  if(FS.baseId){
+    const bm=wm.find(m=>m.id===FS.baseId);
+    if(bm)return{base:bm.march,baseMember:bm};
+  }
+  const minMarch=Math.min(...wm.map(m=>m.march));
+  const bm=wm.find(m=>m.march===minMarch);
+  return{base:minMarch,baseMember:bm};
+}
+function fCalcHits(mems){
+  const wm=mems.map(m=>({...m,march:fGetMarch(m.id)})).filter(m=>m.march!==null&&m.march>0);
+  if(!wm.length)return[];
+  const{base,baseMember}=fGetBase(wm);
+  return wm.map(m=>{
+    const diff=m.march-base;
+    // diff>0: 基準より長い → 先に出す → 正数カウント表示
+    // diff<0: 基準より短い → 後から出す → +N表示
+    // diff=0: 基準 → 0
+    return{...m,wait:diff,countLabel:diff>0?String(diff):diff<0?`+${Math.abs(diff)}`:'0'};
+  }).sort((a,b)=>b.wait-a.wait);
+}
+
+// ============================================================
+// メインrender
+// ============================================================
+function render(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    const active=(MODE==='svs'?SS.tab:FS.tab)===t.dataset.tab;
+    t.classList.toggle('active',active);
+  });
+  const tab=MODE==='svs'?SS.tab:FS.tab;
+  const el=document.getElementById('content');
+  const clk=formatClock();
+  if(MODE==='svs'){
+    const hdrInfo=document.getElementById('hdr-info');
+    hdrInfo.innerHTML=`<div>${sFactionLabel()}</div><div>割当${Object.keys(SS.cityAssign).length}/${sTotalCities()}${IS_MASTER?' / 👑 MASTER':''}</div><div id="hdr-clock" style="font-size:12px;font-weight:900;color:#f7d774;letter-spacing:.5px;margin-top:2px">🕒 ${clk}</div>`;
+    ({setup:rSvsSetup,battle:rSvsBattle,calc:rSvsCalc,copy:rSvsCopy,enemy:rSvsEnemy})[tab]?.(el);
+  } else {
+    const ac=FS.members.filter(m=>FS.active.includes(m.id));
+    document.getElementById('hdr-info').innerHTML=`<div>参戦: ${ac.length}名${IS_MASTER?' / 👑 MASTER':''}</div><div id="hdr-clock" style="font-size:12px;font-weight:900;color:#f7d774;letter-spacing:.5px;margin-top:2px">🕒 ${clk}</div>`;
+    ({battle:rFrostBattle,calc:rFrostCalc,copy:rFrostCopy,enemy:rFrostEnemy})[tab]?.(el);
+  }
+}
+
+
+function formatClock(){
+  const now=new Date();
+  const hh=String(now.getHours()).padStart(2,'0');
+  const mm=String(now.getMinutes()).padStart(2,'0');
+  const ss=String(now.getSeconds()).padStart(2,'0');
+  return `${hh}:${mm}:${ss}`;
+}
+function renderStickyClock(label){return '';}
+
+function renderCalcModeSwitch(){
+  const isDelay=FS.calcMode==='delay';
+  const boxStyle=isDelay
+    ? 'margin-bottom:10px;border-color:rgba(227,179,65,.65);background:linear-gradient(180deg,rgba(58,42,10,.78),rgba(13,24,41,.96));box-shadow:0 0 18px rgba(227,179,65,.12)'
+    : 'margin-bottom:10px';
+  return `<div class="card" style="${boxStyle}">
+    <div class="sec">霜竜 計算モード</div>
+    <div class="seg2" style="margin-bottom:0">
+      <div class="sbtn ${FS.calcMode==='sync'?'on-blue':''}" onclick="fSetCalcMode('sync')">同着モード</div>
+      <div class="sbtn ${FS.calcMode==='delay'?'on-blue':''}" style="${isDelay?'background:#3a2a0a;border-color:#e3b341;color:#f7d774':''}" onclick="fSetCalcMode('delay')">ディレイモード</div>
+    </div>
+  </div>`;
+}
+function fSetCalcMode(v){FS.calcMode=v;render();}
+
+// ============================================================
+// SVS タブ実装
+// ============================================================
+function rSvsSetup(el){
+  const factionOptions=SS.split==='lr'?[{v:'blue',l:'左（青）'},{v:'red',l:'右（赤）'}]:[{v:'blue',l:'上（青）'},{v:'red',l:'下（赤）'}];
+  el.innerHTML=`
+<div class="card">
+  <div class="sec">STEP 1 — 陣営設定</div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:6px">エリア分け</div>
+  <div class="seg2" style="margin-bottom:12px">
+    <div class="sbtn ${SS.split==='lr'?'on-blue':''}" onclick="sSplit('lr')">左右分け</div>
+    <div class="sbtn ${SS.split==='ud'?'on-blue':''}" onclick="sSplit('ud')">上下分け</div>
+  </div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:6px">自陣</div>
+  <div class="seg2" style="margin-bottom:12px">
+    ${factionOptions.map(f=>`<div class="sbtn ${SS.faction===f.v?'on-blue':''}" onclick="sFaction('${f.v}')">${f.l}</div>`).join('')}
+  </div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:6px">都市配置</div>
+  <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:6px">
+    <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:6px">${sFaceLabel('A')}</div>
+    <div class="seg2" style="margin-bottom:0">
+      <div class="sbtn ${SS.placementA==='6'?'on-blue':''}" onclick="sPA('6')">6都市</div>
+      <div class="sbtn ${SS.placementA==='5'?'on-blue':''}" onclick="sPA('5')">5都市</div>
+    </div>
+  </div>
+  <div style="background:var(--bg3);border-radius:8px;padding:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:6px">${sFaceLabel('B')}</div>
+    <div class="seg2" style="margin-bottom:0">
+      <div class="sbtn ${SS.placementB==='6'?'on-blue':''}" onclick="sPB('6')">6都市</div>
+      <div class="sbtn ${SS.placementB==='5'?'on-blue':''}" onclick="sPB('5')">5都市</div>
+    </div>
+  </div>
+  <div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text2);text-align:center">
+    合計 <span style="font-size:16px;font-weight:700;color:var(--text)">${sTotalCities()}</span> 都市
+  </div>
+</div>
+<div class="card">
+  <div class="sec">STEP 2 — 集結主登録 (${SS.members.length}/20名)</div>
+  <div class="row" style="margin-bottom:10px">
+    <input class="inp fl1" id="snn" placeholder="名前を入力"/>
+    <button class="btn btn-sm" style="width:80px;flex-shrink:0" onclick="sAddM()">追加</button>
+  </div>
+  ${SS.members.map(m=>{
+    const info=sGetCityIdx(m.id);
+    const march=info?sMarchArr(info.face)[info.idx]:null;
+    const fLabel=info?sFaceLabel(info.face):'';
+    return`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${m.name}</div>
+        <div style="font-size:11px;color:${info?'var(--accent)':'var(--text3)'}">
+          ${info?`${fLabel} 都市${info.idx+1} — ${march}秒`:'都市未割当'}
+        </div>
+      </div>
+      <button class="btn btn-xs btn-danger" style="width:30px;padding:0" onclick="sRmv(${m.id})">✕</button>
+    </div>`;
+  }).join('')||'<div class="empty">メンバーを追加してください</div>'}
+</div>
+${['A','B'].map(face=>{
+  const fLabel=sFaceLabel(face);
+  const positions=sCityPos(face);
+  const ms=sMarchArr(face),pms=sPetArr(face);
+  const n=sCityCount(face);
+  const assigned=Object.keys(SS.cityAssign).filter(k=>k[0]===face).length;
+  const dots=positions.slice(0,n).map((p,i)=>{
+    const key=`${face}${i+1}`;const mid=SS.cityAssign[key];const mem=mid?SS.members.find(m=>m.id===mid):null;
+    return`<div style="position:absolute;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;border:2px solid ${mid?'var(--accent)':'rgba(255,255,255,0.5)'};background:${mid?'rgba(31,111,235,0.5)':'rgba(0,0,0,0.5)'};cursor:pointer;display:flex;align-items:center;justify-content:center;left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%;z-index:1"
+      onclick="sOpenCM('${key}',${i},'${face}')">
+      <div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 4px #000;pointer-events:none">${mem?mem.name.slice(0,2):`${i+1}`}</div>
+    </div>`;
+  }).join('');
+  return`<div class="card" style="padding:8px">
+    <div style="padding:0 4px 8px;display:flex;align-items:center;justify-content:space-between">
+      <div><span class="face-label ${face==='A'?'face1-label':'face2-label'}">${face==='A'?'面A':'面B'}</span>
+      <span style="font-size:13px;font-weight:600;margin-left:6px">${fLabel} ${face==='A'?SS.placementA:SS.placementB}都市</span></div>
+      <span style="font-size:11px;font-weight:600;color:${assigned===n?'var(--green)':'var(--orange)'}">${assigned}/${n}割当</span>
+    </div>
+    <div style="position:relative;width:100%;border-radius:8px;overflow:hidden;border:1px solid var(--border2)">
+      <img src="${sGetMapImg(face)}" style="width:100%;display:block;pointer-events:none"/>
+      ${dots}
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px">都市をタップして集結主を割当</div>
+  </div>`;
+}).join('')}`;
+  if(SS.modal==='city')sCityModal();
+}
+
+function sOpenCM(key,idx,face){SS.selCity={key,idx,face};SS.modal='city';sCityModal();}
+function sCityModal(){
+  let ov=document.getElementById('cmov');
+  if(!ov){ov=document.createElement('div');ov.id='cmov';ov.className='mov-modal';ov.onclick=e=>{if(e.target===ov){SS.modal=null;ov.remove();}};document.body.appendChild(ov);}
+  const{key,idx,face}=SS.selCity;
+  const ms=sMarchArr(face),pms=sPetArr(face);
+  const fLabel=sFaceLabel(face);
+  ov.innerHTML=`<div class="modal">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">${fLabel} 都市${idx+1} — 集結主を選択</div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px;display:flex">
+      <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--text3)">通常</div><div style="font-size:34px;font-weight:700;color:var(--accent);line-height:1">${ms[idx]}<span style="font-size:12px">秒</span></div></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--text3)">ペット</div><div style="font-size:34px;font-weight:700;color:var(--green);line-height:1">${pms[idx]}<span style="font-size:12px">秒</span></div></div>
+    </div>
+    ${SS.cityAssign[key]?`<button class="btn btn-sm btn-danger" style="margin-bottom:10px" onclick="sAsgn('${key}',null)">割当解除</button>`:''}
+    ${SS.members.map(m=>{
+      const isCur=SS.cityAssign[key]===m.id;
+      const info=sGetCityIdx(m.id);const isOther=info&&info.key!==key;
+      return`<div style="display:flex;align-items:center;padding:12px;background:${isCur?'#1a2a3a':'var(--bg3)'};border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid ${isCur?'var(--accent)':'var(--border)'}" onclick="sAsgn('${key}',${m.id})">
+        <div style="flex:1"><div style="font-size:14px;font-weight:600">${m.name} ${isCur?'✓':''}</div>
+        <div style="font-size:11px;color:${isOther?'var(--orange)':'var(--text3)'}">${isCur?'現在割当中':isOther?`${sFaceLabel(info.face)} 都市${info.idx+1}から移動`:'未割当'}</div></div>
+      </div>`;
+    }).join('')||'<div class="empty">メンバーを先に登録してください</div>'}
+  </div>`;
+}
+function sAsgn(key,id){
+  if(id){if(SS.cityAssign[key]===id)delete SS.cityAssign[key];else{for(const k of Object.keys(SS.cityAssign)){if(SS.cityAssign[k]===id)delete SS.cityAssign[k];}SS.cityAssign[key]=id;}
+  }else delete SS.cityAssign[key];
+  SS.modal=null;document.getElementById('cmov')?.remove();render();
+}
+
+function rSvsBattle(el){
+  const entries=Object.entries(SS.cityAssign).map(([key,mid])=>({key,face:key[0],idx:parseInt(key.slice(1))-1,mid})).sort((a,b)=>a.face.localeCompare(b.face)||a.idx-b.idx);
+  el.innerHTML=`
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <div style="font-size:12px;color:var(--text2)">${sFactionLabel()} ${sTotalCities()}都市</div>
+    <div style="font-size:11px;color:var(--text3)">参戦: ${SS.active.length}名 / 登録: ${entries.length}名</div>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button class="btn btn-xs btn-success" onclick="sAllJoin()">全員参戦</button>
+    <button class="btn btn-xs" onclick="sAllLeave()" style="color:var(--text3)">全員解除</button>
+  </div>
+</div>
+${['A','B'].map(face=>{
+  const fLabel=sFaceLabel(face);
+  const ms=sMarchArr(face),pms=sPetArr(face);
+  const faceEntries=entries.filter(e=>e.face===face);
+  if(!faceEntries.length)return`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center;color:var(--text3);font-size:13px"><span class="face-label ${face==='A'?'face1-label':'face2-label'}">${face==='A'?'面A':'面B'}</span> ${fLabel}: 割当なし</div>`;
+  return`<div style="background:var(--bg3);border-radius:8px;padding:6px 10px;margin:14px 0 8px;font-size:11px;font-weight:700;color:var(--text2)"><span class="face-label ${face==='A'?'face1-label':'face2-label'}">${face==='A'?'面A':'面B'}</span> ${fLabel}</div>
+  ${faceEntries.map(({idx,mid})=>{
+    const mem=SS.members.find(m=>m.id===mid);if(!mem)return'';
+    const isActive=SS.active.includes(mid);
+    const hasPet=SS.pet[mid]&&petSt(mid,SS)!=='dead';
+    const march=sGetMarch(mid)??(hasPet?pms[idx]:ms[idx]);
+    const normalMarch=sGetBaseMarch(mid);
+    const petMarch=sGetBasePetMarch(mid);
+    const st=petSt(mid,SS);
+    const pc={off:'p-off',on:'p-on',warn:'p-warn',low:'p-low',dead:'p-dead'}[st];
+    const adj=SS.adjust[mid]||{march:0,petMarch:0};
+    return`<div style="background:var(--bg2);border:1px solid ${isActive?'var(--accent)':'var(--border)'};border-radius:14px;padding:14px;margin-bottom:12px;opacity:${isActive?1:0.74};box-shadow:0 8px 20px rgba(0,0,0,.12)">
+      <div class="row" style="margin-bottom:${isActive?'10':'0'}px">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700">${mem.name}</div>
+          <div style="font-size:11px;color:var(--text3)">都市${idx+1} — <span style="color:${isActive?(hasPet?'var(--green)':'var(--accent)'):'var(--text3)'};font-weight:700;font-size:15px">${march}</span>秒${hasPet?' 🟢':''}</div>
+        </div>
+        <div class="chip" data-t="${mem.team}">${mem.team}</div>
+        <button class="btn btn-sm ${isActive?'btn-danger':'btn-success'}" style="width:80px;flex-shrink:0" onclick="sToggleActive(${mid})">${isActive?'不参加':'参戦'}</button>
+      </div>
+      ${isActive?`<div style="border-top:1px solid var(--border);padding-top:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--text2);width:36px;flex-shrink:0">通常</span>
+          <button class="btn btn-xs" style="width:32px;height:28px;padding:0;flex-shrink:0" onclick="sAdjust(${mid},'march',-1)">－</button>
+          <span style="font-size:14px;font-weight:700;color:var(--accent);min-width:48px;text-align:center">${normalMarch+(adj.march||0)}秒</span>
+          <button class="btn btn-xs" style="width:32px;height:28px;padding:0;flex-shrink:0" onclick="sAdjust(${mid},'march',1)">＋</button>
+          ${(adj.march||0)!==0?`<span style="font-size:11px;color:var(--orange)">${(adj.march||0)>0?'+':''}${adj.march||0}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;color:var(--green);width:36px;flex-shrink:0">🐾</span>
+          <button class="btn btn-xs" style="width:32px;height:28px;padding:0;flex-shrink:0" onclick="sAdjust(${mid},'petMarch',-1)">－</button>
+          <span style="font-size:14px;font-weight:700;color:var(--green);min-width:48px;text-align:center">${petMarch+(adj.petMarch||0)}秒</span>
+          <button class="btn btn-xs" style="width:32px;height:28px;padding:0;flex-shrink:0" onclick="sAdjust(${mid},'petMarch',1)">＋</button>
+          ${(adj.petMarch||0)!==0?`<span style="font-size:11px;color:var(--orange)">${(adj.petMarch||0)>0?'+':''}${adj.petMarch||0}</span>`:''}
+        </div>
+        ${(adj.march||0)!==0||(adj.petMarch||0)!==0?`<button class="btn btn-xs" style="height:24px;font-size:10px;margin-bottom:8px;color:var(--text3)" onclick="SS.adjust[${mid}]={march:0,petMarch:0};render()">調整リセット</button>`:''}
+        <div class="row" style="margin-bottom:${SS.pet[mid]?'6':'0'}px">
+          <span class="tag ${pc}">${petLbl(mid,SS)}</span>
+          <button class="btn btn-xs" style="width:74px" onclick="sTp(${mid})">${SS.pet[mid]?'停止':'ペットON'}</button>
+          <select class="inp" style="height:30px;font-size:12px;flex:1" onchange="sCTeam(${mid},this.value)">
+            ${TEAMS.map(t=>`<option value="${t}" ${mem.team===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        ${SS.pet[mid]?`<div class="ptp">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">ペット開始時刻（押し忘れ補正）</div>
+          <div class="row" style="margin-bottom:4px">
+            <input class="tinp" type="time" value="${fmtT(mid,SS)}" onchange="sSpetT(${mid},this.value)"/>
+            <button class="btn btn-xs" style="width:64px" onclick="sSpetN(${mid})">今すぐ</button>
+            <span style="font-size:11px;color:var(--text2)">から2時間</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3)">期限: ${fmtE(mid,SS)}</div>
+        </div>`:''}
+      </div>`:''}
+    </div>`;
+  }).join('')}`;
+}).join('')}
+${entries.length===0?`<div class="empty" style="padding:40px 0"><div style="font-size:14px;margin-bottom:8px">都市割当がありません</div><div style="font-size:12px">① 事前設定で割り当ててください</div></div>`:''}`;
+}
+
+function rSvsCalc(el){
+  const ac=SS.members.filter(m=>SS.active.includes(m.id));
+  const all=sCalcHits(ac);
+  const teams=[...new Set(ac.map(m=>m.team))].sort();
+  el.innerHTML=renderStickyClock('SVS 同着計算')+`
+<div class="card">
+  <div class="sec">全体同時着弾</div>
+  ${all.length?`
+  <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
+    <div style="font-size:11px;color:var(--text3)">基準（最短行軍）</div>
+    <div style="font-size:42px;font-weight:700;color:var(--accent);line-height:1">${Math.min(...all.map(r=>r.march))}<span style="font-size:16px">秒</span></div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">${sFactionLabel()} — 参戦${ac.length}名</div>
+  </div>
+  ${all.map(r=>{
+    const info=sGetCityIdx(r.id);const face=info?.face;
+    const hasPet=SS.pet[r.id]&&petSt(r.id,SS)!=='dead';
+    return`<div style="padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border-left:4px solid ${r.wait===0?'var(--green)':'var(--accent)'}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${r.name}</div>
+          <div style="font-size:11px;color:var(--text3)">${face?sFaceLabel(face):''} 都市${info?info.idx+1:'?'} — ${r.march}秒${hasPet?' 🟢':''}</div>
+        </div>
+        <div style="text-align:right;min-width:56px">
+          <div style="font-size:36px;font-weight:700;line-height:1;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.wait}</div>
+          <div style="font-size:10px;color:var(--text3)">秒後</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px">
+        <button class="btn btn-xs" style="width:86px;flex-shrink:0;color:${hasPet?'var(--green)':'var(--text2)'}" onclick="sTp(${r.id})">${hasPet?'🐾 ON':'🐾 OFF'}</button>
+        <select class="inp" style="height:30px;font-size:12px;flex:1" onchange="sCTeam(${r.id},this.value)">
+          ${TEAMS.map(t=>`<option value="${t}" ${r.team===t?'selected':''}>チーム ${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('')}`:`<div class="empty">② 当日参戦タブで参戦メンバーを確定してください</div>`}
+</div>
+${all.length&&teams.length>1?`<div class="card"><div class="sec">チーム別同時着弾</div>
+  ${teams.map(t=>{
+    const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return'';
+    return`<div class="bsec" style="border-left-color:${tc(t)};margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:${tc(t)};margin-bottom:6px">チーム ${t} — 基準: ${Math.min(...tr.map(r=>r.march))}秒</div>
+      ${tr.map(r=>`<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;font-size:13px;font-weight:600">${r.name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-right:10px">${r.march}秒</div>
+        <div style="font-size:26px;font-weight:700;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.wait}<span style="font-size:11px;color:var(--text3)">秒後</span></div>
+      </div>`).join('')}
+    </div>`;
+  }).join('')}
+</div>`:''}`;
+}
+function rSvsCopy(el){
+  const ac=SS.members.filter(m=>SS.active.includes(m.id));
+  const all=sCalcHits(ac);
+  const teams=[...new Set(ac.map(m=>m.team))].sort();
+  const at=all.map(r=>`${r.name} ${r.wait}`).join('\n');
+  const chunks=[];for(let i=0;i<teams.length;i+=2)chunks.push(teams.slice(i,i+2));
+  function makeTeamText(tList){return tList.map(t=>{const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`【${t}】${r.name} ${r.wait}`:`${r.name} ${r.wait}`).join('\n');}).filter(Boolean).join('\n');}
+  el.innerHTML=`
+<div class="card"><div class="sec">全員版</div>
+  <div class="cpbox" id="cp-all">${at||'(参戦メンバー確定後に表示)'}</div>
+  <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-all').textContent)">コピー</button>
+</div>
+${chunks.map((chunk,i)=>`<div class="card" style="margin-top:10px"><div class="sec">チーム ${chunk.join('・')}（${i+1}回目）</div>
+  <div class="cpbox" id="cp-c${i}">${makeTeamText(chunk)||'(なし)'}</div>
+  <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-c${i}').textContent)">コピー（${i+1}回目）</button>
+</div>`).join('')}
+${renderWhUI('svs')}
+${renderGameChatUI('svs')}`;
+  renderWhList();
+}
+
+function sGetPetMarchByIdx(placementKey, idx){
+  return placementKey==='6'?P6[idx]:P5[idx];
+}
+function sEnemyPetMarch(){
+  // プルダウンの選択インデックスからペット行軍を自動計算
+  const sel=document.getElementById('em');
+  if(!sel)return null;
+  const idx=sel.selectedIndex;
+  const placement=SS.placementA; // 面Aの配置を基準
+  return sGetPetMarchByIdx(placement,idx);
+}
+function updateEnemyPetDisplay(){
+  const pm=sEnemyPetMarch();
+  const el=document.getElementById('enemy-pet-march');
+  if(el)el.textContent=pm?`ペット行軍: ${pm}秒`:'';
+}
+
+function sEnemyPetSt(e){
+  if(!e.pet)return{active:false,cls:'p-off',label:'⚪ ペット未使用'};
+  const start=e.petStart||Date.now();
+  const rem=120-(Date.now()-start)/60000;
+  if(rem<=0)return{active:false,cls:'p-dead',label:'⚫ ペット切れ'};
+  const m=Math.floor(rem),sec=Math.floor((rem-m)*60);
+  const time=`${m}:${String(sec).padStart(2,'0')}`;
+  if(rem<=10)return{active:true,cls:'p-low',label:`🔴 残り ${time}`};
+  if(rem<=30)return{active:true,cls:'p-warn',label:`🟡 残り ${time}`};
+  return{active:true,cls:'p-on',label:`🟢 ペット中 ${time}`};
+}
+function sEnemyCurrentMarch(e){
+  const st=sEnemyPetSt(e);
+  return st.active?(e.petMarch??e.march):(e.normalMarch??e.march);
+}
+function rSvsEnemy(el){
+  const allOptions=[
+    ...M6.map((m,i)=>`<option value="${i}_6">6都市 都市${i+1}: ${m}秒 / ペット${P6[i]}秒</option>`),
+    ...M5.map((m,i)=>`<option value="${i}_5">5都市 都市${i+1}: ${m}秒 / ペット${P5[i]}秒</option>`),
+  ];
+  el.innerHTML=`
+<div class="card"><div class="sec">敵情報入力</div>
+  <div class="row" style="margin-bottom:8px"><input class="inp fl1" id="en" placeholder="敵名"/></div>
+  <div class="row" style="margin-bottom:6px">
+    <select class="inp fl1" id="em" onchange="updateEnemyInfo()">
+      ${allOptions.join('')}
+    </select>
+  </div>
+  <div style="background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;gap:16px;align-items:center">
+    <div id="enemy-march-disp" style="font-size:13px;color:var(--text)">通常: 43秒</div>
+    <div id="enemy-pet-disp" style="font-size:13px;color:var(--green)">ペット: 37秒</div>
+    <label class="tgl" style="margin-left:auto"><input type="checkbox" id="ep"/><span class="tsl"></span></label>
+    <span style="font-size:12px;color:var(--text2)">ペット</span>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="sAddE()">追加</button>
+</div>
+<div class="card" style="margin-top:10px"><div class="sec">敵一覧 (${SS.enemies.length}件)</div>
+  ${SS.enemies.length?SS.enemies.map((e,i)=>{
+    const st=sEnemyPetSt(e);
+    const current=sEnemyCurrentMarch(e);
+    return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">${e.name}</div>
+          <div style="font-size:11px;color:var(--text3)">通常 ${e.normalMarch??e.march}秒 / ペット ${e.petMarch}秒</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">現在: <span style="font-weight:800;color:${st.active?'var(--green)':'var(--accent)'}">${current}秒</span></div>
+        </div>
+        <span class="tag ${st.cls}">${st.label}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px">
+        <button class="btn btn-xs" style="width:96px;flex-shrink:0;color:${st.active?'var(--green)':'var(--text2)'}" onclick="sToggleEnemyPet(${i})">${st.active?'🐾 ON':'🐾 OFF'}</button>
+        <button class="btn btn-xs btn-danger" style="width:42px;padding:0;margin-left:auto" onclick="sRmE(${i})">削除</button>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">敵情報なし</div>'}
+</div>`;
+  updateEnemyInfo();
+}
+function updateEnemyInfo(){
+  const sel=document.getElementById('em');if(!sel)return;
+  const[idxStr,placement]=sel.value.split('_');
+  const idx=parseInt(idxStr);
+  const ms=placement==='6'?M6:M5;const ps=placement==='6'?P6:P5;
+  const md=document.getElementById('enemy-march-disp');
+  const pd=document.getElementById('enemy-pet-disp');
+  if(md)md.textContent=`通常: ${ms[idx]}秒`;
+  if(pd)pd.textContent=`ペット: ${ps[idx]}秒`;
+}
+
+// ============================================================
+// 霜竜 タブ実装
+// ============================================================
+function rFrostBattle(el){
+  const waiting=FS.members.filter(m=>!FS.active.includes(m.id));
+  const active=FS.members.filter(m=>FS.active.includes(m.id));
+  el.innerHTML=`
+<div class="card">
+  <div class="sec">集結主登録 (${FS.members.length}/20名)</div>
+  <div class="row" style="margin-bottom:8px">
+    <input class="inp fl1" id="fnn" placeholder="名前を入力"/>
+    <button class="btn btn-sm btn-primary" style="width:80px;flex-shrink:0" onclick="fAddM()">追加</button>
+  </div>
+</div>
+<div class="card">
+  <div class="sec">待機中 (${waiting.length}名)</div>
+  ${waiting.length?waiting.map(m=>`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+    <div style="flex:1;font-size:14px;font-weight:600">${m.name}</div>
+    <button class="btn btn-sm btn-success" style="width:80px;flex-shrink:0" onclick="fJoin(${m.id})">参戦</button>
+    <button class="btn btn-sm btn-danger" style="width:34px;flex-shrink:0;padding:0;margin-left:6px" onclick="fRmv(${m.id})">✕</button>
+  </div>`).join(''):'<div class="empty">待機中なし</div>'}
+</div>
+<div class="card">
+  <div class="sec">参戦中 (${active.length}名)</div>
+  ${active.length?active.map(m=>{
+    const st=petSt(m.id,FS);
+    const pc={off:'p-off',on:'p-on',warn:'p-warn',low:'p-low',dead:'p-dead'}[st];
+    const eff=fGetMarch(m.id);const hasPet=FS.pet[m.id]&&st!=='dead';
+    return`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div class="row" style="margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700">${m.name}</div>
+          ${eff?`<div style="font-size:11px;color:${hasPet?'var(--green)':'var(--accent)'}">有効行軍: ${eff}秒${hasPet?' 🟢':''}</div>`:'<div style="font-size:11px;color:var(--text3)">行軍時間未入力</div>'}
+        </div>
+        <div class="chip" data-t="${m.team}">${m.team}</div>
+        <button class="btn btn-xs btn-danger" style="width:36px;padding:0;flex-shrink:0" onclick="fLv(${m.id})">離脱</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+        <div style="font-size:11px;color:var(--text2);width:40px;flex-shrink:0">通常</div>
+        <input class="inp-num" type="number" placeholder="秒" value="${m.march||''}" onchange="fSetMarch(${m.id},'march',this.value)"/>
+        <div style="font-size:11px;color:var(--green);width:52px;flex-shrink:0">🐾ペット</div>
+        <input class="inp-num" type="number" placeholder="秒" value="${m.petMarch||''}" onchange="fSetMarch(${m.id},'petMarch',this.value)"/>
+        <div style="font-size:11px;color:var(--text3)">秒</div>
+      </div>
+      <div class="row" style="margin-bottom:${FS.pet[m.id]?'6':'0'}px">
+        <span class="tag ${pc}">${petLbl(m.id,FS)}</span>
+        <button class="btn btn-xs" style="width:74px" onclick="fTp(${m.id})">${FS.pet[m.id]?'停止':'ペットON'}</button>
+        <select class="inp" style="height:30px;font-size:12px;flex:1" onchange="fCTeam(${m.id},this.value)">
+          ${TEAMS.map(t=>`<option value="${t}" ${m.team===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      ${FS.pet[m.id]?`<div class="ptp">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">ペット開始時刻（押し忘れ補正）</div>
+        <div class="row" style="margin-bottom:4px">
+          <input class="tinp" type="time" value="${fmtT(m.id,FS)}" onchange="fSpetT(${m.id},this.value)"/>
+          <button class="btn btn-xs" style="width:64px" onclick="fSpetN(${m.id})">今すぐ</button>
+          <span style="font-size:11px;color:var(--text2)">から2時間</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3)">期限: ${fmtE(m.id,FS)}</div>
+      </div>`:''}
+    </div>`;
+  }).join(''):'<div class="empty">参戦中なし</div>'}
+</div>`;
+}
+
+
+function rFrostCalc(el){
+  if(FS.calcMode==='delay'){
+    el.innerHTML=renderCalcModeSwitch()+renderFrostDelayCalc();
+    return;
+  }
+  rFrostSyncCalc(el);
+  el.insertAdjacentHTML('afterbegin',renderCalcModeSwitch());
+}
+function fDelayHitLabel(i){return ['初撃','2発目','3発目','4発目'][i]||`${i+1}発目`;}
+function fDelayTeamColor(team){return tc(team);}
+function fDelayGetMembersForSlot(slotIndex){
+  const ac=FS.members.filter(m=>FS.active.includes(m.id)&&fGetMarch(m.id));
+  if(FS.delaySource==='custom'){
+    const key=String(slotIndex+1);
+    return ac.filter(m=>String(FS.delayAssign[m.id]||'未')===key);
+  }
+  const team=FS.delayOrder[slotIndex];
+  return ac.filter(m=>m.team===team);
+}
+function fDelayOffsets(){
+  const gaps=FS.delayGaps||[0,2,2,2];
+  const offsets=[0,0,0,0];
+  for(let i=1;i<4;i++)offsets[i]=offsets[i-1]+(parseInt(gaps[i]||0)||0);
+  return offsets;
+}
+function fDelayRows(){
+  const offsets=fDelayOffsets();
+  const raw=[];
+  for(let i=0;i<4;i++){
+    const members=fDelayGetMembersForSlot(i);
+    members.forEach(m=>{
+      const march=fGetMarch(m.id);
+      if(march)raw.push({slot:i,offset:offsets[i],gap:i===0?0:(parseInt((FS.delayGaps||[])[i]||0)||0),member:m,march,team:FS.delaySource==='same'?FS.delayOrder[i]:(m.team||'未')});
+    });
+  }
+  if(!raw.length)return[];
+  const minKey=Math.min(...raw.map(r=>r.march-r.offset));
+  return raw.map(r=>({...r,count:(r.march-r.offset)-minKey})).sort((a,b)=>a.slot-b.slot||b.count-a.count||b.march-a.march);
+}
+function fSetDelaySource(v){FS.delaySource=v;render();}
+function fSetDelayOrder(idx,val){FS.delayOrder[idx]=val;render();}
+function fSetDelayGap(idx,val){FS.delayGaps[idx]=Math.max(0,Math.min(99,parseInt(val||0)||0));render();}
+function fBumpDelayGap(idx,delta){
+  const cur=Math.max(0,Math.min(99,parseInt((FS.delayGaps||[])[idx]||0)||0));
+  FS.delayGaps[idx]=Math.max(0,Math.min(99,cur+delta));
+  render();
+}
+function renderDelayGapStepper(idx){
+  const val=Math.max(0,Math.min(99,parseInt((FS.delayGaps||[])[idx]||0)||0));
+  return `<div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><button class="btn btn-xs" style="width:34px;height:30px;padding:0" onclick="fBumpDelayGap(${idx},-1)">－</button><div style="min-width:42px;text-align:center;font-size:16px;font-weight:900;color:#f7d774">+${val}</div><button class="btn btn-xs" style="width:34px;height:30px;padding:0" onclick="fBumpDelayGap(${idx},1)">＋</button></div>`;
+}
+function fSetDelayAssign(id,val){FS.delayAssign[id]=val;render();}
+function fSetDelayCopyMode(v){FS.delayCopyMode=v;render();}
+function renderFrostDelayCalc(){
+  const ac=FS.members.filter(m=>FS.active.includes(m.id));
+  const rows=fDelayRows();
+  const teams=['A','B','C','D'];
+  const copyText=buildFrostDelayCopyText(rows);
+  return `<div class="card" style="border-color:rgba(227,179,65,.45);background:linear-gradient(180deg,rgba(58,42,10,.42),rgba(13,24,41,.98));">
+    <div class="sec">ディレイチーム設定</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px">チーム着弾順を基準に、各メンバーの行軍秒からVC用の出発カウントを逆算します。</div>
+    <div class="seg2" style="margin-bottom:10px">
+      <div class="sbtn ${FS.delaySource==='same'?'on-blue':''}" onclick="fSetDelaySource('same')">同着チームを使用</div>
+      <div class="sbtn ${FS.delaySource==='custom'?'on-blue':''}" onclick="fSetDelaySource('custom')">ディレイ専用チーム</div>
+    </div>
+    ${FS.delaySource==='same'?renderDelaySameTeamSettings(teams):renderDelayCustomTeamSettings(ac)}
+  </div>
+  <div class="card" style="border-color:rgba(227,179,65,.45);background:linear-gradient(180deg,rgba(58,42,10,.34),rgba(13,24,41,.98));">
+    <div class="sec">ディレイ集計 / VCカウント</div>
+    ${rows.length?renderDelayResult(rows):'<div class="empty">参戦メンバーと行軍秒を設定してください</div>'}
+    ${rows.length?renderDelayMixedList(rows):''}
+  </div>`;
+}
+function renderDelaySameTeamSettings(teams){
+  return `<div style="display:grid;gap:8px">
+    ${[0,1,2,3].map(i=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${i===0?'0':'8px'}">
+        <div style="width:58px;font-size:12px;font-weight:900;color:${i===0?'var(--green)':'var(--orange)'}">${fDelayHitLabel(i)}</div>
+        <select class="inp fl1" style="height:34px" onchange="fSetDelayOrder(${i},this.value)">
+          ${teams.map(t=>`<option value="${t}" ${FS.delayOrder[i]===t?'selected':''}>${t}チーム</option>`).join('')}
+        </select>
+        ${i===0?'':renderDelayGapStepper(i)}
+      </div>
+      <div style="font-size:11px;color:var(--text3);padding-left:66px">${fDelayGetMembersForSlot(i).map(m=>m.name).join('、')||'該当メンバーなし'}</div>
+    </div>`).join('')}
+  </div>`;
+}
+function renderDelayCustomTeamSettings(ac){
+  return `<div style="display:grid;gap:8px">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px">
+      <div style="font-size:12px;color:var(--text2);font-weight:800;margin-bottom:8px">発目ごとの間隔</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px">
+        ${[1,2,3].map(i=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px"><div style="font-size:12px;color:var(--text2);font-weight:800">${fDelayHitLabel(i)} 間隔</div>${renderDelayGapStepper(i)}</div>`).join('')}
+      </div>
+    </div>
+    ${ac.length?ac.map(m=>`<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px">
+      <div style="flex:1"><div style="font-size:14px;font-weight:700">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.team}チーム / 行軍 ${fGetMarch(m.id)||'-'}秒</div></div>
+      <select class="inp" style="width:110px;height:34px" onchange="fSetDelayAssign(${m.id},this.value)">
+        <option value="未" ${!FS.delayAssign[m.id]||FS.delayAssign[m.id]==='未'?'selected':''}>未設定</option>
+        ${[0,1,2,3].map(i=>`<option value="${i+1}" ${String(FS.delayAssign[m.id])===String(i+1)?'selected':''}>${fDelayHitLabel(i)}</option>`).join('')}
+      </select>
+    </div>`).join(''):'<div class="empty">参戦メンバーがいません</div>'}
+  </div>`;
+}
+function renderDelayResult(rows){
+  const by=[0,1,2,3].map(i=>rows.filter(r=>r.slot===i));
+  return `<div style="display:grid;gap:10px">
+    ${by.map((list,i)=>list.length?`<div style="background:var(--bg3);border-left:4px solid ${i===0?'var(--green)':'var(--orange)'};border-radius:10px;padding:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:900;color:${i===0?'var(--green)':'var(--orange)'};line-height:1.45">【${fDelayHitLabel(i)}】${i===0?'':`<div style="font-size:11px;color:var(--text2);font-weight:800;margin-top:2px">前着から+${list[0].gap}秒差</div>`}</div>
+        <div style="font-size:11px;color:var(--text3)">累計 +${list[0].offset}秒</div>
+      </div>
+      ${list.map(r=>`<div style="display:flex;align-items:center;padding:7px 0;border-top:1px solid var(--border)">
+        <div style="flex:1"><span class="chip" data-t="${r.team}">${r.team}</span> <span style="font-size:14px;font-weight:700;margin-left:6px">${r.member.name}</span><div style="font-size:11px;color:var(--text3);margin-top:3px">行軍 ${r.march}秒</div></div>
+        <div style="text-align:right"><div style="font-size:30px;font-weight:900;color:var(--text);line-height:1">${r.count}</div><div style="font-size:10px;color:var(--text3)">カウント</div></div>
+      </div>`).join('')}
+    </div>`:'').join('')}
+  </div>`;
+}
+function renderDelayMixedList(rows){
+  const mixed=[...rows].sort((a,b)=>b.count-a.count||a.slot-b.slot||a.member.name.localeCompare(b.member.name,'ja'));
+  return `<div style="background:rgba(6,13,26,.58);border:1px solid rgba(227,179,65,.28);border-radius:10px;padding:10px;margin-top:10px">
+    <div style="font-size:12px;font-weight:900;color:#f7d774;margin-bottom:6px">ディレイVC読み上げ一覧</div>
+    ${mixed.map(r=>`<div style="display:flex;align-items:center;padding:7px 0;border-top:1px solid var(--border)">
+      <div style="flex:1"><span style="font-size:12px;color:#f7d774;font-weight:900">【${fDelayHitLabel(r.slot)}】</span><span style="font-size:14px;font-weight:700;margin-left:6px">${r.member.name}</span></div>
+      <div style="font-size:26px;font-weight:900;color:var(--text);line-height:1">${r.count}<span style="font-size:10px;color:var(--text3);margin-left:3px">count</span></div>
+    </div>`).join('')}
+  </div>`;
+}
+function renderDelayCopyArea(rows){
+  const mode=FS.delayCopyMode||'group';
+  const text=mode==='mixed'?buildFrostDelayMixedCopyText(rows):buildFrostDelayGroupCopyText(rows);
+  return `<div style="margin-top:10px">
+    <div class="seg2" style="margin-bottom:8px">
+      <div class="sbtn ${mode==='group'?'on-blue':''}" onclick="fSetDelayCopyMode('group')">チーム詳細コピー</div>
+      <div class="sbtn ${mode==='mixed'?'on-blue':''}" onclick="fSetDelayCopyMode('mixed')">ディレイ集結カウント</div>
+    </div>
+    <div class="cpbox" id="cp-delay">${text}</div>
+    <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-delay').textContent)">ディレイ結果コピー</button>
+  </div>`;
+}
+function buildFrostDelayGroupCopyText(rows){
+  if(!rows.length)return'';
+  const out=['【ディレイチーム詳細】'];
+  for(let i=0;i<4;i++){
+    const list=rows.filter(r=>r.slot===i).sort((a,b)=>b.count-a.count||a.member.name.localeCompare(b.member.name,'ja'));
+    if(!list.length)continue;
+    out.push(i===0?`【${fDelayHitLabel(i)}】`:`【${fDelayHitLabel(i)}】前着から+${list[0].gap}秒差`);
+    list.forEach(r=>out.push(`${r.member.name}`));
+  }
+  return out.join('\n');
+}
+function buildFrostDelayCountCopyText(rows, slots=null){
+  if(!rows.length)return'';
+  let target=[...rows];
+  if(slots)target=target.filter(r=>slots.includes(r.slot));
+  target.sort((a,b)=>b.count-a.count||a.slot-b.slot||a.member.name.localeCompare(b.member.name,'ja'));
+  return target.map(r=>`${r.member.name} ${r.count}`).join('\n');
+}
+function buildFrostDelayMixedCopyText(rows){
+  return buildFrostDelayCountCopyText(rows);
+}
+function buildFrostDelayCopyText(rows){
+  return (FS.delayCopyMode||'group')==='mixed'?buildFrostDelayMixedCopyText(rows):buildFrostDelayGroupCopyText(rows);
+}
+function rFrostSyncCalc(el){
+  const ac=FS.members.filter(m=>FS.active.includes(m.id));
+  const all=fCalcHits(ac);const teams=[...new Set(ac.map(m=>m.team))].sort();
+  const wm=ac.map(m=>({...m,march:fGetMarch(m.id)})).filter(m=>m.march!==null&&m.march>0);
+  const{base,baseMember}=wm.length?fGetBase(wm):{base:null,baseMember:null};
+
+  el.innerHTML=`
+<div class="card">
+  <div class="sec">全体同時着弾</div>
+  ${all.length?`
+  <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px">
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">基準集結主</div>
+    <div class="row" style="margin-bottom:6px">
+      <select class="inp fl1" id="frost-base-sel" onchange="fSetBase(this.value)" style="height:36px;font-size:13px;">
+        <option value="">最短行軍（自動）</option>
+        ${ac.filter(m=>fGetMarch(m.id)).map(m=>`<option value="${m.id}" ${FS.baseId===m.id?'selected':''}>${m.name}（${fGetMarch(m.id)}秒）</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <div style="font-size:13px;font-weight:700;color:var(--accent)">${baseMember?baseMember.name:'—'}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent)">${base||'—'}<span style="font-size:12px;color:var(--text3)">秒</span></div>
+      <div style="font-size:11px;color:var(--text3)">基準（0カウント）</div>
+    </div>
+  </div>
+  ${all.map(r=>{
+    const hasPet=FS.pet[r.id]&&petSt(r.id,FS)!=='dead';
+    const isBase=r.id===baseMember?.id||(FS.baseId===null&&r.wait===0&&r.march===base);
+    const countColor=r.wait>0?'var(--text)':r.wait<0?'#f0a500':'var(--green)';
+    const borderColor=isBase?'var(--green)':r.wait>0?'var(--accent)':'#f0a500';
+    return`<div style="padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border-left:4px solid ${borderColor}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${r.name}${isBase?' 🎯':''}</div>
+          <div style="font-size:11px;color:var(--text3)">${r.march}秒${hasPet?' 🟢':''}</div>
+        </div>
+        <div style="text-align:right;min-width:56px">
+          <div style="font-size:36px;font-weight:700;line-height:1;color:${countColor}">${r.countLabel}</div>
+          <div style="font-size:10px;color:var(--text3)">${r.wait>0?'カウント':r.wait<0?'後出し':''}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px">
+        <button class="btn btn-xs" style="width:86px;flex-shrink:0;color:${hasPet?'var(--green)':'var(--text2)'}" onclick="fTp(${r.id})">${hasPet?'🐾 ON':'🐾 OFF'}</button>
+        <select class="inp" style="height:30px;font-size:12px;flex:1" onchange="fCTeam(${r.id},this.value)">
+          ${TEAMS.map(t=>`<option value="${t}" ${r.team===t?'selected':''}>チーム ${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('')}`:`<div class="empty">行軍時間を入力してください</div>`}
+</div>
+${all.length&&teams.length>1?`<div class="card"><div class="sec">チーム別同時着弾</div>
+  ${teams.map(t=>{
+    const tMems=ac.filter(m=>m.team===t);
+    const trWm=tMems.map(m=>({...m,march:fGetMarch(m.id)})).filter(m=>m.march);
+    if(!trWm.length)return'';
+    const tb=Math.min(...trWm.map(m=>m.march));
+    const tbm=trWm.find(m=>m.march===tb);
+    const tr=trWm.map(m=>{
+      const diff=m.march-tb;
+      return{...m,wait:diff,countLabel:diff>0?String(diff):diff<0?`+${Math.abs(diff)}`:'0'};
+    }).sort((a,b)=>b.wait-a.wait);
+    return`<div class="bsec" style="border-left-color:${tc(t)};margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:${tc(t)};margin-bottom:4px">チーム ${t}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">基準: ${tbm?tbm.name:'—'} ${tb}秒</div>
+      ${tr.map(r=>`<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;font-size:13px;font-weight:600">${r.name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-right:10px">${r.march}秒</div>
+        <div style="font-size:24px;font-weight:700;color:${r.wait>0?'var(--text)':r.wait<0?'#f0a500':'var(--green)'}">${r.countLabel}</div>
+      </div>`).join('')}
+    </div>`;}).join('')}
+</div>`:''}`;
+}
+function fSetBase(id){FS.baseId=id?parseInt(id):null;render();}
+
+function rFrostCopy(el){
+  const ac=FS.members.filter(m=>FS.active.includes(m.id));
+  const all=fCalcHits(ac);const teams=[...new Set(ac.map(m=>m.team))].sort();
+  const at=all.map(r=>`${r.name} ${r.wait}`).join('\n');
+  const chunks=[];for(let i=0;i<teams.length;i+=2)chunks.push(teams.slice(i,i+2));
+  function makeTeamText(tList){return tList.map(t=>{const tr=fCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`【${t}】${r.name} ${r.wait}`:`${r.name} ${r.wait}`).join('\n');}).filter(Boolean).join('\n');}
+  el.innerHTML=`
+<div class="card"><div class="sec">全員版</div>
+  <div class="cpbox" id="cp-all">${at||'(行軍時間入力後に表示)'}</div>
+  <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-all').textContent)">コピー</button>
+</div>
+${chunks.map((chunk,i)=>`<div class="card" style="margin-top:10px"><div class="sec">チーム ${chunk.join('・')}（${i+1}回目）</div>
+  <div class="cpbox" id="cp-c${i}">${makeTeamText(chunk)||'(なし)'}</div>
+  <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-c${i}').textContent)">コピー（${i+1}回目）</button>
+</div>`).join('')}
+${renderFrostDelayCopyPageCard()}
+${renderWhUI('frost')}
+${renderGameChatUI('frost')}`;
+  renderWhList();
+}
+
+function renderFrostDelayCopyPageCard(){
+  const rows=fDelayRows();
+  if(!rows.length)return `<div class="card" style="margin-top:10px;border-color:rgba(227,179,65,.35)"><div class="sec">ディレイ結果コピー</div><div class="empty">ディレイ計算後に表示されます</div></div>`;
+  const mode=FS.delayCopyMode||'group';
+  const text=mode==='mixed'?buildFrostDelayMixedCopyText(rows):buildFrostDelayGroupCopyText(rows);
+  return `<div class="card" style="margin-top:10px;border-color:rgba(227,179,65,.5);background:linear-gradient(180deg,rgba(58,42,10,.28),rgba(13,24,41,.98));"><div class="sec">ディレイ結果コピー</div>
+    <div class="seg2" style="margin-bottom:8px"><div class="sbtn ${mode==='group'?'on-blue':''}" onclick="fSetDelayCopyMode('group')">チーム詳細コピー</div><div class="sbtn ${mode==='mixed'?'on-blue':''}" onclick="fSetDelayCopyMode('mixed')">ディレイ集結カウント</div></div>
+    <div class="cpbox" id="cp-delay">${text}</div>
+    <button class="btn btn-primary btn-sm" onclick="cp(document.getElementById('cp-delay').textContent)">ディレイ結果コピー</button>
+    ${IS_MASTER?renderDelayMasterSendOptions(rows):''}
+  </div>`;
+}
+function renderDelayMasterSendOptions(rows){
+  return `<div style="margin-top:10px;background:rgba(247,215,116,.08);border:1px solid rgba(247,215,116,.35);border-radius:10px;padding:10px">
+    <div style="font-size:12px;font-weight:900;color:#f7d774;margin-bottom:8px">👑 ディレイゲーム送信</div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:var(--text)"><input type="checkbox" id="delay-send-detail" checked> チーム詳細を送る</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--text)"><input type="checkbox" id="delay-send-count" checked> ディレイ集結カウントを送る</label>
+    <button class="btn" id="game-send-delay" style="background:linear-gradient(180deg,#d97706,#92400e);border-color:#f59e0b;color:#fff;font-weight:900" onclick="sendDelayGameChat()">👑 ディレイ送信</button>
+    <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:8px">送信順：チーム詳細 → 初撃・2発目カウント → 3発目・4発目カウント</div>
+  </div>`;
+}
+
+function rFrostEnemy(el){
+  el.innerHTML=`
+<div class="card"><div class="sec">敵情報入力</div>
+  <div class="row" style="margin-bottom:8px"><input class="inp fl1" id="en" placeholder="敵集結主名"/></div>
+  <div class="row" style="margin-bottom:8px">
+    <label class="tgl"><input type="checkbox" id="ep"/><span class="tsl"></span></label>
+    <span style="font-size:12px;color:var(--text2)">ペット</span>
+  </div>
+  <div class="row" style="margin-bottom:8px"><input class="inp fl1" id="enote" placeholder="備考（任意）"/></div>
+  <button class="btn btn-primary btn-sm" onclick="fAddE()">追加</button>
+</div>
+<div class="card" style="margin-top:10px"><div class="sec">敵一覧 (${FS.enemies.length}件)</div>
+  ${FS.enemies.length?FS.enemies.map((e,i)=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="flex:1;font-size:14px;font-weight:700">${e.name}</div>
+      <span class="tag ${e.pet?'p-on':'p-off'}">${e.pet?'🟢ペットON':'⚪OFF'}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px">
+      <button class="btn btn-xs" style="width:96px;flex-shrink:0;color:${e.pet?'var(--green)':'var(--text2)'}" onclick="fToggleEnemyPet(${i})">${e.pet?'🐾 ON':'🐾 OFF'}</button>
+      <input class="inp fl1" style="height:30px;font-size:12px" value="${escAttr(e.note||'')}" placeholder="備考" onchange="fSetEnemyNote(${i},this.value)"/>
+      <button class="btn btn-xs btn-danger" style="width:42px;padding:0;flex-shrink:0" onclick="fRmE(${i})">削除</button>
+    </div>
+  </div>`).join(''):'<div class="empty">敵情報なし</div>'}
+</div>`;
+}
+function saveWh(){localStorage.setItem('app_webhooks',JSON.stringify(webhooks));}
+function addWh(){
+  const name=document.getElementById('wh-name')?.value?.trim();
+  const url=document.getElementById('wh-url')?.value?.trim();
+  if(!name||!url){toast('チャンネル名とURLを入力してください');return;}
+  webhooks.push({name,url});saveWh();
+  document.getElementById('wh-name').value='';document.getElementById('wh-url').value='';
+  renderWhList();
+}
+function removeWh(i){webhooks.splice(i,1);if(selectedWh>=webhooks.length)selectedWh=0;saveWh();renderWhList();}
+function renderWhList(){
+  const el=document.getElementById('wh-list');if(!el)return;
+  if(!webhooks.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:8px">↓ チャンネルを登録してください</div>';return;}
+  el.innerHTML=`<div class="row" style="margin-bottom:8px">
+    <select class="inp fl1" id="wh-select" onchange="selectedWh=this.selectedIndex" style="height:44px;font-size:14px;font-weight:600;">
+      ${webhooks.map((w,i)=>`<option value="${i}" ${selectedWh===i?'selected':''}>${w.name}</option>`).join('')}
+    </select>
+    <button class="btn btn-xs btn-danger" style="width:36px;padding:0;flex-shrink:0" onclick="removeWh(selectedWh)">✕</button>
+  </div>`;
+}
+function renderWhUI(mode){
+  return`<div class="card" style="margin-top:10px"><div class="sec">Discord送信</div>
+  <div id="wh-list"></div>
+  <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">チャンネルを追加</div>
+    <div class="row" style="margin-bottom:6px"><input class="inp fl1" id="wh-name" placeholder="チャンネル名" style="height:36px;font-size:13px;"/></div>
+    <div class="row"><input class="inp fl1" id="wh-url" placeholder="Webhook URL" style="height:36px;font-size:13px;"/>
+    <button class="btn btn-xs btn-success" style="width:60px;flex-shrink:0" onclick="addWh()">追加</button></div>
+  </div>
+  <button class="btn btn-primary" onclick="sendD('${mode}')">Discordへ送信</button>
+</div>`;
+}
+
+function getCopyBoxText(id){
+  const el=document.getElementById(id);
+  if(!el)return'';
+  const txt=(el.textContent||'').trim();
+  if(!txt || txt.startsWith('(') || txt==='(なし)')return'';
+  return txt;
+}
+function buildGameChatText(kind){
+  if(kind==='all')return getCopyBoxText('cp-all');
+  if(kind==='chunk0')return getCopyBoxText('cp-c0');
+  if(kind==='chunk1')return getCopyBoxText('cp-c1');
+  if(kind==='delayDetail')return buildFrostDelayGroupCopyText(fDelayRows());
+  if(kind==='delayCount01')return buildFrostDelayCountCopyText(fDelayRows(),[0,1]);
+  if(kind==='delayCount23')return buildFrostDelayCountCopyText(fDelayRows(),[2,3]);
+  if(kind==='delayCountAll')return buildFrostDelayCountCopyText(fDelayRows());
+  return'';
+}
+function renderGameChatUI(mode){
+  if(!IS_MASTER)return'';
+  return`<div class="card" style="margin-top:10px;border-color:rgba(247,215,116,.5);box-shadow:0 0 18px rgba(247,215,116,.08)">
+    <div class="sec">👑 MASTER — ゲームチャット送信</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px">Windows送信ツールへ転送し、BlueStacksでゲーム内チャットへ送信します。ゲーム内チャット制限対策として、必要な枠だけ個別送信します。</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:8px">
+      <button class="btn" id="game-send-all" style="background:linear-gradient(180deg,#d9a441,#9a6b12);border-color:#f7d774;color:#fff;font-weight:900" onclick="sendGameChat('${mode}','all','全体同着')">👑 全体同着送信</button>
+      <button class="btn" id="game-send-c0" style="background:linear-gradient(180deg,#1f6feb,#174ea6);border-color:#58a6ff;color:#fff;font-weight:900" onclick="sendGameChat('${mode}','chunk0','チームA・B')">👑 チームA・B送信</button>
+      <button class="btn" id="game-send-c1" style="background:linear-gradient(180deg,#7c3aed,#5b21b6);border-color:#a371f7;color:#fff;font-weight:900" onclick="sendGameChat('${mode}','chunk1','チームC・D')">👑 チームC・D送信</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:8px">※送信中は連打せず、完了表示後に次を送信してください。</div>
+  </div>`;
+}
+function setGameChatButtonsDisabled(disabled){
+  ['game-send-all','game-send-c0','game-send-c1','game-send-delay'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(!b)return;
+    b.disabled=disabled;
+    b.style.opacity=disabled?'0.55':'1';
+    b.style.pointerEvents=disabled?'none':'auto';
+  });
+}
+function postGameChatText(mode,kind,label,txt){
+  return fetch('http://127.0.0.1:1648/send',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({mode,kind,label,text:txt,source:'web-totsugekikun',ts:Date.now()})
+  });
+}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function sendGameChat(mode,kind,label){
+  const txt=buildGameChatText(kind).trim();
+  if(!txt){toast(`${label}の送信内容がありません`);return;}
+  setGameChatButtonsDisabled(true);
+  toast(`${label} 送信中...`);
+  postGameChatText(mode,kind,label,txt).then(r=>{
+    if(r.ok)toast(`${label} 送信指示を送りました`);
+    else throw new Error('bad response');
+  }).catch(()=>{
+    navigator.clipboard.writeText(txt).catch(()=>{});
+    toast('Windowsツール未起動。内容をコピーしました');
+  }).finally(()=>{
+    setTimeout(()=>setGameChatButtonsDisabled(false),5000);
+  });
+}
+async function sendDelayGameChat(){
+  const sendDetail=document.getElementById('delay-send-detail')?.checked;
+  const sendCount=document.getElementById('delay-send-count')?.checked;
+  const jobs=[];
+  if(sendDetail){
+    const t=buildGameChatText('delayDetail').trim();
+    if(t)jobs.push({kind:'delayDetail',label:'ディレイチーム詳細',text:t});
+  }
+  if(sendCount){
+    const t1=buildGameChatText('delayCount01').trim();
+    const t2=buildGameChatText('delayCount23').trim();
+    if(t1)jobs.push({kind:'delayCount01',label:'ディレイ集結カウント前半',text:t1});
+    if(t2)jobs.push({kind:'delayCount23',label:'ディレイ集結カウント後半',text:t2});
+  }
+  if(!jobs.length){toast('ディレイ送信内容がありません');return;}
+  setGameChatButtonsDisabled(true);
+  try{
+    for(let i=0;i<jobs.length;i++){
+      const j=jobs[i];
+      toast(`${j.label} 送信中...`);
+      const r=await postGameChatText('frost',j.kind,j.label,j.text);
+      if(!r.ok)throw new Error('bad response');
+      if(i<jobs.length-1)await sleep(5200);
+    }
+    toast('ディレイ送信完了');
+  }catch(e){
+    navigator.clipboard.writeText(jobs.map(j=>j.text).join('\n\n')).catch(()=>{});
+    toast('Windowsツール未起動。内容をコピーしました');
+  }finally{
+    setTimeout(()=>setGameChatButtonsDisabled(false),5000);
+  }
+}
+
+function sendD(mode){
+  if(!webhooks.length){toast('チャンネルを登録してください');return;}
+  const url=webhooks[selectedWh]?.url;if(!url)return;
+  let txt='';
+  if(mode==='svs'){
+    const ac=SS.members.filter(m=>SS.active.includes(m.id));
+    const teams=[...new Set(ac.map(m=>m.team))].sort();
+    txt=teams.map(t=>{const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`**【${t}】**${r.name} ${r.wait}秒後`:`${r.name} ${r.wait}秒後`).join('\n');}).filter(Boolean).join('\n');
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:`**🎯 SVS同時着弾**\n${sFactionLabel()}\n\n${txt}`})}).then(r=>toast(r.ok?'Discord送信完了！':'送信失敗')).catch(()=>toast('送信エラー'));
+  } else {
+    const ac=FS.members.filter(m=>FS.active.includes(m.id));
+    const teams=[...new Set(ac.map(m=>m.team))].sort();
+    txt=teams.map(t=>{const tr=fCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`**【${t}】**${r.name} ${r.wait}秒後`:`${r.name} ${r.wait}秒後`).join('\n');}).filter(Boolean).join('\n');
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:`**❄️ 霜竜同時着弾**\n\n${txt}`})}).then(r=>toast(r.ok?'Discord送信完了！':'送信失敗')).catch(()=>toast('送信エラー'));
+  }
+}
+
+// ============================================================
+// SVS アクション
+// ============================================================
+function sSplit(v){if(SS.split===v)return;SS.split=v;SS.faction='blue';SS.cityAssign={};render();}
+function sFaction(v){if(SS.faction===v)return;SS.faction=v;SS.cityAssign={};render();}
+function sPA(v){if(SS.placementA===v)return;SS.placementA=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='A')delete SS.cityAssign[k];}render();}
+function sPB(v){if(SS.placementB===v)return;SS.placementB=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='B')delete SS.cityAssign[k];}render();}
+function sAddM(){
+  const n=document.getElementById('snn')?.value?.trim();
+  if(!n){toast('名前を入力してください');return;}
+  if(SS.members.length>=20){toast('最大20名まで登録できます');return;}
+  if(SS.members.find(m=>m.name===n)){toast('同じ名前が既に存在します');return;}
+  SS.members.push({id:Date.now(),name:n,team:'A'});
+  document.getElementById('snn').value='';render();
+}
+function sRmv(id){SS.members=SS.members.filter(m=>m.id!==id);SS.active=SS.active.filter(a=>a!==id);for(const k of Object.keys(SS.cityAssign)){if(SS.cityAssign[k]===id)delete SS.cityAssign[k];}render();}
+function sToggleActive(mid){SS.active.includes(mid)?SS.active=SS.active.filter(a=>a!==mid):SS.active.push(mid);render();}
+function sAllJoin(){SS.active=[...new Set([...SS.active,...Object.values(SS.cityAssign)])];render();}
+function sAllLeave(){SS.active=[];render();}
+function sTp(id){SS.pet[id]?(SS.pet[id]=false,delete SS.petStart[id]):(SS.pet[id]=true,SS.petStart[id]=Date.now());render();}
+function sCTeam(id,t){const m=SS.members.find(m=>m.id===id);if(m)m.team=t;render();}
+function sSpetT(id,ts){const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);SS.petStart[id]=t.getTime();render();}
+function sSpetN(id){SS.petStart[id]=Date.now();render();}
+function sAddE(){
+  const n=document.getElementById('en')?.value?.trim();if(!n){toast('敵名を入力してください');return;}
+  const sel=document.getElementById('em');
+  const[idxStr,placement]=sel.value.split('_');const idx=parseInt(idxStr);
+  const ms=placement==='6'?M6:M5;const ps=placement==='6'?P6:P5;
+  const normalMarch=ms[idx],petMarch=ps[idx];
+  const pet=document.getElementById('ep')?.checked||false;
+  SS.enemies.push({name:n,normalMarch,petMarch,march:normalMarch,pet,petStart:pet?Date.now():null});render();
+}
+function sToggleEnemyPet(i){const e=SS.enemies[i];if(!e)return;e.pet=!e.pet;e.petStart=e.pet?Date.now():null;render();}
+function sRmE(i){SS.enemies.splice(i,1);render();}
+
+// ============================================================
+// 霜竜 アクション
+// ============================================================
+function fAddM(){
+  const n=document.getElementById('fnn')?.value?.trim();
+  if(!n){toast('名前を入力してください');return;}
+  if(FS.members.length>=20){toast('最大20名まで登録できます');return;}
+  if(FS.members.find(m=>m.name===n)){toast('同じ名前が既に存在します');return;}
+  FS.members.push({id:Date.now(),name:n,team:'A',march:null,petMarch:null});
+  document.getElementById('fnn').value='';render();
+}
+function fRmv(id){FS.members=FS.members.filter(m=>m.id!==id);FS.active=FS.active.filter(a=>a!==id);delete FS.pet[id];render();}
+function fJoin(id){if(!FS.active.includes(id))FS.active.push(id);render();}
+function fLv(id){FS.active=FS.active.filter(a=>a!==id);render();}
+function fSetMarch(id,key,val){const m=FS.members.find(m=>m.id===id);if(m)m[key]=val?parseInt(val):null;saveAll();render();}
+function fTp(id){FS.pet[id]?(FS.pet[id]=false,delete FS.petStart[id]):(FS.pet[id]=true,FS.petStart[id]=Date.now());render();}
+function fCTeam(id,t){const m=FS.members.find(m=>m.id===id);if(m)m.team=t;render();}
+function fSpetT(id,ts){const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);FS.petStart[id]=t.getTime();render();}
+function fSpetN(id){FS.petStart[id]=Date.now();render();}
+function fAddE(){
+  const n=document.getElementById('en')?.value?.trim();if(!n){toast('敵名を入力してください');return;}
+  const note=document.getElementById('enote')?.value?.trim()||'';
+  FS.enemies.push({name:n,pet:document.getElementById('ep')?.checked||false,note});render();
+}
+function fToggleEnemyPet(i){const e=FS.enemies[i];if(!e)return;e.pet=!e.pet;render();}
+function fSetEnemyNote(i,v){const e=FS.enemies[i];if(!e)return;e.note=v;render();}
+function fRmE(i){FS.enemies.splice(i,1);render();}
+
+// ============================================================
+// 保存・復元
+// ============================================================
+function getStatePayload(){
+  return {
+    version:1,
+    updatedAt:Date.now(),
+    svs:{
+      split:SS.split,faction:SS.faction,placementA:SS.placementA,placementB:SS.placementB,
+      members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,enemies:SS.enemies,adjust:SS.adjust
+    },
+    frost:{
+      members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,enemies:FS.enemies,baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
+    }
+  };
+}
+function applyStatePayload(d){
+  if(!d)return;
+  const s=d.svs||d.SS||{};
+  if(s.split)SS.split=s.split;if(s.faction)SS.faction=s.faction;
+  if(s.placementA)SS.placementA=s.placementA;if(s.placementB)SS.placementB=s.placementB;
+  if(s.members)SS.members=s.members;if(s.cityAssign)SS.cityAssign=s.cityAssign;
+  if(s.active)SS.active=s.active;if(s.pet)SS.pet=s.pet;if(s.petStart)SS.petStart=s.petStart;
+  if(s.enemies)SS.enemies=s.enemies;if(s.adjust)SS.adjust=s.adjust;
+  const f=d.frost||d.FS||{};
+  if(f.members)FS.members=f.members;if(f.active)FS.active=f.active;
+  if(f.pet)FS.pet=f.pet;if(f.petStart)FS.petStart=f.petStart;if(f.enemies)FS.enemies=f.enemies;
+  if(f.baseId!==undefined)FS.baseId=f.baseId;
+  if(f.calcMode)FS.calcMode=f.calcMode;if(f.delaySource)FS.delaySource=f.delaySource;
+  if(f.delayOrder)FS.delayOrder=f.delayOrder;if(f.delayGaps)FS.delayGaps=f.delayGaps;if(f.delayAssign)FS.delayAssign=f.delayAssign;if(f.delayCopyMode)FS.delayCopyMode=f.delayCopyMode;
+}
+function saveLocal(){
+  try{localStorage.setItem('app_svs',JSON.stringify({
+    split:SS.split,faction:SS.faction,placementA:SS.placementA,placementB:SS.placementB,
+    members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,enemies:SS.enemies,adjust:SS.adjust
+  }));
+  localStorage.setItem('app_frost',JSON.stringify({
+    members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,enemies:FS.enemies,baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
+  }));}catch(e){}
+}
+function saveAll(){
+  saveLocal();
+  if(isRemoteApplying)return;
+  if(fbDb&&roomRef&&roomKey){
+    clearTimeout(fbSaveTimer);
+    fbSaveTimer=setTimeout(()=>{
+      if(isRemoteApplying)return;
+      try{roomRef.set(getStatePayload()).catch(()=>{});}catch(e){}
+    },250);
+  }
+}
+function loadAll(){
+  try{
+    const s=JSON.parse(localStorage.getItem('app_svs')||'{}');
+    if(s.split)SS.split=s.split;if(s.faction)SS.faction=s.faction;
+    if(s.placementA)SS.placementA=s.placementA;if(s.placementB)SS.placementB=s.placementB;
+    if(s.members)SS.members=s.members;if(s.cityAssign)SS.cityAssign=s.cityAssign;
+    if(s.active)SS.active=s.active;if(s.pet)SS.pet=s.pet;if(s.petStart)SS.petStart=s.petStart;
+    if(s.enemies)SS.enemies=s.enemies;if(s.adjust)SS.adjust=s.adjust;
+  }catch(e){}
+  try{
+    const f=JSON.parse(localStorage.getItem('app_frost')||'{}');
+    if(f.members)FS.members=f.members;if(f.active)FS.active=f.active;
+    if(f.pet)FS.pet=f.pet;if(f.petStart)FS.petStart=f.petStart;if(f.enemies)FS.enemies=f.enemies;if(f.baseId!==undefined)FS.baseId=f.baseId;
+  if(f.calcMode)FS.calcMode=f.calcMode;if(f.delaySource)FS.delaySource=f.delaySource;
+  if(f.delayOrder)FS.delayOrder=f.delayOrder;if(f.delayGaps)FS.delayGaps=f.delayGaps;if(f.delayAssign)FS.delayAssign=f.delayAssign;if(f.delayCopyMode)FS.delayCopyMode=f.delayCopyMode;
+  }catch(e){}
+}
+function normalizeRoomKey(v){return String(v||'').replace(/\D/g,'').slice(0,4);}
+function roomPath(mode,key){return `rooms/${mode}/${key}`;}
+function connectRoom(mode,key){
+  roomKey=normalizeRoomKey(key);
+  roomMode=mode;
+  if(roomKey){
+    sessionStorage.setItem(`room_${mode}`,roomKey);
+    sessionStorage.setItem('last_room_key',roomKey);
+  }else{
+    sessionStorage.removeItem(`room_${mode}`);
+  }
+  try{if(roomRef)roomRef.off();}catch(e){}
+  roomRef=null;
+  if(!fbDb||!roomKey){fetchMembers();return;}
+  roomRef=fbDb.ref(roomPath(mode,roomKey));
+  let first=true;
+  roomRef.on('value',snap=>{
+    const data=snap.val();
+    if(first){
+      first=false;
+      if(data){
+        roomHasRemoteData=true;
+        isRemoteApplying=true;
+        applyStatePayload(data);
+        saveLocal();
+        render();
+        isRemoteApplying=false;
+      }else{
+        roomHasRemoteData=false;
+        fetchMembers();
+      }
+      return;
+    }
+    if(!data)return;
+    isRemoteApplying=true;
+    applyStatePayload(data);
+    saveLocal();
+    render();
+    isRemoteApplying=false;
+  },err=>{console.warn('Firebase room error',err);toast('共有接続エラー');});
+}
+
+// ============================================================
+// GAS連携
+// ============================================================
+function fetchMembers(){
+  fetch(GAS_URL).then(r=>r.json()).then(data=>{
+    if(!data.members||!data.members.length)return;
+    // SVS・霜竜 両方に同じメンバーを反映
+    const syncMembers=(state,isFrost)=>{
+      const old=state.members;
+      state.members=data.members.map((m,i)=>{
+        const o=old.find(o=>o.name===m.name);
+        const base={id:o?.id||(Date.now()+i),name:m.name,team:o?.team||(m.team||'A')};
+        return isFrost?{...base,march:o?.march||null,petMarch:o?.petMarch||null}:base;
+      });
+    };
+    syncMembers(SS,false);syncMembers(FS,true);
+    saveAll();render();
+  }).catch(()=>{});
+}
+
+// ============================================================
+// パスワード認証 & モード切り替え
+// ============================================================
+function getPass(){return'1648';}
+function checkAuth(mode){return true;}
+
+const MODE_THEME={
+  svs:{
+    key:'svs',
+    icon:'⚔️',
+    short:'SVS',
+    label:'SVS版',
+    title:'⚔️ 突撃くん SVS版',
+    accent:'#ff8a00',
+    accent2:'#d96b00',
+    accentSoft:'#ffb347',
+    border:'#ff9f1c',
+    glow:'rgba(255,138,0,0.58)',
+    bg:'rgba(42,20,4,0.82)',
+    bg2:'rgba(217,107,0,0.92)',
+    switchVideo:REPO_FROST+'switch_to_svs.mp4',
+    authBg:REPO_FROST+'svs_bg.mp4',
+    intro:REPO_FROST+'intro.mp4'
+  },
+  frost:{
+    key:'frost',
+    icon:'❄️',
+    short:'霜竜',
+    label:'霜竜版',
+    title:'❄️ 突撃くん 霜竜版',
+    accent:'#38b6ff',
+    accent2:'#0e8fd4',
+    accentSoft:'#7dd3fc',
+    border:'#38b6ff',
+    glow:'rgba(56,182,255,0.58)',
+    bg:'rgba(6,24,46,0.82)',
+    bg2:'rgba(14,143,212,0.92)',
+    switchVideo:REPO_FROST+'switch_to_frost.mp4',
+    authBg:REPO_FROST+'frost_bg.mp4',
+    intro:REPO_FROST+'frost_intro.mp4'
+  }
+};
+
+function cleanupEntranceScreens(){
+  ['mode-select','mode-bg-vid','mode-overlay','auth-screen','auth-bg','auth-bg-vid','auth-title-label'].forEach(id=>document.getElementById(id)?.remove());
+  document.querySelectorAll('.entrance-layer').forEach(el=>el.remove());
+  document.querySelectorAll('video').forEach(v=>{if(v.id==='mode-bg-vid'||v.id==='auth-bg-vid'){v.pause();v.remove();}});
+}
+
+function showModeSelect(){
+  cleanupEntranceScreens();
+
+  const vid=document.createElement('video');
+  vid.id='mode-bg-vid';
+  vid.className='entrance-layer';
+  vid.src=REPO_FROST+'mode_select.mp4';
+  vid.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:28;background:#000;';
+  vid.autoplay=true;vid.loop=true;vid.muted=true;vid.playsInline=true;
+  vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');
+  document.body.appendChild(vid);
+  vid.play().catch(()=>{});
+
+  const ov=document.createElement('div');
+  ov.id='mode-overlay';
+  ov.className='entrance-layer';
+  ov.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;background:linear-gradient(180deg,rgba(0,0,0,.38),rgba(0,0,0,.68));z-index:29;';
+  document.body.appendChild(ov);
+
+  const div=document.createElement('div');
+  div.id='mode-select';
+  div.className='entrance-layer';
+  div.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:30;width:min(92vw,460px);display:flex;flex-direction:column;align-items:center;gap:18px;padding:20px 16px;';
+  div.innerHTML=`
+    <div style="font-size:13px;font-weight:900;color:#f7d774;text-shadow:-1px -1px 0 rgba(0,0,0,.95),1px -1px 0 rgba(0,0,0,.95),-1px 1px 0 rgba(0,0,0,.95),1px 1px 0 rgba(0,0,0,.95),0 0 10px rgba(255,215,100,.35);letter-spacing:3px;text-align:center;margin-bottom:-8px">1648</div>
+    <div style="font-size:28px;font-weight:900;color:#f7d774;text-shadow:-1px -1px 0 rgba(0,0,0,.95),1px -1px 0 rgba(0,0,0,.95),-1px 1px 0 rgba(0,0,0,.95),1px 1px 0 rgba(0,0,0,.95),0 0 14px rgba(255,215,100,.42),0 3px 12px rgba(0,0,0,1);letter-spacing:2px;text-align:center;line-height:1.1">突撃くん</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.82);text-shadow:0 2px 10px rgba(0,0,0,.95);margin-top:-6px">モードを選択してください</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:4px">
+      <button onclick="showAuth('svs')"
+        style="height:78px;background:linear-gradient(180deg,rgba(255,154,31,.96),rgba(196,82,0,.92));border:2px solid #ffb347;border-radius:16px;color:#fff;font-size:18px;font-weight:900;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;box-shadow:0 0 24px rgba(255,138,0,.55), inset 0 1px 0 rgba(255,255,255,.22);backdrop-filter:blur(2px);">
+        <div style="font-size:24px;line-height:1">⚔️</div>
+        <div style="margin-top:4px">SVS版</div>
+      </button>
+      <button onclick="showAuth('frost')"
+        style="height:78px;background:linear-gradient(180deg,rgba(56,182,255,.96),rgba(14,103,170,.92));border:2px solid #7dd3fc;border-radius:16px;color:#fff;font-size:18px;font-weight:900;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;box-shadow:0 0 24px rgba(56,182,255,.55), inset 0 1px 0 rgba(255,255,255,.22);backdrop-filter:blur(2px);">
+        <div style="font-size:24px;line-height:1">❄️</div>
+        <div style="margin-top:4px">霜竜版</div>
+      </button>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+function showAuth(mode){
+  cleanupEntranceScreens();
+  const theme=MODE_THEME[mode]||MODE_THEME.svs;
+  const other=mode==='svs'?MODE_THEME.frost:MODE_THEME.svs;
+
+  const bgVid=document.createElement('video');
+  bgVid.id='auth-bg-vid';
+  bgVid.className='entrance-layer';
+  bgVid.src=theme.authBg;
+  bgVid.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:10;background:#000;';
+  bgVid.autoplay=true;bgVid.loop=true;bgVid.muted=true;bgVid.playsInline=true;
+  bgVid.setAttribute('playsinline','');bgVid.setAttribute('webkit-playsinline','');
+  document.body.appendChild(bgVid);
+  bgVid.play().catch(()=>{});
+
+  const bg=document.createElement('div');
+  bg.id='auth-bg';
+  bg.className='entrance-layer';
+  bg.style.cssText=`position:fixed;inset:0;width:100vw;height:100vh;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.62));z-index:11;box-shadow:inset 0 0 140px ${theme.glow};`;
+  document.body.appendChild(bg);
+
+  const title=document.createElement('div');
+  title.id='auth-title-label';
+  title.className='entrance-layer';
+  title.style.cssText=`position:fixed;top:18px;left:16px;z-index:12;color:${theme.accentSoft};font-size:15px;font-weight:900;letter-spacing:.5px;text-shadow:0 0 14px ${theme.glow},0 2px 10px rgba(0,0,0,1);`;
+  title.textContent=theme.title.replace(/^⚔️\s*|^❄️\s*/,'');
+  document.body.appendChild(title);
+
+  const div=document.createElement('div');
+  div.id='auth-screen';
+  div.className='entrance-layer';
+  div.style.cssText='position:fixed;top:62%;left:50%;transform:translate(-50%,-50%);z-index:12;width:86%;max-width:330px;display:flex;flex-direction:column;align-items:center;padding:18px 14px;border-radius:18px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 32px rgba(0,0,0,.18);';
+  div.innerHTML=`
+    <div style="font-size:13px;color:#f5f7fb;margin-bottom:12px;text-shadow:0 0 10px rgba(0,0,0,1)">共有キー（任意）</div>
+    <div style="display:flex;gap:8px;width:100%;margin-bottom:6px;">
+      <input id="room-input" type="text" inputmode="numeric" maxlength="4" placeholder="room"
+        value="${sessionStorage.getItem(`room_${mode}`)||sessionStorage.getItem('last_room_key')||''}"
+        style="flex:0 0 calc(30% - 4px);min-width:0;height:48px;background:rgba(10,14,22,0.92);border:1.5px solid rgba(255,255,255,.22);border-radius:12px;color:#fff;font-size:18px;text-align:center;outline:none;letter-spacing:3px;-webkit-appearance:none;box-shadow:0 0 12px rgba(0,0,0,.35);"
+        oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
+        onkeydown="if(event.key==='Enter')startVideo('${mode}')"/>
+      <button onclick="startVideo('${mode}')"
+        style="flex:0 0 calc(70% - 4px);min-width:0;height:48px;background:linear-gradient(180deg,${theme.accent},${theme.accent2});border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:900;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;box-shadow:0 0 22px ${theme.glow};">
+        突撃！
+      </button>
+    </div>
+    <div style="width:100%;font-size:12px;opacity:.72;line-height:1.45;text-align:center;color:#fff;text-shadow:0 0 8px rgba(0,0,0,1);margin-bottom:14px">
+      同じ4桁キーでリアルタイム共同編集できます。<br>未入力の場合は個人用です。
+    </div>
+    ${portalIsDeveloper()?'<div style="font-size:11px;color:#f7d774;font-weight:900;margin-bottom:10px;text-shadow:0 0 8px rgba(0,0,0,1)">👑 Developer MASTER 自動付与</div>':''}
+    <button onclick="switchMode('${other.key}')"
+      style="width:100%;height:44px;background:rgba(10,14,22,0.78);border:1.5px solid ${other.border};border-radius:12px;color:${other.accentSoft};font-size:14px;font-weight:800;cursor:pointer;-webkit-appearance:none;touch-action:manipulation;box-shadow:0 0 16px ${other.glow};">
+      ${other.icon} ${other.short}モードへ
+    </button>
+  `;
+  document.body.appendChild(div);
+  setTimeout(()=>document.getElementById('room-input')?.focus(),300);
+  window._authMode=mode;
+}
+
+function switchMode(toMode){
+  document.getElementById('auth-screen')?.remove();
+  document.getElementById('auth-bg')?.remove();
+  document.getElementById('auth-bg-vid')?.remove();
+  document.getElementById('auth-title-label')?.remove();
+
+  const theme=MODE_THEME[toMode]||MODE_THEME.svs;
+  const vwrap=document.createElement('div');
+  vwrap.className='entrance-layer';
+  vwrap.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:50;';
+  const vid=document.createElement('video');
+  vid.src=theme.switchVideo;
+  vid.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+  vid.playsInline=true;vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');vid.muted=false;
+  const goAuth=()=>{
+    vwrap.style.transition='opacity 0.35s';
+    vwrap.style.opacity='0';
+    setTimeout(()=>{vwrap.remove();showAuth(toMode);},350);
+  };
+  vid.onended=goAuth;vid.onerror=goAuth;
+  vwrap.appendChild(vid);document.body.appendChild(vwrap);
+  vid.play().catch(goAuth);
+}
+
+function startVideo(mode){
+  const rk=normalizeRoomKey(document.getElementById('room-input')?.value?.trim());
+
+  IS_MASTER=portalIsDeveloper();
+  if(IS_MASTER){
+    sessionStorage.setItem(`master_${mode}`,'1');
+  }else{
+    sessionStorage.removeItem(`master_${mode}`);
+  }
+
+  document.getElementById('auth-screen')?.remove();
+  document.getElementById('auth-bg')?.remove();
+  document.getElementById('auth-bg-vid')?.remove();
+  document.getElementById('auth-title-label')?.remove();
+
+  const videoUrl=mode==='svs'?REPO_FROST+'intro.mp4':REPO_FROST+'frost_intro.mp4';
+  const vwrap=document.createElement('div');
+  vwrap.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:20;';
+  const vid=document.createElement('video');
+  vid.src=videoUrl;
+  vid.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
+  vid.playsInline=true;
+  vid.setAttribute('playsinline','');
+  vid.setAttribute('webkit-playsinline','');
+  vid.muted=false;
+
+  const goMain=()=>{
+    vwrap.style.transition='opacity 0.5s';
+    vwrap.style.opacity='0';
+    setTimeout(()=>{
+      vwrap.remove();
+      document.getElementById('app').style.display='flex';
+      document.getElementById('app').style.opacity='0';
+      document.getElementById('app').style.transition='opacity 0.4s';
+      setTimeout(()=>{document.getElementById('app').style.opacity='1';},30);
+      setMode(mode);
+      connectRoom(mode,rk);
+    },500);
+  };
+
+  vid.onended=goMain;
+  vid.onerror=goMain;
+  vwrap.appendChild(vid);
+  document.body.appendChild(vwrap);
+  vid.play().catch(goMain);
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+const _r=render;
+window.render=function(){_r();saveAll();};
+
+setInterval(()=>{
+  const e=document.getElementById('hdr-clock');
+  if(e)e.textContent=`🕒 ${formatClock()}`;
+},1000);
+
+setInterval(()=>{
+  SS.now=Date.now();FS.now=Date.now();
+  if(SS.members.some(m=>SS.active.includes(m.id)&&SS.pet[m.id])||FS.members.some(m=>FS.active.includes(m.id)&&FS.pet[m.id])||SS.enemies.some(e=>e.pet))render();
+},10000);
+
+loadAll();
+
+// ===== 1648 Portal 認証ロック =====
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const PORTAL_HOME_URL="/1648-portal/home/";
+const PROFILE_SETUP_URL="/1648-portal/profile-setup/";
+function goBackToPortalPrevious(){
+  try{
+    if(document.referrer && document.referrer.includes("/1648-portal/")){
+      history.back();
+      return;
+    }
+  }catch(e){}
+  location.href="/1648-portal/home/";
+}
+
+
+function getPortalSession(){
+  const raw=localStorage.getItem("discord_user");
+  if(!raw)return null;
+  try{
+    const data=JSON.parse(raw);
+    if(!data || data.ok!==true)return null;
+    if(data.status==="pending_profile"){
+      location.replace(PROFILE_SETUP_URL);
+      return null;
+    }
+    if(data.status!=="active")return null;
+    return data;
+  }catch(e){
+    return null;
+  }
+}
+function portalName(data){
+  return data?.user?.playerName || data?.profile_data?.playerName || data?.discord?.globalName || data?.discord?.username || "メンバー";
+}
+function portalAlliance(data){
+  return data?.user?.alliance || data?.profile_data?.alliance || "";
+}
+function portalRole(data){
+  const candidates = [
+    data?.role,
+    data?.roleName,
+    data?.roleKey,
+    data?.permissionRole,
+    data?.user?.role,
+    data?.user?.roleName,
+    data?.user?.roleKey,
+    data?.user?.permissionRole,
+    data?.profile_data?.role,
+    data?.profile_data?.roleName,
+    data?.profile_data?.roleKey,
+    data?.profileData?.role,
+    data?.profileData?.roleName,
+    data?.profileData?.roleKey
+  ];
+  const found = candidates.find(v => v !== undefined && v !== null && String(v).trim() !== "");
+  return String(found || "member").trim().toLowerCase();
+}
+function portalDiscordId(data){
+  return String(
+    data?.user?.discordId ||
+    data?.user?.id ||
+    data?.discord?.id ||
+    data?.discordId ||
+    data?.id ||
+    ""
+  );
+}
+function portalIsDeveloper(){
+  const session=getPortalSession();
+  if(!session) return false;
+  const role = portalRole(session);
+  const discordId = portalDiscordId(session);
+
+  // けーさん固定Developer判定（ポータル本体と同じ事故防止）
+  if(discordId === "795152243883114527") return true;
+
+  return role === "developer" ||
+         role === "dev" ||
+         role === "ディベロッパー" ||
+         role === "開発者";
+}
+function showPortalLock(title,msg,href,label){
+  const box=document.getElementById("portalLock");
+  if(!box)return;
+  box.style.display="flex";
+  box.innerHTML=`<div class="portal-lock-box"><h2>${title}</h2><p>${msg}</p><a href="${href}">${label}</a></div>`;
+}
+function startPortalRaid(){
+  const session=getPortalSession();
+  if(!session){
+    localStorage.removeItem("discord_user");
+    showPortalLock("ログインが必要です","1648 PortalでDiscord認証を完了してください。",LOGIN_URL,"Discordでログイン");
+    setTimeout(()=>{ location.replace(LOGIN_URL); }, 700);
+    return;
+  }
+
+  const lock=document.getElementById("portalLock");
+  if(lock)lock.style.display="none";
+
+  const topbar=document.getElementById("portalTopbar");
+  if(topbar)topbar.style.display="flex";
+
+  sessionStorage.setItem("portal_entry","1");
+
+  if(portalIsDeveloper()){
+    sessionStorage.setItem("master_svs","1");
+    sessionStorage.setItem("master_frost","1");
+  }else{
+    sessionStorage.removeItem("master_svs");
+    sessionStorage.removeItem("master_frost");
+  }
+
+  // 認証コードは撤廃。入口演出は毎回表示し、モード選択から開始。
+  document.getElementById('app').style.display='none';
+  showModeSelect();
+}
+
+// モード設定時にセッションに記録
+const _setMode=setMode;
+window.setMode=function(m){sessionStorage.setItem('last_mode',m);_setMode(m);};
+
+startPortalRaid();
+</script>
+</body>
+</html>
