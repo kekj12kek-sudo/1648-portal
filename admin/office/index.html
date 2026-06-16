@@ -2520,27 +2520,34 @@ function showAdminAccessError(message){
   document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">管理権限が必要です</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`;
 }
 async function loadPortalAdmin(){
+  const raw = readJsonStorage(['discord_user','1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+  const st = getStoredPortalObject();
   const discordId = getPortalDiscordId();
   if(!discordId) return null;
-  let user = null, roleDoc = null;
-  if(fbFs){
-    try{
-      const us = await fbFs.collection('users').doc(discordId).get();
-      if(us.exists) user = us.data() || {};
-    }catch(e){ console.warn('users read failed', e); }
-    try{
-      const rs = await fbFs.collection('role_map').doc(discordId).get();
-      if(rs.exists) roleDoc = rs.data() || {};
-    }catch(e){ console.warn('role_map read failed', e); }
-  }
-  const st = getStoredPortalObject();
-  const role = String((roleDoc && (roleDoc.role || roleDoc.type)) || user?.role || st.role || st.portalRole || '').toLowerCase();
+
+  // Firestoreのusers/role_mapはクライアント直読みだと権限ルールで弾かれるため、
+  // Portalログイン時にlocalStorageへ保存された情報を優先する。
+  // 開発者本人はDiscord IDで通過させる。
+  const DEVELOPER_IDS = ['795152243883114527'];
+
+  const role = String(
+    st.role ||
+    st.portalRole ||
+    raw.role ||
+    raw.portalRole ||
+    raw.user?.role ||
+    raw.user?.portalRole ||
+    raw.profile?.role ||
+    raw.profile?.portalRole ||
+    (DEVELOPER_IDS.includes(discordId) ? 'developer' : '')
+  ).toLowerCase();
+
   return {
     discordId,
     role,
-    gameId: String(user?.gameId || st.gameId || '').trim(),
-    playerName: String(user?.playerName || user?.globalName || st.playerName || st.userName || '').trim(),
-    alliance: String(user?.alliance || st.alliance || st.allianceName || '').trim()
+    gameId: String(st.gameId || raw.gameId || raw.user?.gameId || '').trim(),
+    playerName: String(st.playerName || st.globalName || raw.playerName || raw.user?.playerName || raw.discord?.globalName || '').trim(),
+    alliance: String(st.alliance || raw.alliance || raw.user?.alliance || raw.allianceName || '').trim()
   };
 }
 async function bootPortalAdmin(){
