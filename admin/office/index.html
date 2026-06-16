@@ -443,6 +443,7 @@ input:checked+.tsl:before{transform:translateX(22px);background:#fff;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 // ===================================================
 // Firebase 初期化
@@ -456,10 +457,11 @@ const firebaseConfig = {
   messagingSenderId: "753962945830",
   appId: "1:753962945830:web:c74bb9bbef3ffdda9905e7"
 };
-let fbApp = null, fbDb = null;
+let fbApp = null, fbDb = null, fbFs = null;
 try{
   fbApp = firebase.initializeApp(firebaseConfig);
   fbDb  = firebase.database();
+  fbFs  = firebase.firestore();
   console.log("Firebase: connected");
 }catch(e){ console.warn("Firebase init failed", e); }
 
@@ -822,15 +824,14 @@ function calcBasePoint(answers){
   });
   return total;
 }
-function getPointRecord(name){
-  const raw = manualPoints[name];
+function getPointRecord(key){
+  const raw = manualPoints[key];
   if(!raw) return {};
   if(typeof raw === 'object') return raw;
-  // 旧形式互換
   return { b_rally_s: Number(raw||0) };
 }
-function getBonusPoint(name, itemId){
-  return Number(getPointRecord(name)[itemId] || 0);
+function getBonusPoint(key, itemId){
+  return Number(getPointRecord(key)[itemId] || 0);
 }
 
 function getBonusMax(itemId){
@@ -838,14 +839,14 @@ function getBonusMax(itemId){
   if(!item) return 5;
   return item.type === 'manual' ? (item.max||5) : (item.pt||1);
 }
-function getManualPoint(name){
-  const rec = getPointRecord(name);
+function getManualPoint(key){
+  const rec = getPointRecord(key);
   return ADMIN_CONFIG.bonusItems.reduce((sum, b) => sum + Number(rec[b.id]||0), 0);
 }
 // 後方互換
-function getMainPoint(name){ return getBonusPoint(name, 'b_rally_s') + getBonusPoint(name, 'b_rally_a'); }
-function getSvsPoint(name){ return getBonusPoint(name, 'b_svs'); }
-function calcTotalPoint(sub){ return calcBasePoint(sub.answers || {}) + getManualPoint(sub.name); }
+function getMainPoint(key){ return getBonusPoint(key, 'b_rally_s') + getBonusPoint(key, 'b_rally_a'); }
+function getSvsPoint(key){ return getBonusPoint(key, 'b_svs'); }
+function calcTotalPoint(sub){ return calcBasePoint(sub.answers || {}) + getManualPoint(applicantKey(sub)); }
 function choiceText(qid, answers){
   const q = ADMIN_CONFIG.questions.find(x=>x.id===qid);
   if(!q) return "";
@@ -1710,6 +1711,33 @@ function getTargetSurveyLabel(){
 }
 
 
+
+function applicantKey(sub){
+  if(!sub) return '';
+  if(sub.identityKey) return String(sub.identityKey);
+  if(sub.discordId && sub.gameId) return `${sub.discordId}_${sub.gameId}`.replace(/[.#$\[\]/]/g,'_');
+  return String(sub.name || sub.displayName || '');
+}
+function applicantDisplay(sub){
+  if(!sub) return '';
+  if(sub.displayName) return sub.displayName;
+  const ally = sub.alliance || sub.allianceName || '';
+  const nm = sub.playerName || sub.userName || sub.name || '';
+  return ally ? `[${ally}] ${nm}` : nm;
+}
+function getApplicantRows(){
+  const map = new Map();
+  getTargetSubmissions().forEach(s=>{
+    const key = applicantKey(s);
+    if(!key) return;
+    map.set(key, {key, name: applicantDisplay(s), sub:s});
+  });
+  Object.keys(manualPoints || {}).forEach(key=>{
+    if(!map.has(key)) map.set(key, {key, name:key, sub:null});
+  });
+  return Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+}
+
 function getApplicantNames(){
   const set = new Set();
   getTargetSubmissions().forEach(s => { if(s.name) set.add(s.name); });
@@ -1723,29 +1751,28 @@ function renderPriorityList(){
   const box = document.getElementById('priorityList');
   if(!box) return;
   box.innerHTML = `<div class="poll-scope-note">対象：${escapeHtml(getTargetSurveyLabel())}</div>`;
-  const names = getApplicantNames();
-  if(!names.length){
+  const rows = getApplicantRows();
+  if(!rows.length){
     box.innerHTML += '<div class="empty-admin">回答者がいません</div>';
     return;
   }
 
   const activeBonus = ADMIN_CONFIG.activeBonusItems;
-
-  const sorted = [...names].sort((a,b)=>{
-    const subA = getSubmissionByName(a), subB = getSubmissionByName(b);
-    const ptA = (subA ? calcBasePoint(subA.answers||{}) : 0) + getManualPoint(a);
-    const ptB = (subB ? calcBasePoint(subB.answers||{}) : 0) + getManualPoint(b);
+  const sorted = [...rows].sort((a,b)=>{
+    const ptA = (a.sub ? calcBasePoint(a.sub.answers||{}) : 0) + getManualPoint(a.key);
+    const ptB = (b.sub ? calcBasePoint(b.sub.answers||{}) : 0) + getManualPoint(b.key);
     return ptB - ptA;
   });
 
-  sorted.forEach((name, idx)=>{
-    const sub  = getSubmissionByName(name);
+  sorted.forEach((row, idx)=>{
+    const key  = row.key;
+    const name = row.name;
+    const sub  = row.sub;
     const base = sub ? calcBasePoint(sub.answers||{}) : 0;
-    const total = base + getManualPoint(name);
+    const total = base + getManualPoint(key);
     const accel = sub ? choiceText('q1', sub.answers||{}) : '申請なし';
-    const safeName = escapeAttr(name);
+    const safeKey = escapeAttr(key);
 
-    // 希望タグ
     let prefTagsHtml = '';
     if(sub && sub.omakase){
       prefTagsHtml = `<span class="applicant-pref-tag omakase">時間帯はお任せ</span>`;
@@ -1756,9 +1783,8 @@ function renderPriorityList(){
       });
     }
 
-    // 加点項目行を生成（固定値はON/OFF、手動入力はステッパー）
     const bonusRows = activeBonus.map(item=>{
-      const val = getBonusPoint(name, item.id);
+      const val = getBonusPoint(key, item.id);
       const isFixed = item.type !== 'manual';
       if(isFixed){
         const checked = val > 0;
@@ -1767,7 +1793,7 @@ function renderPriorityList(){
             <div class="applicant-ctrl-label" style="min-width:80px">${escapeHtml(item.label)}</div>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1">
               <input type="checkbox" ${checked?'checked':''}
-                onchange="setBonusPoint('${safeName}','${item.id}',this.checked?${item.pt||1}:0)"
+                onchange="setBonusPoint('${safeKey}','${item.id}',this.checked?${item.pt||1}:0)"
                 style="width:18px;height:18px;cursor:pointer">
               <span style="font-size:12px;color:${checked?'var(--gold)':'var(--text2)'}">
                 ${checked?`+${item.pt||1}pt 付与中`:'なし'}
@@ -1779,18 +1805,17 @@ function renderPriorityList(){
           <div class="applicant-ctrl-row">
             <div class="applicant-ctrl-label" style="min-width:80px">${escapeHtml(item.label)}</div>
             <div class="applicant-svs">
-              <button class="step-btn" onclick="stepBonusPoint('${safeName}','${item.id}',-1)">−</button>
+              <button class="step-btn" onclick="stepBonusPoint('${safeKey}','${item.id}',-1)">−</button>
               <div class="applicant-svs-val">${val}</div>
-              <button class="step-btn" onclick="stepBonusPoint('${safeName}','${item.id}',1)">＋</button>
+              <button class="step-btn" onclick="stepBonusPoint('${safeKey}','${item.id}',1)">＋</button>
               <div style="font-size:11px;color:var(--text2);margin-left:4px">+${val}pt</div>
             </div>
           </div>`;
       }
     }).join('');
 
-    // ポイント内訳チップ
     const bonusChips = activeBonus.map(item=>{
-      const v = getBonusPoint(name, item.id);
+      const v = getBonusPoint(key, item.id);
       return v > 0 ? `<span class="applicant-pt-chip">${escapeHtml(item.label)} +${v}</span>` : '';
     }).join('');
 
@@ -1816,36 +1841,25 @@ function renderPriorityList(){
 }
 
 
-function stepSvsPoint(name, delta){
-  stepBonusPoint(name, 'b_svs', delta);
-}
-function setMainPoint(name, val){
-  // 後方互換用（既存コードから呼ばれる場合）
-  setBonusPoint(name, 'b_rally_s', val);
-}
+function stepSvsPoint(key, delta){ stepBonusPoint(key, 'b_svs', delta); }
+function setMainPoint(key, val){ setBonusPoint(key, 'b_rally_s', val); }
 
-function setBonusPoint(name, itemId, val){
-  const rec = getPointRecord(name);
+function setBonusPoint(key, itemId, val){
+  const rec = getPointRecord(key);
   const max = getBonusMax(itemId);
   rec[itemId] = Math.max(0, Math.min(max, Number(val||0)));
-  manualPoints[name] = rec;
+  manualPoints[key] = rec;
   saveManualPointsToDB();
   renderPriorityList();
   buildResults();
 }
 
-function stepBonusPoint(name, itemId, delta){
-  const cur = getBonusPoint(name, itemId);
-  setBonusPoint(name, itemId, cur + delta);
+function stepBonusPoint(key, itemId, delta){
+  const cur = getBonusPoint(key, itemId);
+  setBonusPoint(key, itemId, cur + delta);
 }
-function setSvsPoint(name, val){
-  const p = getPointRecord(name);
-  p.svs = Number(val || 0);
-  manualPoints[name] = p;
-  renderPriorityList();
-  buildResults();
-}
-function setManualPoint(name, val){ setMainPoint(name, val); }
+function setSvsPoint(key, val){ setBonusPoint(key, 'b_svs', val); }
+function setManualPoint(key, val){ setMainPoint(key, val); }
 function clearManualPoints(){
   manualPoints = {};
   renderPriorityList();
@@ -1859,12 +1873,13 @@ function candidateFromSubmission(sub, pref){
   if(!r) return null;
   return {
     id: sub.id || sub.name,
-    name: sub.name,
+    key: applicantKey(sub),
+    name: applicantDisplay(sub),
     role: r.role,
     time: r.time,
     pref,
     basePt:calcBasePoint(sub.answers||{}),
-    manualPt:getManualPoint(sub.name),
+    manualPt:getManualPoint(applicantKey(sub)),
     totalPt:calcTotalPoint(sub),
     accel:choiceText('q1', sub.answers||{}),
     createdAt:sub.createdAt || ''
@@ -1914,7 +1929,7 @@ function buildFinalAssignments(){
   const winners       = [];
   const candidateMap  = {}; // 管理確認用
 
-  function uid(sub){ return sub.id || sub.name; }
+  function uid(sub){ return applicantKey(sub) || sub.id || sub.name; }
 
   function addWinner(c, sub){
     const key = `${c.role}|${c.time}`;
@@ -1937,12 +1952,13 @@ function buildFinalAssignments(){
     const r = sub.reservations && sub.reservations[pref];
     if(!r) return null;
     return {
-      name     : sub.name,
+      key      : applicantKey(sub),
+      name     : applicantDisplay(sub),
       role     : r.role || preferredRole(sub),
       time     : r.time,
       pref,
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(sub.name),
+      manualPt : getManualPoint(applicantKey(sub)),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2024,11 +2040,12 @@ function buildFinalAssignments(){
       : ALL_SLOTS.find(t=>!filledSlots.has(`${role}|${t}`));
     if(!time) return;
     const c = {
-      name     : sub.name,
+      key      : applicantKey(sub),
+      name     : applicantDisplay(sub),
       role, time,
       pref     : 4, // 自動割当
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(sub.name),
+      manualPt : getManualPoint(applicantKey(sub)),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2057,11 +2074,12 @@ function buildFinalAssignments(){
     const time = emptySlots[i];
     if(!time) return;
     const c = {
-      name     : sub.name,
+      key      : applicantKey(sub),
+      name     : applicantDisplay(sub),
       role, time,
       pref     : 0, // お任せ
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(sub.name),
+      manualPt : getManualPoint(applicantKey(sub)),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2072,7 +2090,8 @@ function buildFinalAssignments(){
   // ⑤ 補欠リスト（48名超）
   const benchList = benchSubs.map((sub,i)=>({
     rank    : MAX_SLOTS + i + 1,
-    name    : sub.name,
+    key     : applicantKey(sub),
+    name    : applicantDisplay(sub),
     totalPt : calcTotalPoint(sub),
     accel   : choiceText('q1', sub.answers||{}),
   }));
@@ -2400,7 +2419,7 @@ function buildPostText(){
         adminLines.push(`${g.time} ${role}：${win.name}（${win.totalPt}pt / ${prefLabel}）`);
 
         const backups = (g.candidates || [])
-          .filter(c => c.name !== win.name)
+          .filter(c => (c.key || c.name) !== (win.key || win.name))
           .sort(compareCandidates)
           .slice(0,2);
         if(backups.length){
@@ -2456,30 +2475,61 @@ function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 
 
 
+
 // ===================================================
 // Portal連携（管理者版）
 // - 管理入口はPortal管理ページからのリンク
 // - 官職予約内の管理者パスワードは使用しない
-// - 表示名は [同盟名] user名 を前提に回答データ側から表示
+// - 権限確認: role_map/{discordId} または users/{discordId}.role
 // ===================================================
-function getPortalAdmin(){
-  function read(keys){
-    for(const k of keys){
-      for(const st of [localStorage, sessionStorage]){
-        try{ const raw=st.getItem(k); if(raw) return JSON.parse(raw); }catch(e){}
-      }
+let portalAdmin = null;
+function readJsonStorage(keys){
+  for(const k of keys){
+    for(const st of [localStorage, sessionStorage]){
+      try{ const raw=st.getItem(k); if(raw) return JSON.parse(raw); }catch(e){}
     }
-    return null;
   }
+  return null;
+}
+function getStoredPortalObject(){ return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {}; }
+function getPortalDiscordId(){
   const q = new URLSearchParams(location.search);
-  const u = read(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+  const u = getStoredPortalObject();
+  return String(q.get('discordId') || u.discordId || u.id || u.uid || '').trim();
+}
+function showAdminAccessError(message){
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">管理権限が必要です</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`;
+}
+async function loadPortalAdmin(){
+  const discordId = getPortalDiscordId();
+  if(!discordId) return null;
+  let user = null, roleDoc = null;
+  if(fbFs){
+    try{
+      const us = await fbFs.collection('users').doc(discordId).get();
+      if(us.exists) user = us.data() || {};
+    }catch(e){ console.warn('users read failed', e); }
+    try{
+      const rs = await fbFs.collection('role_map').doc(discordId).get();
+      if(rs.exists) roleDoc = rs.data() || {};
+    }catch(e){ console.warn('role_map read failed', e); }
+  }
+  const st = getStoredPortalObject();
+  const role = String((roleDoc && (roleDoc.role || roleDoc.type)) || user?.role || st.role || st.portalRole || '').toLowerCase();
   return {
-    role: q.get('role') || u.role || u.portalRole || '',
-    userName: q.get('userName') || u.userName || u.playerName || u.name || '',
-    allianceName: q.get('allianceName') || u.allianceName || u.alliance || ''
+    discordId,
+    role,
+    gameId: String(user?.gameId || st.gameId || '').trim(),
+    playerName: String(user?.playerName || user?.globalName || st.playerName || st.userName || '').trim(),
+    alliance: String(user?.alliance || st.alliance || st.allianceName || '').trim()
   };
 }
-function bootPortalAdmin(){
+async function bootPortalAdmin(){
+  portalAdmin = await loadPortalAdmin();
+  if(!portalAdmin || !['admin','officer','manager'].includes(portalAdmin.role)){
+    showAdminAccessError('Portalで管理者ページから入り直してください。admin / officer / manager 権限が必要です。');
+    return;
+  }
   adminLoggedIn = true;
   document.getElementById('adminScreen')?.classList.add('open');
   setTimeout(()=>{
@@ -2495,7 +2545,6 @@ function openAdmin(){ openAdminPanel(); }
 function loginAdmin(){ bootPortalAdmin(); }
 function closeAdminLogin(){}
 function closeAdmin(){ location.href='../'; }
-
 // ===================================================
 // 初期化
 // ===================================================
