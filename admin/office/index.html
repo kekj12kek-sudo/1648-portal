@@ -2530,8 +2530,8 @@ async function loadPortalAdmin(){
 }
 async function bootPortalAdmin(){
   portalAdmin = await loadPortalAdmin();
-  if(!portalAdmin || !['admin','officer','manager'].includes(portalAdmin.role)){
-    showAdminAccessError('Portalで管理者ページから入り直してください。admin / officer / manager 権限が必要です。');
+  if(!portalAdmin || !['developer','admin','officer','manager'].includes(portalAdmin.role)){
+    showAdminAccessError('Portalで管理者ページから入り直してください。developer / admin / officer / manager 権限が必要です。');
     return;
   }
   adminLoggedIn = true;
