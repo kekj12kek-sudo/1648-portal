@@ -354,6 +354,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .mypageMenuBtn:active{transform:scale(.985);}
 .mypageMenuBtn.disabled{opacity:.45;cursor:not-allowed;}
 .mypageMenuBtn.closeBtn{background:rgba(59,130,246,.13);border-color:rgba(59,130,246,.28);color:#bfdbfe;text-align:center;}
+
+.mypageDataCard{
+  margin-top:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.055);
+  padding:11px 12px;
+  text-align:left;
+}
+.mypageDataTitle{
+  font-size:12px;
+  font-weight:900;
+  color:#facc15;
+  margin-bottom:8px;
+}
+.mypageDataLine{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:12px;
+  line-height:1.55;
+  padding:3px 0;
+  color:rgba(255,255,255,.88);
+}
+.mypageDataLabel{color:rgba(255,255,255,.58);font-weight:800;white-space:nowrap;}
+.mypageDataValue{font-weight:900;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mypageMuted{font-size:11px;color:rgba(255,255,255,.48);line-height:1.6;}
+.mypageHistoryItem{
+  border-top:1px solid rgba(255,255,255,.08);
+  padding:7px 0 0;
+  margin-top:7px;
+}
+.mypageHistoryItem:first-child{border-top:none;margin-top:0;padding-top:0;}
+.mypageHistoryTitle{font-size:12px;font-weight:900;color:#e5e7eb;line-height:1.45;}
+.mypageHistoryMeta{font-size:10px;color:rgba(255,255,255,.48);margin-top:2px;}
+
 @media(max-width:480px){
   #link-buttons{
     top:76px;
@@ -424,9 +460,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
       <div class="profileRow"><span class="profileLabel">権限</span><span class="profileValue" id="mypageRole">-</span></div>
       <div class="adminPermissionNote" id="adminPermissionNote">管理者・運営権限があります。右下の「管理者ページ」から管理機能を利用できます。</div>
       <div class="profileRow"><span class="profileLabel">Discord認証</span><span class="profileValue" id="mypageDiscord">認証済み</span></div>
+      <div class="mypageDataCard">
+        <div class="mypageDataTitle">🧊 T12保存状況</div>
+        <div id="mypageT12Area" class="mypageMuted">読み込み中...</div>
+      </div>
+      <div class="mypageDataCard">
+        <div class="mypageDataTitle">📋 アンケート履歴</div>
+        <div id="mypageSurveyHistoryArea" class="mypageMuted">読み込み中...</div>
+      </div>
       <div class="mypageMenu">
-        <button class="mypageMenuBtn disabled" type="button">📋 アンケート履歴（準備中）</button>
-        <button class="mypageMenuBtn disabled" type="button">🧊 T12保存状況（準備中）</button>
         <button class="mypageMenuBtn closeBtn" type="button" id="mypageCloseBtn">閉じる</button>
       </div>
     </div>
@@ -681,6 +723,97 @@ async function loadUnreadSurveyCount(){
     updateUnreadNotice(Number.isFinite(cached) ? cached : 0);
   }
 }
+
+function formatPortalDate(value){
+  if(!value) return "";
+  try{
+    let d = null;
+    if(typeof value === "string") d = new Date(value);
+    else if(value._seconds) d = new Date(value._seconds * 1000);
+    else if(value.seconds) d = new Date(value.seconds * 1000);
+    else d = new Date(value);
+    if(!d || Number.isNaN(d.getTime())) return "";
+    const pad = n => String(n).padStart(2,"0");
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }catch(e){ return ""; }
+}
+function t12StageLabel(value){
+  const map = {
+    locked:"未解放",
+    unlocked:"T12解放済",
+    skill_1:"スキル1済",
+    skill_2:"スキル2済",
+    skill_3:"スキル3済",
+    capacity_1:"容量1済",
+    capacity_2:"容量2済",
+    capacity_3:"容量3済",
+    max:"カンスト"
+  };
+  return map[value] || value || "未保存";
+}
+function renderMyPageT12(progress){
+  const area = document.getElementById("mypageT12Area");
+  if(!area) return;
+  if(!progress){
+    area.className = "mypageMuted";
+    area.textContent = "T12保存データはまだありません。";
+    return;
+  }
+  const summary = progress.summary || {};
+  const updated = formatPortalDate(progress.updatedAt) || progress.updatedAtText || "";
+  area.className = "";
+  area.innerHTML = `
+    <div class="mypageDataLine"><span class="mypageDataLabel">盾</span><span class="mypageDataValue">${t12StageLabel(summary.shield)}</span></div>
+    <div class="mypageDataLine"><span class="mypageDataLabel">槍</span><span class="mypageDataValue">${t12StageLabel(summary.spear)}</span></div>
+    <div class="mypageDataLine"><span class="mypageDataLabel">弓</span><span class="mypageDataValue">${t12StageLabel(summary.bow)}</span></div>
+    ${updated ? `<div class="mypageHistoryMeta">最終更新：${updated}</div>` : ""}
+  `;
+}
+function renderMyPageSurveyHistory(history){
+  const area = document.getElementById("mypageSurveyHistoryArea");
+  if(!area) return;
+  const list = Array.isArray(history) ? history : [];
+  if(!list.length){
+    area.className = "mypageMuted";
+    area.textContent = "アンケート回答履歴はまだありません。";
+    return;
+  }
+  area.className = "";
+  area.innerHTML = list.slice(0,5).map(item => {
+    const date = formatPortalDate(item.updatedAt || item.submittedAt);
+    return `<div class="mypageHistoryItem">
+      <div class="mypageHistoryTitle">${escapeHtml(item.title || "アンケート")}</div>
+      <div class="mypageHistoryMeta">${date ? `回答：${date}` : "回答済み"}</div>
+    </div>`;
+  }).join("");
+}
+async function loadMyPageData(){
+  const discordId = getPortalDiscordId();
+  renderMyPageT12(null);
+  renderMyPageSurveyHistory([]);
+  if(!discordId) return;
+  try{
+    const res = await fetch(`${PORTAL_FUNCTION_BASE}/getMyPageData`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({discordId})
+    });
+    const data = await res.json().catch(()=>({ok:false,error:"invalid_json"}));
+    if(!res.ok || !data.ok) throw new Error(data.error || "getMyPageData_failed");
+    renderMyPageT12(data.t12Progress || null);
+    renderMyPageSurveyHistory(data.surveyHistory || []);
+  }catch(e){
+    console.warn("mypage data load failed", e);
+    const t12Area = document.getElementById("mypageT12Area");
+    const historyArea = document.getElementById("mypageSurveyHistoryArea");
+    if(t12Area){ t12Area.className = "mypageMuted"; t12Area.textContent = "T12データを読み込めませんでした。"; }
+    if(historyArea){ historyArea.className = "mypageMuted"; historyArea.textContent = "履歴を読み込めませんでした。"; }
+  }
+}
+function escapeHtml(str){
+  return String(str || "").replace(/[&<>\"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[s]));
+}
+
 function logoutPortal(){
   localStorage.removeItem("discord_user");
   localStorage.removeItem("discord_auth_code");
@@ -721,6 +854,7 @@ function openMyPage(){
   if(adminNote){
     adminNote.classList.toggle("show", getPortalPermissionLevel() >= 1);
   }
+  loadMyPageData();
   if(overlay) overlay.classList.add("open");
 }
 function closeMyPage(){
@@ -749,7 +883,9 @@ function getPortalPermissionLevel(){
     const role = data?.role || data?.user?.role || "member";
     const levelMap = {
       "developer": 3,
+      "admin": 3,
       "manager": 2,
+      "officer": 2,
       "technical": 1,
       "member": 0
     };
