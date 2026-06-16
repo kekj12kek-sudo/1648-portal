@@ -2975,17 +2975,179 @@ async function bootPortalAdmin(){
 }
 function closeAdmin(){ location.href='../'; }
 // ===================================================
+// v15 final override: 管理画面はFunctions経由に統一
+// ===================================================
+function getLocalPortalSessionFinal(){
+  try{return JSON.parse(localStorage.getItem('discord_user')||'{}');}catch(e){return {};}
+}
+function getPortalDiscordId(){
+  const s = getLocalPortalSessionFinal();
+  return String(s?.user?.discordId || s?.discordId || s?.discord?.id || '').trim();
+}
+function getPortalRole(){
+  const s = getLocalPortalSessionFinal();
+  return String(s?.user?.role || s?.role || '').toLowerCase().trim();
+}
+function callOfficeFunction(name, payload){
+  const discordId = getPortalDiscordId();
+  return fetch(`${OFFICE_FUNCTION_BASE}/${name}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({discordId, ...(payload || {})})
+  }).then(async res=>{
+    const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
+    if(!res.ok || !data.ok) throw new Error(data.error || `${name}_failed`);
+    return data;
+  });
+}
+function officeTypeFromRole(role){
+  return role === '教育部長' ? 'education' : role === '副執政官' ? 'vice' : String(role || 'office');
+}
+function officeNameFromType(type){
+  return type === 'education' ? '教育部長' : type === 'vice' ? '副執政官' : '官職';
+}
+function eventDateFromInput(value){
+  const d = value ? new Date(value) : new Date();
+  if(isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function normalizeAdminRoom(id, r){
+  const officeType = r.officeType || officeTypeFromRole(r.role || r.officeName);
+  const officeName = r.officeName || r.role || officeNameFromType(officeType);
+  return {
+    ...r,
+    id: r.id || r.roomId || id,
+    roomId: r.roomId || r.id || id,
+    type:'office',
+    officeType,
+    officeName,
+    role: officeName,
+    title: r.title || `${officeName}予約`,
+    deadline: r.deadline || r.closeAt || '',
+    reservedStart: r.reservedStart || r.openAt || '',
+    status: r.status || 'draft'
+  };
+}
+async function loadAdminOfficeRooms(){
+  const discordId = getPortalDiscordId();
+  if(!discordId){ showAdminAccessError('Portalのログイン情報がありません。管理ページから入り直してください。'); return; }
+  try{
+    const data = await callOfficeFunction('listOfficeRoomsAdmin', {});
+    surveysMap = {};
+    (data.rooms || []).forEach(r=>{
+      const id = r.roomId || r.id;
+      surveysMap[id] = normalizeAdminRoom(id, r);
+    });
+    renderAdminSurveyList();
+    if(adminEditSurveyId && surveysMap[adminEditSurveyId]) openEditPanel(adminEditSurveyId);
+  }catch(e){
+    console.warn('listOfficeRoomsAdmin failed', e);
+    showAdminAccessError('官職予約一覧を読み込めません。Functionsのデプロイ状態を確認してください。エラー：' + (e.message || e));
+  }
+}
+function initFirebase(){
+  // office_roomsはFirestore直読みしない。管理もFunctions経由で取得する。
+  loadAdminOfficeRooms();
+  try{
+    if(fbDb){
+      fbDb.ref(DB_CONFIG).on('value', snap=>{
+        const d = snap.val();
+        if(!d) return;
+        if(d.questions) ADMIN_CONFIG.questions = d.questions;
+        renderAdminQuestions();
+      });
+    }
+  }catch(e){ console.warn('config read skipped', e); }
+
+  let activeSubRef = null;
+  window._loadSurveyData = function(surveyId){
+    if(!fbDb || !surveyId) return;
+    if(activeSubRef) fbDb.ref(activeSubRef).off();
+    activeSubRef = `${DB_SUBMISSIONS}/${surveyId}`;
+    fbDb.ref(activeSubRef).on('value', snap=>{
+      submissions = snap.val() ? Object.values(snap.val()) : [];
+      if(adminLoggedIn){ renderPriorityList(); buildResults(); buildPostText(); }
+    });
+  };
+}
+function saveSurveyToDB(surveyId, data){
+  if(!surveyId) return;
+  const current = surveysMap[surveyId] || {};
+  const merged = normalizeAdminRoom(surveyId, {...current, ...(data || {}), id:surveyId, roomId:surveyId});
+  surveysMap[surveyId] = merged;
+  callOfficeFunction('updateOfficeRoom', {roomId:surveyId, data:merged})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message || e)); });
+}
+function createSurveyInDB(surveyData){
+  const id = surveyData.id || surveyData.roomId;
+  const room = normalizeAdminRoom(id, surveyData);
+  surveysMap[id] = room;
+  const event = {
+    eventId: room.eventId,
+    eventName: room.eventName || 'バフ予約',
+    eventDate: room.eventDate || eventDateFromInput(room.openAt || room.closeAt || room.deadline),
+    status: room.status || 'open',
+    openAt: room.openAt || room.reservedStart || room.startedAt || '',
+    closeAt: room.closeAt || room.deadline || ''
+  };
+  callOfficeFunction('upsertOfficeRoom', {event, room})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message || e)); });
+  renderAdminSurveyList();
+}
+function deleteSurveyFromDB(surveyId){
+  if(!surveyId) return;
+  callOfficeFunction('deleteOfficeRoom', {roomId:surveyId})
+    .then(()=>loadAdminOfficeRooms())
+    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message || e)); });
+}
+function saveManualPointsToDB(){
+  const sid = adminEditSurveyId || currentSurveyId;
+  if(!sid) return;
+  callOfficeFunction('saveOfficeManualPoints', {roomId:sid, points:manualPoints})
+    .catch(e=>{ console.warn('manual points save failed', e); alert('加点保存に失敗しました：' + (e.message || e)); });
+}
+function saveOfficeBundle(eventId, eventData, roomData){
+  return callOfficeFunction('upsertOfficeRoom', {event:{...eventData, eventId}, room:roomData});
+}
+function buildOfficeIds(roleName, startValue, endValue){
+  const info = OFFICE_TYPE_MAP[roleName] || {type:officeTypeFromRole(roleName), name:roleName || '官職'};
+  const baseDate = startValue || endValue || new Date().toISOString();
+  const d = new Date(baseDate);
+  const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const eventId = `buff_${ymd}`;
+  let roomId = `${eventId}_${info.type}`;
+  if(surveysMap && surveysMap[roomId]){
+    let n = 2;
+    while(surveysMap[`${roomId}_${String(n).padStart(2,'0')}`]) n++;
+    roomId = `${roomId}_${String(n).padStart(2,'0')}`;
+  }
+  return {eventId, roomId, officeType:info.type, officeName:info.name, eventDate:eventDateFromInput(baseDate)};
+}
+function bootPortalAdmin(){
+  const discordId = getPortalDiscordId();
+  const role = getPortalRole();
+  const allowedRoles = ['developer','admin','officer','manager'];
+  const developerIds = ['795152243883114527'];
+  if(!discordId || (!allowedRoles.includes(role) && !developerIds.includes(discordId))){
+    showAdminAccessError('Portalで管理者ページから入り直してください。developer / admin / officer / manager 権限が必要です。');
+    return;
+  }
+  portalAdmin = {discordId, role};
+  adminLoggedIn = true;
+  document.getElementById('adminScreen')?.classList.add('open');
+  renderAdminQuestions();
+  renderAdminSurveyList();
+  loadAdminOfficeRooms();
+}
+function closeAdmin(){ location.href='../'; }
+// ===================================================
 // 初期化
 // ===================================================
-buildRoleTabs();
-buildQuestions();
-renderSeats();
-updateDecideBtn();
-// Firebase接続（読み込み完了後にrenderSurveyListが呼ばれて画面が更新される）
+renderAdminQuestions();
 initFirebase();
 bootPortalAdmin();
-
-
 // 管理者版では官職予約内パス入力を使用しない
 
 </script>
