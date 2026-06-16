@@ -882,6 +882,7 @@ function applyPublicSurveyState(){
 
 function buildRoleTabs(){
   const tabs = document.getElementById('roleTabs');
+  if(!tabs) return;
   tabs.innerHTML = '';
   ADMIN_CONFIG.activeRoles.forEach((role, i) => {
     const cfg = ROLE_CONFIG[role] || {icon:'⚔️', color:'blue'};
@@ -915,6 +916,7 @@ function switchRole(role){
 // ===================================================
 function buildQuestions(){
   const area = document.getElementById('questionsArea');
+  if(!area) return;
   area.innerHTML = '';
   ADMIN_CONFIG.questions.forEach(q => {
     const sec = document.createElement('div');
@@ -994,6 +996,7 @@ function getMySlotIdx(role, time){
 
 function renderSeats(){
   const container = document.getElementById('seatContainer');
+  if(!container) return;
   container.innerHTML = '';
 
   const amH = document.createElement('div');
@@ -1211,6 +1214,7 @@ function updateDecideBtn(){
   const filled = Object.values(myReservations).filter(v=>v).length;
   const canDecide = isOmakase || filled === 3;
   const btn = document.getElementById('btnDecide');
+  if(!btn) return;
   btn.className = canDecide ? 'btn-decide active' : 'btn-decide';
 }
 
@@ -2546,13 +2550,9 @@ function loginAdmin(){ bootPortalAdmin(); }
 function closeAdminLogin(){}
 function closeAdmin(){ location.href='../'; }
 // ===================================================
-// 初期化
+// 初期化（管理者版）
+// 回答者用UI(roleTabs/questionsArea/seatContainer/btnDecide)は管理者ページに存在しないため呼ばない。
 // ===================================================
-buildRoleTabs();
-buildQuestions();
-renderSeats();
-updateDecideBtn();
-// Firebase接続（読み込み完了後にrenderSurveyListが呼ばれて画面が更新される）
 initFirebase();
 bootPortalAdmin();
 
