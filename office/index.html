@@ -394,8 +394,8 @@ input:checked+.tsl:before{transform:translateX(22px);background:#fff;}
     <div class="complete-sub">アンケートを受け付けました。<br>結果は管理者から通知されます。</div>
     <div class="complete-detail" id="completeDetail"></div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-      <button class="btn-close-complete" id="btnGoSurveyList" onclick="goBackToSurveyList()" style="display:none;background:#1e3a8a;border-color:#3b82f6;color:#93c5fd;">📋 他のアンケートに回答する</button>
-      <button class="btn-close-complete" onclick="location.href='https://kekj12kek-sudo.github.io/1648-hq/'">← ホームに戻る</button>
+      <button class="btn-close-complete" onclick="goBackToSurveyList()" style="background:#1e3a8a;border-color:#3b82f6;color:#93c5fd;">📋 アンケートRoomへ戻る</button>
+      <button class="btn-close-complete" onclick="location.href='https://kekj12kek-sudo.github.io/1648-portal/home/'" style="background:#1c2537;border-color:#1e3050;color:#e8edf5;">🏠 ポータルへ戻る</button>
     </div>
   </div>
 </div>
@@ -2796,10 +2796,7 @@ function hasPortalIdentity(){
   return !!(portalUser && portalUser.discordId && portalUser.gameId && portalUser.playerName);
 }
 function showAccessError(message){
-  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">Portalから開いてください</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><div style="display:flex;gap:8px">
-<button onclick="location.href='../survey/'" style="flex:1;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">アンケートRoomへ戻る</button>
-<button onclick="location.href='../home/'" style="flex:1;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">ポータルへ戻る</button>
-</div></div></div>`;
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">Portalから開いてください</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../survey/'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">アンケートRoomへ戻る</button></div></div>`;
 }
 async function bootPortalAnswer(){
   if(portalBooting) return false;
