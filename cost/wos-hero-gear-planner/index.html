@@ -62,14 +62,15 @@ body{min-height:100vh;background:radial-gradient(circle at top,#17345a 0,#08111f
 })();
 </script>
 
-<style id="portal-back-style">
+
+<style id="portal-back-style-v4">
 .portal-back-cost{
   position:fixed;
   left:10px;
   bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index:99999;
-  min-height:36px;
-  padding:0 13px;
+  min-height:38px;
+  padding:0 14px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.28);
   background:rgba(0,0,0,.72);
@@ -85,10 +86,11 @@ body{min-height:100vh;background:radial-gradient(circle at top,#17345a 0,#08111f
   box-shadow:0 8px 24px rgba(0,0,0,.35);
 }
 .portal-back-cost:active{transform:scale(.96);}
-body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 48px);}
+body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px)!important;}
 </style>
 </head>
 <body>
+<a class="portal-back-cost" href="../">← コスト計算room</a>
 <div class="app">
   <div class="header">
     <div class="title">⚔️ 英雄装備 Planner</div>

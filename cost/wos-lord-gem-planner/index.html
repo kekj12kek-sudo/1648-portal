@@ -113,14 +113,15 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
 })();
 </script>
 
-<style id="portal-back-style">
+
+<style id="portal-back-style-v4">
 .portal-back-cost{
   position:fixed;
   left:10px;
   bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index:99999;
-  min-height:36px;
-  padding:0 13px;
+  min-height:38px;
+  padding:0 14px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.28);
   background:rgba(0,0,0,.72);
@@ -136,10 +137,11 @@ select,input{width:100%;border:1px solid #8bd8ff66;background:#071d31;color:#fff
   box-shadow:0 8px 24px rgba(0,0,0,.35);
 }
 .portal-back-cost:active{transform:scale(.96);}
-body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 48px);}
+body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px)!important;}
 </style>
 </head>
 <body>
+<a class="portal-back-cost" href="../">← コスト計算room</a>
 <div class="app">
   <div class="header">
     <div class="title" id="appTitle">宝石コスト計算</div>
