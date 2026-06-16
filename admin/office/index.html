@@ -1180,6 +1180,7 @@ function closePopup(){
 // ===================================================
 function renderSummary(){
   const items = document.getElementById('summaryItems');
+  if(!items) return;
   items.innerHTML = '';
 
   if(isOmakase){
@@ -2487,6 +2488,7 @@ function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 // - 権限確認: role_map/{discordId} または users/{discordId}.role
 // ===================================================
 let portalAdmin = null;
+let adminLoggedIn = false;
 function readJsonStorage(keys){
   for(const k of keys){
     for(const st of [localStorage, sessionStorage]){
@@ -2495,11 +2497,24 @@ function readJsonStorage(keys){
   }
   return null;
 }
-function getStoredPortalObject(){ return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {}; }
+function getStoredPortalObject(){
+  const raw = readJsonStorage(['discord_user','1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+  return raw.user || raw.profile || raw;
+}
 function getPortalDiscordId(){
   const q = new URLSearchParams(location.search);
-  const u = getStoredPortalObject();
-  return String(q.get('discordId') || u.discordId || u.id || u.uid || '').trim();
+  const raw = readJsonStorage(['discord_user','1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+  const u = raw.user || raw.profile || raw;
+  return String(
+    q.get('discordId') ||
+    u.discordId ||
+    u.id ||
+    u.uid ||
+    raw.discordId ||
+    raw.discord?.id ||
+    raw.discord?.discordId ||
+    ''
+  ).trim();
 }
 function showAdminAccessError(message){
   document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">管理権限が必要です</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`;
@@ -2550,9 +2565,13 @@ function loginAdmin(){ bootPortalAdmin(); }
 function closeAdminLogin(){}
 function closeAdmin(){ location.href='../'; }
 // ===================================================
-// 初期化（管理者版）
-// 回答者用UI(roleTabs/questionsArea/seatContainer/btnDecide)は管理者ページに存在しないため呼ばない。
+// 初期化
 // ===================================================
+buildRoleTabs();
+buildQuestions();
+renderSeats();
+updateDecideBtn();
+// Firebase接続（読み込み完了後にrenderSurveyListが呼ばれて画面が更新される）
 initFirebase();
 bootPortalAdmin();
 
