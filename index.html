@@ -626,11 +626,60 @@ function getDisplayNameWithAlliance(){
   const alliance = getPortalAlliance();
   return alliance ? `[${alliance}] ${name}` : name;
 }
-function getUnreadSurveyCount(){
-  // UI先行版：Functions連携前は localStorage の値があれば表示。
-  // 後続工程で getOpenSurveysForUser の未回答件数に差し替える。
-  const n = Number(localStorage.getItem("portal_unanswered_count") || "0");
-  return Number.isFinite(n) && n > 0 ? n : 0;
+const PORTAL_FUNCTION_BASE = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net";
+
+function getPortalDiscordId(){
+  const data = getPortalSession();
+  return String(
+    data?.user?.discordId ||
+    data?.discord?.id ||
+    data?.discordId ||
+    ""
+  ).trim();
+}
+
+function updateUnreadNotice(count){
+  const unreadNotice = document.getElementById("unreadNotice");
+  if(!unreadNotice) return;
+
+  const n = Number(count || 0);
+  if(Number.isFinite(n) && n > 0){
+    unreadNotice.textContent = `🔔 未回答 ${n}件`;
+    unreadNotice.classList.add("show");
+  }else{
+    unreadNotice.classList.remove("show");
+  }
+}
+
+async function loadUnreadSurveyCount(){
+  const discordId = getPortalDiscordId();
+  if(!discordId){
+    updateUnreadNotice(0);
+    return;
+  }
+
+  try{
+    const res = await fetch(`${PORTAL_FUNCTION_BASE}/getOpenSurveysForUser`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({discordId})
+    });
+
+    const data = await res.json().catch(()=>({ok:false,error:"invalid_json"}));
+    if(!res.ok || !data.ok) throw new Error(data.error || "getOpenSurveysForUser_failed");
+
+    const list = Array.isArray(data.surveys) ? data.surveys : [];
+    const unreadCount = list.filter(s => !s.answered).length;
+
+    localStorage.setItem("portal_unanswered_count", String(unreadCount));
+    updateUnreadNotice(unreadCount);
+  }catch(e){
+    console.warn("pending survey count load failed", e);
+
+    // 通信失敗時は直前の件数を一時表示。なければ非表示。
+    const cached = Number(localStorage.getItem("portal_unanswered_count") || "0");
+    updateUnreadNotice(Number.isFinite(cached) ? cached : 0);
+  }
 }
 function logoutPortal(){
   localStorage.removeItem("discord_user");
@@ -645,14 +694,9 @@ function initUserBadge(){
   if(welcomeName){
     welcomeName.textContent = displayName;
   }
-  const unreadCount = getUnreadSurveyCount();
   if(unreadNotice){
-    if(unreadCount > 0){
-      unreadNotice.textContent = `🔔 未回答 ${unreadCount}件`;
-      unreadNotice.classList.add("show");
-    }else{
-      unreadNotice.classList.remove("show");
-    }
+    updateUnreadNotice(0);
+    loadUnreadSurveyCount();
   }
   if(myPageBtn){
     myPageBtn.addEventListener("click", openMyPage);
