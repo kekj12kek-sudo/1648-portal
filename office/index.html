@@ -601,28 +601,31 @@ function normalizeOfficeRoomDoc(id, raw){
 
 async function loadOfficeRoomsViaFunctions(){
   const discordId = getPortalDiscordId();
+  const q = new URLSearchParams(location.search);
+  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
   if(!discordId){
-    console.warn('office rooms load skipped: no discordId');
+    console.warn('office room load skipped: no discordId');
+    return;
+  }
+  if(!sid){
+    showAccessError('公開中アンケートのIDが指定されていません。アンケートRoomから開いてください。');
     return;
   }
   try{
-    const res = await fetch(`${OFFICE_FUNCTION_BASE}/getOpenSurveysForUser`, {
+    const res = await fetch(`${OFFICE_FUNCTION_BASE}/getOfficeRoomForAnswer`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({discordId})
+      body:JSON.stringify({discordId, roomId:sid})
     });
     const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
-    if(!res.ok || !data.ok) throw new Error(data.error || 'load_office_rooms_failed');
+    if(!res.ok || !data.ok) throw new Error(data.error || 'load_office_room_failed');
     surveysMap = {};
-    (data.surveys || []).filter(s=>s.type === 'office').forEach(s=>{
-      const d = normalizeOfficeRoomDoc(s.id || s.roomId, s);
-      d.status = 'open';
-      surveysMap[d.id] = d;
-    });
-    renderSurveyList();
+    const d = normalizeOfficeRoomDoc(data.room.roomId || data.room.id || sid, data.room);
+    d.status = 'open';
+    surveysMap[d.id] = d;
     await bootPortalAnswer();
   }catch(e){
-    console.warn('office rooms function load failed', e);
+    console.warn('office room function load failed', e);
     showAccessError('官職予約データを読み込めません。Functionsのデプロイ状態を確認してください。');
   }
 }
