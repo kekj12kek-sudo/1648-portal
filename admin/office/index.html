@@ -2563,6 +2563,20 @@ const OFFICE_NAME_MAP = {
   vice:'副執政官'
 };
 
+const OFFICE_FUNCTION_BASE = 'https://us-central1-yoyaku-4ec7c.cloudfunctions.net';
+async function officeFunctionCall(name, payload){
+  const res = await fetch(`${OFFICE_FUNCTION_BASE}/${name}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({discordId:localDiscordId(), ...payload})
+  });
+  const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
+  if(!res.ok || !data.ok){
+    throw new Error(data.error || `function_${name}_failed`);
+  }
+  return data;
+}
+
 function pad2(n){ return String(n).padStart(2,'0'); }
 function ymdFromDateValue(value){
   const d = value ? new Date(value) : new Date();
@@ -2671,27 +2685,35 @@ function initFirebase(){
   };
 }
 
-async function saveOfficeEvent(eventId, data){
-  if(!fbFs || !eventId) return;
-  await fbFs.collection('office_events').doc(eventId).set(data, {merge:true});
+async function saveOfficeBundle(eventId, eventData, roomData){
+  return officeFunctionCall('upsertOfficeRoom', {
+    event:{...eventData, eventId},
+    room:roomData
+  });
 }
+
 function saveSurveyToDB(surveyId, data){
-  if(!fbFs || !surveyId) return;
-  const payload = {...data, updatedAt:safeNowIso()};
-  fbFs.collection('office_rooms').doc(surveyId).set(payload, {merge:true}).catch(e=>console.warn('office room save failed', e));
+  if(!surveyId) return;
+  officeFunctionCall('updateOfficeRoom', {roomId:surveyId, data})
+    .catch(e=>{
+      console.warn('office room save failed', e);
+      alert('保存に失敗しました：' + e.message);
+    });
 }
 function createSurveyInDB(surveyData){
   const id = surveyData.id || surveyData.roomId;
   if(!id) return;
   surveysMap[id] = normalizeOfficeRoom(id, surveyData);
-  if(fbFs){
-    fbFs.collection('office_rooms').doc(id).set(surveysMap[id], {merge:true}).catch(e=>console.warn('office room create failed', e));
-  }
+  // 新規作成本体は startSurveyNow / reserveSurvey の saveOfficeBundle でFunctions保存する。
   renderAdminSurveyList();
 }
 function deleteSurveyFromDB(surveyId){
   if(!surveyId) return;
-  if(fbFs) fbFs.collection('office_rooms').doc(surveyId).delete().catch(e=>console.warn('office room delete failed', e));
+  officeFunctionCall('deleteOfficeRoom', {roomId:surveyId})
+    .catch(e=>{
+      console.warn('office room delete failed', e);
+      alert('削除に失敗しました：' + e.message);
+    });
   if(fbDb){
     fbDb.ref(`${DB_SUBMISSIONS}/${surveyId}`).remove();
     fbDb.ref(`${DB_MANUALPTS}/${surveyId}`).remove();
@@ -2743,7 +2765,7 @@ async function startSurveyNow(){
     bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems))
   };
   try{
-    await saveOfficeEvent(ids.eventId, eventPayload);
+    await saveOfficeBundle(ids.eventId, eventPayload, roomPayload);
     createSurveyInDB(roomPayload);
     adminEditSurveyId = ids.roomId;
     showToast('✓ 官職予約を開始しました');
@@ -2796,7 +2818,7 @@ async function reserveSurvey(){
     bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems))
   };
   try{
-    await saveOfficeEvent(ids.eventId, eventPayload);
+    await saveOfficeBundle(ids.eventId, eventPayload, roomPayload);
     createSurveyInDB(roomPayload);
     adminEditSurveyId = ids.roomId;
     showToast('✓ 官職予約を予約しました');
