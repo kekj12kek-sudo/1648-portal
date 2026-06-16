@@ -599,21 +599,37 @@ function normalizeOfficeRoomDoc(id, raw){
   };
 }
 
-function initFirebase(){
-  // office_rooms は Firestore が正本。Realtime Database は回答集計用だけに使う。
-  if(fbFs){
-    try{
-      fbFs.collection('office_rooms').onSnapshot(snap=>{
-        surveysMap = {};
-        snap.forEach(doc=>{
-          const d = normalizeOfficeRoomDoc(doc.id, doc.data() || {});
-          surveysMap[d.id] = d;
-        });
-        if(!adminLoggedIn && !surveySelected) renderSurveyList();
-        startSurveyTimer();
-      }, err=>console.warn('office_rooms snapshot failed', err));
-    }catch(e){ console.warn('office_rooms listener failed', e); }
+async function loadOfficeRoomsViaFunctions(){
+  const discordId = getPortalDiscordId();
+  if(!discordId){
+    console.warn('office rooms load skipped: no discordId');
+    return;
   }
+  try{
+    const res = await fetch(`${OFFICE_FUNCTION_BASE}/getOpenSurveysForUser`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({discordId})
+    });
+    const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
+    if(!res.ok || !data.ok) throw new Error(data.error || 'load_office_rooms_failed');
+    surveysMap = {};
+    (data.surveys || []).filter(s=>s.type === 'office').forEach(s=>{
+      const d = normalizeOfficeRoomDoc(s.id || s.roomId, s);
+      d.status = 'open';
+      surveysMap[d.id] = d;
+    });
+    renderSurveyList();
+    await bootPortalAnswer();
+  }catch(e){
+    console.warn('office rooms function load failed', e);
+    showAccessError('官職予約データを読み込めません。Functionsのデプロイ状態を確認してください。');
+  }
+}
+
+function initFirebase(){
+  // office_rooms はFirestore直読みしない。Firestoreルールで弾かれるためFunctions経由で取得する。
+  loadOfficeRoomsViaFunctions();
 
   if(fbDb){
     try{
@@ -860,23 +876,23 @@ function applyPublicSurveyState(){
 
 function buildRoleTabs(){
   const tabs = document.getElementById('roleTabs');
+  if(!tabs) return;
   tabs.innerHTML = '';
-  ADMIN_CONFIG.activeRoles.forEach((role, i) => {
-    const cfg = ROLE_CONFIG[role] || {icon:'⚔️', color:'blue'};
-    ensureRoleExists(role);
-    const tab = document.createElement('div');
-    tab.className = `role-tab${i===0?' active-'+cfg.color:''}`;
-    tab.dataset.role = role;
-    tab.textContent = `${cfg.icon} ${role}`;
-    // 回答者はタブ切り替え不可（見えるだけ）
-    tab.style.cursor = 'default';
-    tab.style.opacity = i===0 ? '1' : '0.4';
-    tabs.appendChild(tab);
-  });
-  // currentRoleがactiveRolesにない場合は先頭にリセット
   if(!ADMIN_CONFIG.activeRoles.includes(currentRole)){
     currentRole = ADMIN_CONFIG.activeRoles[0] || '副執政官';
   }
+  ADMIN_CONFIG.activeRoles.forEach((role) => {
+    const cfg = ROLE_CONFIG[role] || {icon:'⚔️', color:'blue'};
+    ensureRoleExists(role);
+    const isActive = role === currentRole;
+    const tab = document.createElement('div');
+    tab.className = `role-tab${isActive?' active-'+cfg.color:''}`;
+    tab.dataset.role = role;
+    tab.textContent = `${cfg.icon} ${role}`;
+    tab.style.cursor = 'default';
+    tab.style.opacity = isActive ? '1' : '0.4';
+    tabs.appendChild(tab);
+  });
 }
 
 function switchRole(role){
@@ -2486,6 +2502,8 @@ function selectSurvey(surveyId){
   currentRole = roleName;
   const titleEl = document.querySelector('.header-title');
   if(titleEl) titleEl.textContent = '🚄 ' + roleName + ' 予約';
+  const statusEl = document.getElementById('userStatus');
+  if(statusEl) statusEl.textContent = '未回答';
 
   // 座席データを初期化
   ensureSeatExists(surveyId);
