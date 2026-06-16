@@ -354,41 +354,84 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .mypageMenuBtn:active{transform:scale(.985);}
 .mypageMenuBtn.disabled{opacity:.45;cursor:not-allowed;}
 .mypageMenuBtn.closeBtn{background:rgba(59,130,246,.13);border-color:rgba(59,130,246,.28);color:#bfdbfe;text-align:center;}
-
-.mypageDataCard{
-  margin-top:10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.055);
-  padding:11px 12px;
-  text-align:left;
+.mypageSection{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.1);
 }
-.mypageDataTitle{
+.mypageSectionTitle{
   font-size:12px;
   font-weight:900;
   color:#facc15;
   margin-bottom:8px;
 }
-.mypageDataLine{
+.mypageStatusText{
+  font-size:13px;
+  font-weight:900;
+  color:#fff;
+  line-height:1.6;
+}
+.mypageSubText{
+  margin-top:4px;
+  font-size:11px;
+  color:rgba(255,255,255,.58);
+  line-height:1.55;
+}
+.pendingSurveyList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:8px;
+}
+.pendingSurveyItem{
+  padding:10px;
+  border-radius:13px;
+  border:1px solid rgba(251,191,36,.26);
+  background:rgba(251,191,36,.08);
+}
+.pendingSurveyTitle{
+  font-size:12px;
+  font-weight:900;
+  color:#fde68a;
+  line-height:1.4;
+}
+.pendingSurveyDeadline{
+  margin-top:3px;
+  font-size:11px;
+  color:rgba(255,255,255,.68);
+}
+.muteSurveyBtn{
+  margin-top:8px;
+  min-height:32px;
+  border:none;
+  border-radius:999px;
+  padding:0 10px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.16);
+  color:#e5e7eb;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.muteSurveyBtn:active{transform:scale(.97);}
+.t12Grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:6px;
+  margin-top:8px;
+}
+.t12Row{
   display:flex;
   justify-content:space-between;
   gap:10px;
+  padding:8px 10px;
+  border-radius:11px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
   font-size:12px;
-  line-height:1.55;
-  padding:3px 0;
-  color:rgba(255,255,255,.88);
 }
-.mypageDataLabel{color:rgba(255,255,255,.58);font-weight:800;white-space:nowrap;}
-.mypageDataValue{font-weight:900;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mypageMuted{font-size:11px;color:rgba(255,255,255,.48);line-height:1.6;}
-.mypageHistoryItem{
-  border-top:1px solid rgba(255,255,255,.08);
-  padding:7px 0 0;
-  margin-top:7px;
-}
-.mypageHistoryItem:first-child{border-top:none;margin-top:0;padding-top:0;}
-.mypageHistoryTitle{font-size:12px;font-weight:900;color:#e5e7eb;line-height:1.45;}
-.mypageHistoryMeta{font-size:10px;color:rgba(255,255,255,.48);margin-top:2px;}
+.t12Label{color:rgba(255,255,255,.58);font-weight:900;}
+.t12Value{color:#bfdbfe;font-weight:900;text-align:right;}
 
 @media(max-width:480px){
   #link-buttons{
@@ -460,13 +503,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
       <div class="profileRow"><span class="profileLabel">権限</span><span class="profileValue" id="mypageRole">-</span></div>
       <div class="adminPermissionNote" id="adminPermissionNote">管理者・運営権限があります。右下の「管理者ページ」から管理機能を利用できます。</div>
       <div class="profileRow"><span class="profileLabel">Discord認証</span><span class="profileValue" id="mypageDiscord">認証済み</span></div>
-      <div class="mypageDataCard">
-        <div class="mypageDataTitle">🧊 T12保存状況</div>
-        <div id="mypageT12Area" class="mypageMuted">読み込み中...</div>
+      <div class="mypageSection">
+        <div class="mypageSectionTitle">📋 アンケート回答状況</div>
+        <div id="surveyStatusBox">
+          <div class="mypageSubText">読み込み中...</div>
+        </div>
       </div>
-      <div class="mypageDataCard">
-        <div class="mypageDataTitle">📋 アンケート履歴</div>
-        <div id="mypageSurveyHistoryArea" class="mypageMuted">読み込み中...</div>
+      <div class="mypageSection">
+        <div class="mypageSectionTitle">🧊 T12保存状況</div>
+        <div id="t12StatusBox">
+          <div class="mypageSubText">読み込み中...</div>
+        </div>
       </div>
       <div class="mypageMenu">
         <button class="mypageMenuBtn closeBtn" type="button" id="mypageCloseBtn">閉じる</button>
@@ -669,75 +716,40 @@ function getDisplayNameWithAlliance(){
   return alliance ? `[${alliance}] ${name}` : name;
 }
 const PORTAL_FUNCTION_BASE = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net";
+let myPageDataCache = null;
+let myPageDataLoading = false;
 
 function getPortalDiscordId(){
   const data = getPortalSession();
-  return String(
-    data?.user?.discordId ||
-    data?.discord?.id ||
-    data?.discordId ||
-    ""
-  ).trim();
+  return data?.user?.discordId || data?.discord?.id || data?.discordId || "";
 }
 
-function updateUnreadNotice(count){
-  const unreadNotice = document.getElementById("unreadNotice");
-  if(!unreadNotice) return;
-
-  const n = Number(count || 0);
-  if(Number.isFinite(n) && n > 0){
-    unreadNotice.textContent = `🔔 未回答 ${n}件`;
-    unreadNotice.classList.add("show");
-  }else{
-    unreadNotice.classList.remove("show");
-  }
+async function callPortalFunction(name, payload){
+  const res = await fetch(`${PORTAL_FUNCTION_BASE}/${name}`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload || {})
+  });
+  const data = await res.json().catch(()=>({ok:false,error:"invalid_json"}));
+  if(!res.ok || !data.ok) throw new Error(data.error || `${name}_failed`);
+  return data;
 }
 
-async function loadUnreadSurveyCount(){
-  const discordId = getPortalDiscordId();
-  if(!discordId){
-    updateUnreadNotice(0);
-    return;
-  }
-
-  try{
-    const res = await fetch(`${PORTAL_FUNCTION_BASE}/getOpenSurveysForUser`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId})
-    });
-
-    const data = await res.json().catch(()=>({ok:false,error:"invalid_json"}));
-    if(!res.ok || !data.ok) throw new Error(data.error || "getOpenSurveysForUser_failed");
-
-    const list = Array.isArray(data.surveys) ? data.surveys : [];
-    const unreadCount = list.filter(s => !s.answered).length;
-
-    localStorage.setItem("portal_unanswered_count", String(unreadCount));
-    updateUnreadNotice(unreadCount);
-  }catch(e){
-    console.warn("pending survey count load failed", e);
-
-    // 通信失敗時は直前の件数を一時表示。なければ非表示。
-    const cached = Number(localStorage.getItem("portal_unanswered_count") || "0");
-    updateUnreadNotice(Number.isFinite(cached) ? cached : 0);
-  }
-}
-
-function formatPortalDate(value){
+function formatPortalDeadline(value){
   if(!value) return "";
-  try{
-    let d = null;
-    if(typeof value === "string") d = new Date(value);
+  let d = null;
+  if(typeof value === "string"){
+    const text = value.includes("T") ? value : value.replace(" ", "T");
+    d = new Date(text.includes("Z") || /[+-]\d{2}:\d{2}$/.test(text) ? text : `${text}+09:00`);
+  }else if(value && typeof value === "object"){
+    if(value.seconds) d = new Date(value.seconds * 1000);
     else if(value._seconds) d = new Date(value._seconds * 1000);
-    else if(value.seconds) d = new Date(value.seconds * 1000);
-    else d = new Date(value);
-    if(!d || Number.isNaN(d.getTime())) return "";
-    const pad = n => String(n).padStart(2,"0");
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }catch(e){ return ""; }
+  }
+  if(!d || Number.isNaN(d.getTime())) return "";
+  return `${d.getMonth()+1}月${d.getDate()}日${d.getHours()}時まで`;
 }
-function t12StageLabel(value){
+
+function normalizeT12Label(value){
   const map = {
     locked:"未解放",
     unlocked:"T12解放済",
@@ -751,67 +763,111 @@ function t12StageLabel(value){
   };
   return map[value] || value || "未保存";
 }
-function renderMyPageT12(progress){
-  const area = document.getElementById("mypageT12Area");
-  if(!area) return;
-  if(!progress){
-    area.className = "mypageMuted";
-    area.textContent = "T12保存データはまだありません。";
+
+function renderMyPageSurveyStatus(data){
+  const box = document.getElementById("surveyStatusBox");
+  if(!box) return;
+  const summary = data?.surveySummary || {};
+  const total = Number(summary.total || 0);
+  const answered = Number(summary.answered || 0);
+  const pending = Array.isArray(summary.pendingSurveys) ? summary.pendingSurveys : [];
+
+  if(total <= 0){
+    box.innerHTML = `<div class="mypageStatusText">公開中アンケートはありません</div>`;
     return;
   }
-  const summary = progress.summary || {};
-  const updated = formatPortalDate(progress.updatedAt) || progress.updatedAtText || "";
-  area.className = "";
-  area.innerHTML = `
-    <div class="mypageDataLine"><span class="mypageDataLabel">盾</span><span class="mypageDataValue">${t12StageLabel(summary.shield)}</span></div>
-    <div class="mypageDataLine"><span class="mypageDataLabel">槍</span><span class="mypageDataValue">${t12StageLabel(summary.spear)}</span></div>
-    <div class="mypageDataLine"><span class="mypageDataLabel">弓</span><span class="mypageDataValue">${t12StageLabel(summary.bow)}</span></div>
-    ${updated ? `<div class="mypageHistoryMeta">最終更新：${updated}</div>` : ""}
-  `;
-}
-function renderMyPageSurveyHistory(history){
-  const area = document.getElementById("mypageSurveyHistoryArea");
-  if(!area) return;
-  const list = Array.isArray(history) ? history : [];
-  if(!list.length){
-    area.className = "mypageMuted";
-    area.textContent = "アンケート回答履歴はまだありません。";
-    return;
-  }
-  area.className = "";
-  area.innerHTML = list.slice(0,5).map(item => {
-    const date = formatPortalDate(item.updatedAt || item.submittedAt);
-    return `<div class="mypageHistoryItem">
-      <div class="mypageHistoryTitle">${escapeHtml(item.title || "アンケート")}</div>
-      <div class="mypageHistoryMeta">${date ? `回答：${date}` : "回答済み"}</div>
-    </div>`;
-  }).join("");
-}
-async function loadMyPageData(){
-  const discordId = getPortalDiscordId();
-  renderMyPageT12(null);
-  renderMyPageSurveyHistory([]);
-  if(!discordId) return;
-  try{
-    const res = await fetch(`${PORTAL_FUNCTION_BASE}/getMyPageData`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({discordId})
+
+  let html = `<div class="mypageStatusText">${answered} / ${total} 回答済み</div>`;
+  if(!pending.length){
+    html += `<div class="mypageSubText">現在未回答のアンケートはありません</div>`;
+  }else{
+    html += `<div class="mypageSubText">未回答アンケート</div><div class="pendingSurveyList">`;
+    pending.forEach(s=>{
+      const deadline = formatPortalDeadline(s.closeAt || s.deadline);
+      html += `<div class="pendingSurveyItem">
+        <div class="pendingSurveyTitle">${escapeHtml(s.title || "アンケート")}</div>
+        ${deadline ? `<div class="pendingSurveyDeadline">締切：${escapeHtml(deadline)}</div>` : ""}
+        <button class="muteSurveyBtn" type="button" onclick="muteSurveyNotification('${escapeAttr(s.id)}')">お知らせOFF</button>
+      </div>`;
     });
-    const data = await res.json().catch(()=>({ok:false,error:"invalid_json"}));
-    if(!res.ok || !data.ok) throw new Error(data.error || "getMyPageData_failed");
-    renderMyPageT12(data.t12Progress || null);
-    renderMyPageSurveyHistory(data.surveyHistory || []);
-  }catch(e){
-    console.warn("mypage data load failed", e);
-    const t12Area = document.getElementById("mypageT12Area");
-    const historyArea = document.getElementById("mypageSurveyHistoryArea");
-    if(t12Area){ t12Area.className = "mypageMuted"; t12Area.textContent = "T12データを読み込めませんでした。"; }
-    if(historyArea){ historyArea.className = "mypageMuted"; historyArea.textContent = "履歴を読み込めませんでした。"; }
+    html += `</div>`;
+  }
+  box.innerHTML = html;
+}
+
+function renderMyPageT12Status(data){
+  const box = document.getElementById("t12StatusBox");
+  if(!box) return;
+  const t12 = data?.t12 || null;
+  if(!t12 || !t12.exists){
+    box.innerHTML = `<div class="mypageStatusText">保存データなし</div><div class="mypageSubText">T12 Plannerで保存するとここに表示されます</div>`;
+    return;
+  }
+  const summary = t12.summary || {};
+  box.innerHTML = `<div class="t12Grid">
+    <div class="t12Row"><span class="t12Label">盾</span><span class="t12Value">${escapeHtml(normalizeT12Label(summary.shield))}</span></div>
+    <div class="t12Row"><span class="t12Label">槍</span><span class="t12Value">${escapeHtml(normalizeT12Label(summary.spear))}</span></div>
+    <div class="t12Row"><span class="t12Label">弓</span><span class="t12Value">${escapeHtml(normalizeT12Label(summary.bow))}</span></div>
+  </div>`;
+}
+
+function renderUnreadNoticeFromData(data){
+  const unreadNotice = document.getElementById("unreadNotice");
+  if(!unreadNotice) return;
+  const count = Number(data?.surveySummary?.pendingNoticeCount || 0);
+  if(count > 0){
+    unreadNotice.textContent = `🔔 未回答 ${count}件`;
+    unreadNotice.classList.add("show");
+  }else{
+    unreadNotice.classList.remove("show");
   }
 }
+
+async function loadMyPageData(){
+  if(myPageDataLoading) return myPageDataCache;
+  const discordId = getPortalDiscordId();
+  if(!discordId) return null;
+  myPageDataLoading = true;
+  try{
+    const data = await callPortalFunction("getMyPageData", {discordId});
+    myPageDataCache = data;
+    renderUnreadNoticeFromData(data);
+    renderMyPageSurveyStatus(data);
+    renderMyPageT12Status(data);
+    return data;
+  }catch(e){
+    console.warn("getMyPageData failed", e);
+    renderMyPageSurveyStatus({surveySummary:{total:0,answered:0,pendingSurveys:[]}});
+    renderMyPageT12Status({t12:{exists:false}});
+    return null;
+  }finally{
+    myPageDataLoading = false;
+  }
+}
+
+async function muteSurveyNotification(surveyId){
+  const discordId = getPortalDiscordId();
+  if(!discordId || !surveyId) return;
+  try{
+    await callPortalFunction("muteSurveyNotification", {discordId, surveyId});
+    myPageDataCache = null;
+    await loadMyPageData();
+  }catch(e){
+    console.warn("muteSurveyNotification failed", e);
+    alert("お知らせOFFに失敗しました");
+  }
+}
+
 function escapeHtml(str){
-  return String(str || "").replace(/[&<>\"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[s]));
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function escapeAttr(str){
+  return String(str ?? "").replace(/['\\]/g, "\\$&");
 }
 
 function logoutPortal(){
@@ -827,10 +883,7 @@ function initUserBadge(){
   if(welcomeName){
     welcomeName.textContent = displayName;
   }
-  if(unreadNotice){
-    updateUnreadNotice(0);
-    loadUnreadSurveyCount();
-  }
+  if(unreadNotice){ unreadNotice.classList.remove("show"); }
   if(myPageBtn){
     myPageBtn.addEventListener("click", openMyPage);
   }
@@ -854,6 +907,8 @@ function openMyPage(){
   if(adminNote){
     adminNote.classList.toggle("show", getPortalPermissionLevel() >= 1);
   }
+  renderMyPageSurveyStatus(myPageDataCache || {surveySummary:{total:0,answered:0,pendingSurveys:[]}});
+  renderMyPageT12Status(myPageDataCache || {t12:{exists:false}});
   loadMyPageData();
   if(overlay) overlay.classList.add("open");
 }
@@ -883,9 +938,7 @@ function getPortalPermissionLevel(){
     const role = data?.role || data?.user?.role || "member";
     const levelMap = {
       "developer": 3,
-      "admin": 3,
       "manager": 2,
-      "officer": 2,
       "technical": 1,
       "member": 0
     };
@@ -906,6 +959,7 @@ function initAdminLink(){
 document.addEventListener("DOMContentLoaded", () => {
   initUserBadge();
   initAdminLink();
+  loadMyPageData();
 });
 
 </script>
