@@ -323,6 +323,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .role-admin,.role-manager{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fecaca;}
 .role-officer,.role-technical{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.45);color:#bfdbfe;}
 .role-member{background:rgba(148,163,184,.14);border-color:rgba(148,163,184,.32);color:#e2e8f0;}
+.adminPermissionNote{
+  display:none;
+  margin-top:8px;
+  padding:9px 10px;
+  border-radius:12px;
+  border:1px solid rgba(250,204,21,.25);
+  background:rgba(250,204,21,.08);
+  color:#fde68a;
+  font-size:11px;
+  line-height:1.55;
+  font-weight:800;
+  text-align:left;
+}
+.adminPermissionNote.show{display:block;}
 .mypageMenu{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
 .mypageMenuBtn{
   width:100%;
@@ -339,7 +353,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 }
 .mypageMenuBtn:active{transform:scale(.985);}
 .mypageMenuBtn.disabled{opacity:.45;cursor:not-allowed;}
-.mypageMenuBtn.logout{background:rgba(239,68,68,.13);border-color:rgba(239,68,68,.28);color:#fecaca;}
+.mypageMenuBtn.closeBtn{background:rgba(59,130,246,.13);border-color:rgba(59,130,246,.28);color:#bfdbfe;text-align:center;}
 @media(max-width:480px){
   #link-buttons{
     top:76px;
@@ -408,11 +422,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
       <div class="profileRow"><span class="profileLabel">プレイヤー名</span><span class="profileValue" id="mypagePlayerName">-</span></div>
       <div class="profileRow"><span class="profileLabel">同盟</span><span class="profileValue" id="mypageAlliance">-</span></div>
       <div class="profileRow"><span class="profileLabel">権限</span><span class="profileValue" id="mypageRole">-</span></div>
+      <div class="adminPermissionNote" id="adminPermissionNote">管理者・運営権限があります。右下の「管理者ページ」から管理機能を利用できます。</div>
       <div class="profileRow"><span class="profileLabel">Discord認証</span><span class="profileValue" id="mypageDiscord">認証済み</span></div>
       <div class="mypageMenu">
         <button class="mypageMenuBtn disabled" type="button">📋 アンケート履歴（準備中）</button>
         <button class="mypageMenuBtn disabled" type="button">🧊 T12保存状況（準備中）</button>
-        <button class="mypageMenuBtn logout" type="button" id="mypageLogoutBtn">ログアウト</button>
+        <button class="mypageMenuBtn closeBtn" type="button" id="mypageCloseBtn">閉じる</button>
       </div>
     </div>
   </div>
@@ -642,9 +657,9 @@ function initUserBadge(){
   if(myPageBtn){
     myPageBtn.addEventListener("click", openMyPage);
   }
-  const logoutBtn = document.getElementById("mypageLogoutBtn");
-  if(logoutBtn){
-    logoutBtn.addEventListener("click", logoutPortal);
+  const closeBtn = document.getElementById("mypageCloseBtn");
+  if(closeBtn){
+    closeBtn.addEventListener("click", closeMyPage);
   }
 }
 function openMyPage(){
@@ -652,11 +667,15 @@ function openMyPage(){
   const playerName = document.getElementById("mypagePlayerName");
   const alliance = document.getElementById("mypageAlliance");
   const roleBox = document.getElementById("mypageRole");
+  const adminNote = document.getElementById("adminPermissionNote");
   const role = getPortalRoleKey();
   if(playerName) playerName.textContent = getPortalUserName();
   if(alliance) alliance.textContent = getPortalAlliance() || "未設定";
   if(roleBox){
     roleBox.innerHTML = `<span class="roleBadgePopup role-${role}">${getRoleDisplayName(role)}</span>`;
+  }
+  if(adminNote){
+    adminNote.classList.toggle("show", getPortalPermissionLevel() >= 1);
   }
   if(overlay) overlay.classList.add("open");
 }
