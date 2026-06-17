@@ -2143,10 +2143,23 @@ document.getElementById("editorCalc").addEventListener("click", calculateAndScro
 setupPresetButtons();
 initQuickSelect();
 
+
+function getLimitedRoleFromPortalSession(data){
+  const role = String(data?.role || data?.user?.role || data?.profile_data?.role || data?.profileData?.role || "member").trim().toLowerCase();
+  return role;
+}
+function isLimitedPortalUser(data){
+  return getLimitedRoleFromPortalSession(data) === "limited";
+}
+function showLimitedAccess(){
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif"><div style="width:100%;max-width:360px;border-radius:18px;border:1px solid rgba(251,191,36,.28);background:rgba(15,23,42,.96);padding:22px 18px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#facc15;margin-bottom:8px">利用制限中</div><div style="font-size:13px;color:rgba(255,255,255,.68);line-height:1.7;margin-bottom:16px">現在利用できる機能はコスト計算roomのみです。</div><a href="/1648-portal/cost/" style="display:flex;align-items:center;justify-content:center;height:46px;border-radius:12px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:900;margin-bottom:10px">コスト計算roomへ</a><a href="/1648-portal/" style="display:flex;align-items:center;justify-content:center;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.16);color:#bfdbfe;text-decoration:none;font-size:12px;font-weight:900">ポータルへ戻る</a></div></div>`;
+}
+
 async function bootPlanner(){
   if(!requirePortalEntry()) return;
   portalSession = getPortalSession();
   if(!portalSession) return;
+  if(isLimitedPortalUser(portalSession)){ showLimitedAccess(); return; }
   initPortalUser();
   initT12Cloud();
 

@@ -741,7 +741,8 @@ function getRoleDisplayName(role){
     manager:"Manager",
     officer:"Officer",
     technical:"Technical",
-    member:"Member"
+    member:"Member",
+    limited:"Limited"
   };
   return map[role] || "Member";
 }
@@ -936,6 +937,30 @@ function logoutPortal(){
   localStorage.removeItem("discord_auth_code");
   location.href = "https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
 }
+function isLimitedPortalUser(){
+  return String(getPortalRoleKey() || "member").toLowerCase() === "limited";
+}
+function applyLimitedHomeView(){
+  if(!isLimitedPortalUser()) return;
+  document.body.classList.add("limited-role");
+  const myPageBtn = document.getElementById("myPageBtn");
+  const unreadNotice = document.getElementById("unreadNotice");
+  const adminLink = document.getElementById("adminFuture");
+  if(myPageBtn) myPageBtn.style.display = "none";
+  if(unreadNotice) unreadNotice.style.display = "none";
+  if(adminLink) adminLink.style.display = "none";
+  document.querySelectorAll(".tap-area").forEach(el=>{
+    if(el.id !== "") el.style.display = "none";
+  });
+  const costBtn = document.querySelector(".link-btn-cost");
+  document.querySelectorAll("#link-buttons .link-btn").forEach(btn=>{
+    if(btn !== costBtn) btn.style.display = "none";
+  });
+  if(costBtn){
+    costBtn.style.display = "flex";
+    costBtn.style.order = "1";
+  }
+}
 function initUserBadge(){
   const welcomeName = document.getElementById("welcomeName");
   const myPageBtn = document.getElementById("myPageBtn");
@@ -945,6 +970,10 @@ function initUserBadge(){
     welcomeName.textContent = displayName;
   }
   if(unreadNotice){ unreadNotice.classList.remove("show"); }
+  if(isLimitedPortalUser()){
+    applyLimitedHomeView();
+    return;
+  }
   if(myPageBtn){
     myPageBtn.addEventListener("click", openMyPage);
   }
@@ -1001,7 +1030,8 @@ function getPortalPermissionLevel(){
       "developer": 3,
       "manager": 2,
       "technical": 1,
-      "member": 0
+      "member": 0,
+      "limited": -1
     };
 
     return levelMap[role] ?? 0;
@@ -1020,7 +1050,8 @@ function initAdminLink(){
 document.addEventListener("DOMContentLoaded", () => {
   initUserBadge();
   initAdminLink();
-  loadMyPageData();
+  if(!isLimitedPortalUser()) loadMyPageData();
+  applyLimitedHomeView();
 });
 
 </script>

@@ -1890,6 +1890,12 @@ function portalIsDeveloper(){
   return false;
 }
 
+
+function portalIsLimited(data){
+  const role = String(data?.role || data?.user?.role || data?.profile_data?.role || data?.profileData?.role || "member").trim().toLowerCase();
+  return role === "limited";
+}
+
 function showPortalLock(title,msg,href,label){
   const box=document.getElementById("portalLock");
   if(!box)return;
@@ -1902,6 +1908,11 @@ function startPortalRaid(){
     localStorage.removeItem("discord_user");
     showPortalLock("ログインが必要です","1648 PortalでDiscord認証を完了してください。",LOGIN_URL,"Discordでログイン");
     setTimeout(()=>{ location.replace(LOGIN_URL); }, 700);
+    return;
+  }
+
+  if(portalIsLimited(session)){
+    showPortalLock("利用制限中","現在利用できる機能はコスト計算roomのみです。","/1648-portal/cost/","コスト計算roomへ");
     return;
   }
 
