@@ -757,6 +757,42 @@ header > strong{display:none !important}
 #userOverlay{display:none !important}
 #saveStatus{display:none !important}
 
+/* ===== v9: header DB save button / game-value placeholder fix ===== */
+.title-stack{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  gap:3px !important;
+  min-width:0 !important;
+}
+.title-stack strong{
+  display:inline !important;
+  width:auto !important;
+  font-size:16px !important;
+  color:#f59e0b !important;
+  white-space:nowrap !important;
+  line-height:1.15 !important;
+}
+.header-db-save{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:22px !important;
+  padding:3px 8px !important;
+  border-radius:999px !important;
+  border:1px solid #22c55e !important;
+  background:#14532d !important;
+  color:#dcfce7 !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+}
+.stock-card input::placeholder{
+  color:#9ca3af !important;
+  opacity:.9 !important;
+}
+
 </style>
 </head>
 <body>
@@ -790,7 +826,10 @@ header > strong{display:none !important}
 <header>
   <div class="title-row">
     <a id="btnBackPortal" class="back-portal" href="/1648-portal/">← 戻る</a>
-    <strong>1648 T12 Planner</strong>
+    <div class="title-stack">
+      <strong>1648 T12 Planner</strong>
+      <button id="btnHeaderDbSave" class="header-db-save" type="button">DB保存</button>
+    </div>
   </div>
 
   <div class="header-user" id="headerUser">
@@ -1117,9 +1156,9 @@ function applySavedData(data){
   if(data.troop) troop = data.troop;
   if(data.stock){
     const s = data.stock;
-    if(document.getElementById("stock-refined")) document.getElementById("stock-refined").value = s.refined || 0;
-    if(document.getElementById("stock-particle")) document.getElementById("stock-particle").value = s.particle || 0;
-    if(document.getElementById("stock-steel")) document.getElementById("stock-steel").value = s.steel || 0;
+    if(document.getElementById("stock-refined")) document.getElementById("stock-refined").value = formatGameInputValue(s.refined);
+    if(document.getElementById("stock-particle")) document.getElementById("stock-particle").value = formatGameInputValue(s.particle);
+    if(document.getElementById("stock-steel")) document.getElementById("stock-steel").value = formatGameInputValue(s.steel);
   }
   return true;
 }
@@ -1233,11 +1272,20 @@ function applyLoadedState(){
 // 手持ち素材
 // =========================================================
 function parseGameValue(v){
-  if(!v) return 0;
-  v=String(v).trim().toUpperCase();
-  if(v.endsWith("M")) return (parseFloat(v)||0)*1000000;
-  if(v.endsWith("K")) return (parseFloat(v)||0)*1000;
-  return Number(v)||0;
+  if(v === null || v === undefined) return 0;
+  let s = String(v).trim().toUpperCase().replace(/,/g, "");
+  if(!s || s === "0") return 0;
+  if(s.endsWith("M")) return (parseFloat(s) || 0) * 1000000;
+  if(s.endsWith("K")) return (parseFloat(s) || 0) * 1000;
+  return Number(s) || 0;
+}
+
+function formatGameInputValue(v){
+  const n = Number(v) || 0;
+  if(!n) return "";
+  if(n >= 1000000) return (Math.round(n / 100000) / 10).toFixed(1).replace(/\.0$/, "") + "M";
+  if(n >= 1000) return (Math.round(n / 100) / 10).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(Math.round(n));
 }
 
 function getStock(){
@@ -1285,7 +1333,7 @@ document.querySelectorAll(".btn-troop-reset").forEach(b=>b.addEventListener("cli
 document.getElementById("btnStockReset")?.addEventListener("click", ()=>{
   ["stock-refined","stock-particle","stock-steel"].forEach(id=>{
     const el = document.getElementById(id);
-    if(el) el.value = 0;
+    if(el) el.value = "";
   });
   renderGoalResult();
   renderTotalResult();
@@ -2542,6 +2590,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
       e.stopPropagation();
       if(typeof manualT12CloudSaveV7 === "function") await manualT12CloudSaveV7();
       else if(typeof manualT12CloudSave === "function") await manualT12CloudSave();
+    };
+  }
+
+  const headerSaveBtn = document.getElementById("btnHeaderDbSave");
+  if(headerSaveBtn){
+    headerSaveBtn.onclick = async (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      headerSaveBtn.textContent = "保存中";
+      if(typeof manualT12CloudSaveV7 === "function") await manualT12CloudSaveV7();
+      else if(typeof manualT12CloudSave === "function") await manualT12CloudSave();
+      headerSaveBtn.textContent = "保存済";
+      setTimeout(()=>{ headerSaveBtn.textContent = "DB保存"; }, 1200);
     };
   }
 });
