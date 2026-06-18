@@ -831,9 +831,9 @@ header > strong{display:none !important}
     <div style="margin-top:10px">
       <div style="font-size:13px;color:#f59e0b;font-weight:700;margin-bottom:4px">📦 手持ち素材を入力（不足数を自動計算）</div>
       <div class="stock-grid">
-        <div class="stock-card"><img class="material-icon" src="refined.png"><div style="flex:1"><div class="label">精錬火晶</div><input id="stock-refined" type="number" min="0" placeholder="0"></div></div>
-        <div class="stock-card"><img class="material-icon" src="particle.png"><div style="flex:1"><div class="label">火晶微粒子</div><input id="stock-particle" type="number" min="0" placeholder="0"></div></div>
-        <div class="stock-card time-card"><img class="material-icon" src="steel.png"><div style="flex:1"><div class="label">鋼材</div><input id="stock-steel" type="number" min="0" placeholder="0"></div></div>
+        <div class="stock-card"><img class="material-icon" src="refined.png"><div style="flex:1"><div class="label">精錬火晶</div><input id="stock-refined" type="text" placeholder="例：120K / 1.6M"></div></div>
+        <div class="stock-card"><img class="material-icon" src="particle.png"><div style="flex:1"><div class="label">火晶微粒子</div><input id="stock-particle" type="text" placeholder="例：850K / 17.5M"></div></div>
+        <div class="stock-card time-card"><img class="material-icon" src="steel.png"><div style="flex:1"><div class="label">鋼材</div><input id="stock-steel" type="text" placeholder="例：850K / 1.6M"></div></div>
       </div>
       <button id="btnStockReset" style="width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1px solid #7c4a00;background:#2a1400;color:#c9a87c;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">↩ 手持ち素材をリセット</button>
     </div>
@@ -1232,11 +1232,19 @@ function applyLoadedState(){
 // =========================================================
 // 手持ち素材
 // =========================================================
+function parseGameValue(v){
+  if(!v) return 0;
+  v=String(v).trim().toUpperCase();
+  if(v.endsWith("M")) return (parseFloat(v)||0)*1000000;
+  if(v.endsWith("K")) return (parseFloat(v)||0)*1000;
+  return Number(v)||0;
+}
+
 function getStock(){
   return {
-    refined:  Number(document.getElementById("stock-refined")?.value)  || 0,
-    particle: Number(document.getElementById("stock-particle")?.value) || 0,
-    steel:    Number(document.getElementById("stock-steel")?.value)    || 0,
+    refined:parseGameValue(document.getElementById("stock-refined")?.value),
+    particle:parseGameValue(document.getElementById("stock-particle")?.value),
+    steel:parseGameValue(document.getElementById("stock-steel")?.value),
   };
 }
 
