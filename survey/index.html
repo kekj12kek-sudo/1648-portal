@@ -685,9 +685,7 @@ select option{color:#111827}
 </style>
 </head>
 <body>
-<video class="bg-video" autoplay muted loop playsinline preload="auto">
-  <source src="/1648-portal/survey/bg.mp4" type="video/mp4">
-</video>
+<video class="bg-video" id="bgVideo" autoplay muted loop playsinline preload="none" data-src="/1648-portal/survey/bg.mp4"></video>
 <div class="bg-shade"></div>
 <div id="app"></div>
 
@@ -941,6 +939,19 @@ function getAlliance(){
 
 function setMode(mode){
   document.body.classList.toggle("answer-mode", mode === "answer");
+  // 回答画面では背景動画を読み込まない（帯域・読み込み速度の節約）。
+  // 一覧画面（home）のときだけ、まだ読み込んでいなければ動画をセットして再生する。
+  const v = document.getElementById("bgVideo");
+  if(v){
+    if(mode === "home"){
+      if(!v.dataset.loaded){
+        v.src = v.dataset.src;
+        v.dataset.loaded = "1";
+        v.load();
+        v.play().catch(()=>{});
+      }
+    }
+  }
 }
 
 function renderHeader(title, sub, backUrl = PORTAL_URL){
