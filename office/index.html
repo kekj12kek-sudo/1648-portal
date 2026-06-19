@@ -599,6 +599,15 @@ function normalizeOfficeRoomDoc(id, raw){
   };
 }
 
+// room情報取得とuser情報取得を並列実行するための共有Promise
+// （以前は loadPortalUser が bootPortalAnswer 内、room取得の後段で呼ばれており
+//   直列待ちになっていたため起動が遅かった。ここで同時に発火させて待ち時間を短縮する）
+let _portalUserPromise = null;
+function getPortalUserPromise(){
+  if(!_portalUserPromise) _portalUserPromise = loadPortalUser();
+  return _portalUserPromise;
+}
+
 async function loadOfficeRoomsViaFunctions(){
   const discordId = getPortalDiscordId();
   const q = new URLSearchParams(location.search);
@@ -612,6 +621,8 @@ async function loadOfficeRoomsViaFunctions(){
     return;
   }
   try{
+    // room取得とuser取得を同時に投げる（直列待ちをやめて起動を高速化）
+    const userPromise = getPortalUserPromise();
     const res = await fetch(`${OFFICE_FUNCTION_BASE}/getOfficeRoomForAnswer`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -623,6 +634,7 @@ async function loadOfficeRoomsViaFunctions(){
     const d = normalizeOfficeRoomDoc(data.room.roomId || data.room.id || sid, data.room);
     d.status = 'open';
     surveysMap[d.id] = d;
+    await userPromise; // user取得がまだなら待つ（通常はroom取得と並行してほぼ同時に終わる）
     await bootPortalAnswer();
   }catch(e){
     console.warn('office room function load failed', e);
@@ -2822,7 +2834,7 @@ async function bootPortalAnswer(){
   }
   if(portalBootedSurveyId === sid && surveySelected) return true;
   portalBooting = true;
-  portalUser = await loadPortalUser();
+  portalUser = await getPortalUserPromise();
   portalBooting = false;
   if(isLimitedPortalRole(portalUser.role)){
     showLimitedAccess();
