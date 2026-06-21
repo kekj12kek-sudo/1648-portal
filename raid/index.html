@@ -400,14 +400,14 @@ function sFactionLabel(){
 }
 function sGetMapImg(faceKey){
   const IMG={
-    'lr_blue_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_40%20(1).png',
-    'lr_blue_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_56%20(1).png',
-    'lr_red_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_08%20(1).png',
-    'lr_red_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_12%20(1).png',
-    'ud_blue_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_54_40%20(1).png',
-    'ud_blue_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2023_48_15%20(1).png',
-    'ud_red_A':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2023_47_59%20(1).png',
-    'ud_red_B':REPO_SVS+'ChatGPT%20Image%202026%E5%B9%B45%E6%9C%8824%E6%97%A5%2022_55_12%20(1).png',
+    'lr_blue_A':'raid/images/左右分け青左上.jpg',
+    'lr_blue_B':'raid/images/左右分け青左下.jpg',
+    'lr_red_A':'raid/images/左右分け赤右上.jpg',
+    'lr_red_B':'raid/images/左右分け赤右下.jpg',
+    'ud_blue_A':'raid/images/上下分け青左上.jpg',
+    'ud_blue_B':'raid/images/上下分け青右上.jpg',
+    'ud_red_A':'raid/images/上下分け赤左下.jpg',
+    'ud_red_B':'raid/images/上下分け赤右下.jpg',
   };
   return IMG[`${SS.split}_${SS.faction}_${faceKey}`]||'';
 }
