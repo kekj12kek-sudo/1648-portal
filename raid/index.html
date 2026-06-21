@@ -400,14 +400,14 @@ function sFactionLabel(){
 }
 function sGetMapImg(faceKey){
   const IMG={
-    'lr_blue_A':'raid/images/左右分け青左上.jpg',
-    'lr_blue_B':'raid/images/左右分け青左下.jpg',
-    'lr_red_A':'raid/images/左右分け赤右上.jpg',
-    'lr_red_B':'raid/images/左右分け赤右下.jpg',
-    'ud_blue_A':'raid/images/上下分け青左上.jpg',
-    'ud_blue_B':'raid/images/上下分け青右上.jpg',
-    'ud_red_A':'raid/images/上下分け赤左下.jpg',
-    'ud_red_B':'raid/images/上下分け赤右下.jpg',
+    'lr_blue_A':'images/左右分け青左上.jpg',
+    'lr_blue_B':'images/左右分け青左下.jpg',
+    'lr_red_A':'images/左右分け赤右上.jpg',
+    'lr_red_B':'images/左右分け赤右下.jpg',
+    'ud_blue_A':'images/上下分け青左上.jpg',
+    'ud_blue_B':'images/上下分け青右上.jpg',
+    'ud_red_A':'images/上下分け赤左下.jpg',
+    'ud_red_B':'images/上下分け赤右下.jpg',
   };
   return IMG[`${SS.split}_${SS.faction}_${faceKey}`]||'';
 }
