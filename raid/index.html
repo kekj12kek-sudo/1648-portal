@@ -197,6 +197,30 @@ let fbApp=null, fbDb=null, roomKey='', roomMode='', roomRef=null, isRemoteApplyi
 try{fbApp=firebase.initializeApp(firebaseConfig);fbDb=firebase.database();}catch(e){console.warn('Firebase init failed',e);}
 
 // ============================================================
+// 部分同期（dirtyフィールド管理）
+// ============================================================
+// 編集系関数は markDirty('svs/pet') のようにフィールドパスを宣言する。
+// scheduleSave() がそれらをデバウンスしてまとめ、Firebase へは
+// roomRef.set() ではなく roomRef.update() で「変更箇所だけ」送信する。
+// これにより、Aがペット欄を保存してもBが編集中の敵情報フィールドは
+// 上書きされない（lost update を防止）。
+let dirtyPaths=new Set();
+function markDirty(...paths){for(const p of paths)dirtyPaths.add(p);}
+function getByPath(obj,path){return path.split('/').reduce((o,k)=>(o==null?undefined:o[k]),obj);}
+
+// 現在フォーカス中（編集中）のDOM要素が持つフィールドパス。
+// 受信した遠隔更新がこのパスに該当する場合、再描画で上書きしない。
+let focusedFieldPath=null;
+document.addEventListener('focusin',e=>{
+  const el=e.target.closest('[data-field]');
+  focusedFieldPath=el?el.getAttribute('data-field'):null;
+});
+document.addEventListener('focusout',e=>{
+  const el=e.target.closest('[data-field]');
+  if(el&&focusedFieldPath===el.getAttribute('data-field'))focusedFieldPath=null;
+});
+
+// ============================================================
 // 共通定数
 // ============================================================
 const REPO_SVS='https://kekj12kek-sudo.github.io/frost-dragon-app/';
@@ -364,7 +388,7 @@ function sGetBasePetMarch(mid){
 function sAdjust(mid,key,delta){
   if(!SS.adjust[mid])SS.adjust[mid]={march:0,petMarch:0};
   SS.adjust[mid][key]=(SS.adjust[mid][key]||0)+delta;
-  render();
+  markDirty('svs/adjust');scheduleSave();render();
 }
 function sFaceLabel(faceKey){
   if(SS.split==='lr'){const side=SS.faction==='blue'?'左':'右';return faceKey==='A'?`${side}上エリア`:`${side}下エリア`;}
@@ -474,7 +498,7 @@ function renderCalcModeSwitch(){
     </div>
   </div>`;
 }
-function fSetCalcMode(v){FS.calcMode=v;render();}
+function fSetCalcMode(v){FS.calcMode=v;markDirty('frost/calcMode');scheduleSave();render();}
 
 // ============================================================
 // SVS タブ実装
@@ -590,7 +614,8 @@ function sCityModal(){
 function sAsgn(key,id){
   if(id){if(SS.cityAssign[key]===id)delete SS.cityAssign[key];else{for(const k of Object.keys(SS.cityAssign)){if(SS.cityAssign[k]===id)delete SS.cityAssign[k];}SS.cityAssign[key]=id;}
   }else delete SS.cityAssign[key];
-  SS.modal=null;document.getElementById('cmov')?.remove();render();
+  SS.modal=null;document.getElementById('cmov')?.remove();
+  markDirty('svs/cityAssign');scheduleSave();render();
 }
 
 function rSvsBattle(el){
@@ -657,7 +682,7 @@ ${['A','B'].map(face=>{
         ${SS.pet[mid]?`<div class="ptp">
           <div style="font-size:11px;color:var(--text2);margin-bottom:6px">ペット開始時刻（押し忘れ補正）</div>
           <div class="row" style="margin-bottom:4px">
-            <input class="tinp" type="time" value="${fmtT(mid,SS)}" onchange="sSpetT(${mid},this.value)"/>
+            <input class="tinp" data-field="svs/petStart" type="time" value="${fmtT(mid,SS)}" onchange="sSpetT(${mid},this.value)"/>
             <button class="btn btn-xs" style="width:64px" onclick="sSpetN(${mid})">今すぐ</button>
             <span style="font-size:11px;color:var(--text2)">から2時間</span>
           </div>
@@ -866,9 +891,9 @@ function rFrostBattle(el){
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
         <div style="font-size:11px;color:var(--text2);width:40px;flex-shrink:0">通常</div>
-        <input class="inp-num" type="number" placeholder="秒" value="${m.march||''}" onchange="fSetMarch(${m.id},'march',this.value)"/>
+        <input class="inp-num" data-field="frost/members" type="number" placeholder="秒" value="${m.march||''}" onchange="fSetMarch(${m.id},'march',this.value)"/>
         <div style="font-size:11px;color:var(--green);width:52px;flex-shrink:0">🐾ペット</div>
-        <input class="inp-num" type="number" placeholder="秒" value="${m.petMarch||''}" onchange="fSetMarch(${m.id},'petMarch',this.value)"/>
+        <input class="inp-num" data-field="frost/members" type="number" placeholder="秒" value="${m.petMarch||''}" onchange="fSetMarch(${m.id},'petMarch',this.value)"/>
         <div style="font-size:11px;color:var(--text3)">秒</div>
       </div>
       <div class="row" style="margin-bottom:${FS.pet[m.id]?'6':'0'}px">
@@ -881,7 +906,7 @@ function rFrostBattle(el){
       ${FS.pet[m.id]?`<div class="ptp">
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">ペット開始時刻（押し忘れ補正）</div>
         <div class="row" style="margin-bottom:4px">
-          <input class="tinp" type="time" value="${fmtT(m.id,FS)}" onchange="fSpetT(${m.id},this.value)"/>
+          <input class="tinp" data-field="frost/petStart" type="time" value="${fmtT(m.id,FS)}" onchange="fSpetT(${m.id},this.value)"/>
           <button class="btn btn-xs" style="width:64px" onclick="fSpetN(${m.id})">今すぐ</button>
           <span style="font-size:11px;color:var(--text2)">から2時間</span>
         </div>
@@ -932,20 +957,20 @@ function fDelayRows(){
   const minKey=Math.min(...raw.map(r=>r.march-r.offset));
   return raw.map(r=>({...r,count:(r.march-r.offset)-minKey})).sort((a,b)=>a.slot-b.slot||b.count-a.count||b.march-a.march);
 }
-function fSetDelaySource(v){FS.delaySource=v;render();}
-function fSetDelayOrder(idx,val){FS.delayOrder[idx]=val;render();}
-function fSetDelayGap(idx,val){FS.delayGaps[idx]=Math.max(0,Math.min(99,parseInt(val||0)||0));render();}
+function fSetDelaySource(v){FS.delaySource=v;markDirty('frost/delaySource');scheduleSave();render();}
+function fSetDelayOrder(idx,val){FS.delayOrder[idx]=val;markDirty('frost/delayOrder');scheduleSave();render();}
+function fSetDelayGap(idx,val){FS.delayGaps[idx]=Math.max(0,Math.min(99,parseInt(val||0)||0));markDirty('frost/delayGaps');scheduleSave();render();}
 function fBumpDelayGap(idx,delta){
   const cur=Math.max(0,Math.min(99,parseInt((FS.delayGaps||[])[idx]||0)||0));
   FS.delayGaps[idx]=Math.max(0,Math.min(99,cur+delta));
-  render();
+  markDirty('frost/delayGaps');scheduleSave();render();
 }
 function renderDelayGapStepper(idx){
   const val=Math.max(0,Math.min(99,parseInt((FS.delayGaps||[])[idx]||0)||0));
   return `<div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><button class="btn btn-xs" style="width:34px;height:30px;padding:0" onclick="fBumpDelayGap(${idx},-1)">－</button><div style="min-width:42px;text-align:center;font-size:16px;font-weight:900;color:#f7d774">+${val}</div><button class="btn btn-xs" style="width:34px;height:30px;padding:0" onclick="fBumpDelayGap(${idx},1)">＋</button></div>`;
 }
-function fSetDelayAssign(id,val){FS.delayAssign[id]=val;render();}
-function fSetDelayCopyMode(v){FS.delayCopyMode=v;render();}
+function fSetDelayAssign(id,val){FS.delayAssign[id]=val;markDirty('frost/delayAssign');scheduleSave();render();}
+function fSetDelayCopyMode(v){FS.delayCopyMode=v;markDirty('frost/delayCopyMode');scheduleSave();render();}
 function renderFrostDelayCalc(){
   const ac=FS.members.filter(m=>FS.active.includes(m.id));
   const rows=fDelayRows();
@@ -1129,7 +1154,7 @@ ${all.length&&teams.length>1?`<div class="card"><div class="sec">チーム別同
     </div>`;}).join('')}
 </div>`:''}`;
 }
-function fSetBase(id){FS.baseId=id?parseInt(id):null;render();}
+function fSetBase(id){FS.baseId=id?parseInt(id):null;markDirty('frost/baseId');scheduleSave();render();}
 
 function rFrostCopy(el){
   const ac=FS.members.filter(m=>FS.active.includes(m.id));
@@ -1193,7 +1218,7 @@ function rFrostEnemy(el){
     </div>
     <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px">
       <button class="btn btn-xs" style="width:96px;flex-shrink:0;color:${e.pet?'var(--green)':'var(--text2)'}" onclick="fToggleEnemyPet(${i})">${e.pet?'🐾 ON':'🐾 OFF'}</button>
-      <input class="inp fl1" style="height:30px;font-size:12px" value="${escAttr(e.note||'')}" placeholder="備考" onchange="fSetEnemyNote(${i},this.value)"/>
+      <input class="inp fl1" data-field="${"frost/enemies/"+(e._id||'')}" style="height:30px;font-size:12px" value="${escAttr(e.note||'')}" placeholder="備考" onchange="fSetEnemyNote(${i},this.value)"/>
       <button class="btn btn-xs btn-danger" style="width:42px;padding:0;flex-shrink:0" onclick="fRmE(${i})">削除</button>
     </div>
   </div>`).join(''):'<div class="empty">敵情報なし</div>'}
@@ -1348,26 +1373,63 @@ function sendD(mode){
 // ============================================================
 // SVS アクション
 // ============================================================
-function sSplit(v){if(SS.split===v)return;SS.split=v;SS.faction='blue';SS.cityAssign={};render();}
-function sFaction(v){if(SS.faction===v)return;SS.faction=v;SS.cityAssign={};render();}
-function sPA(v){if(SS.placementA===v)return;SS.placementA=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='A')delete SS.cityAssign[k];}render();}
-function sPB(v){if(SS.placementB===v)return;SS.placementB=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='B')delete SS.cityAssign[k];}render();}
+function sSplit(v){
+  if(SS.split===v)return;SS.split=v;SS.faction='blue';SS.cityAssign={};
+  markDirty('svs/split','svs/faction','svs/cityAssign');scheduleSave();render();
+}
+function sFaction(v){
+  if(SS.faction===v)return;SS.faction=v;SS.cityAssign={};
+  markDirty('svs/faction','svs/cityAssign');scheduleSave();render();
+}
+function sPA(v){
+  if(SS.placementA===v)return;SS.placementA=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='A')delete SS.cityAssign[k];}
+  markDirty('svs/placementA','svs/cityAssign');scheduleSave();render();
+}
+function sPB(v){
+  if(SS.placementB===v)return;SS.placementB=v;for(const k of Object.keys(SS.cityAssign)){if(k[0]==='B')delete SS.cityAssign[k];}
+  markDirty('svs/placementB','svs/cityAssign');scheduleSave();render();
+}
 function sAddM(){
   const n=document.getElementById('snn')?.value?.trim();
   if(!n){toast('名前を入力してください');return;}
   if(SS.members.length>=20){toast('最大20名まで登録できます');return;}
   if(SS.members.find(m=>m.name===n)){toast('同じ名前が既に存在します');return;}
   SS.members.push({id:Date.now(),name:n,team:'A'});
-  document.getElementById('snn').value='';render();
+  document.getElementById('snn').value='';
+  markDirty('svs/members');scheduleSave();render();
 }
-function sRmv(id){SS.members=SS.members.filter(m=>m.id!==id);SS.active=SS.active.filter(a=>a!==id);for(const k of Object.keys(SS.cityAssign)){if(SS.cityAssign[k]===id)delete SS.cityAssign[k];}render();}
-function sToggleActive(mid){SS.active.includes(mid)?SS.active=SS.active.filter(a=>a!==mid):SS.active.push(mid);render();}
-function sAllJoin(){SS.active=[...new Set([...SS.active,...Object.values(SS.cityAssign)])];render();}
-function sAllLeave(){SS.active=[];render();}
-function sTp(id){SS.pet[id]?(SS.pet[id]=false,delete SS.petStart[id]):(SS.pet[id]=true,SS.petStart[id]=Date.now());render();}
-function sCTeam(id,t){const m=SS.members.find(m=>m.id===id);if(m)m.team=t;render();}
-function sSpetT(id,ts){const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);SS.petStart[id]=t.getTime();render();}
-function sSpetN(id){SS.petStart[id]=Date.now();render();}
+function sRmv(id){
+  SS.members=SS.members.filter(m=>m.id!==id);SS.active=SS.active.filter(a=>a!==id);for(const k of Object.keys(SS.cityAssign)){if(SS.cityAssign[k]===id)delete SS.cityAssign[k];}
+  markDirty('svs/members','svs/active','svs/cityAssign');scheduleSave();render();
+}
+function sToggleActive(mid){
+  SS.active.includes(mid)?SS.active=SS.active.filter(a=>a!==mid):SS.active.push(mid);
+  markDirty('svs/active');scheduleSave();render();
+}
+function sAllJoin(){
+  SS.active=[...new Set([...SS.active,...Object.values(SS.cityAssign)])];
+  markDirty('svs/active');scheduleSave();render();
+}
+function sAllLeave(){
+  SS.active=[];
+  markDirty('svs/active');scheduleSave();render();
+}
+function sTp(id){
+  SS.pet[id]?(SS.pet[id]=false,delete SS.petStart[id]):(SS.pet[id]=true,SS.petStart[id]=Date.now());
+  markDirty('svs/pet','svs/petStart');scheduleSave();render();
+}
+function sCTeam(id,t){
+  const m=SS.members.find(m=>m.id===id);if(m)m.team=t;
+  markDirty('svs/members');scheduleSave();render();
+}
+function sSpetT(id,ts){
+  const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);SS.petStart[id]=t.getTime();
+  markDirty('svs/petStart');scheduleSave();render();
+}
+function sSpetN(id){
+  SS.petStart[id]=Date.now();
+  markDirty('svs/petStart');scheduleSave();render();
+}
 function sAddE(){
   const n=document.getElementById('en')?.value?.trim();if(!n){toast('敵名を入力してください');return;}
   const sel=document.getElementById('em');
@@ -1375,10 +1437,23 @@ function sAddE(){
   const ms=placement==='6'?M6:M5;const ps=placement==='6'?P6:P5;
   const normalMarch=ms[idx],petMarch=ps[idx];
   const pet=document.getElementById('ep')?.checked||false;
-  SS.enemies.push({name:n,normalMarch,petMarch,march:normalMarch,pet,petStart:pet?Date.now():null});render();
+  const enemy={_id:'e'+Date.now()+Math.random().toString(36).slice(2,7),name:n,normalMarch,petMarch,march:normalMarch,pet,petStart:pet?Date.now():null};
+  SS.enemies.push(enemy);
+  markDirty('svs/enemies/'+enemy._id);scheduleSave();render();
 }
-function sToggleEnemyPet(i){const e=SS.enemies[i];if(!e)return;e.pet=!e.pet;e.petStart=e.pet?Date.now():null;render();}
-function sRmE(i){SS.enemies.splice(i,1);render();}
+function sToggleEnemyPet(i){
+  const e=SS.enemies[i];if(!e)return;
+  if(!e._id){e._id='e'+Date.now()+Math.random().toString(36).slice(2,7);}
+  e.pet=!e.pet;e.petStart=e.pet?Date.now():null;
+  markDirty('svs/enemies/'+e._id);scheduleSave();render();
+}
+function sRmE(i){
+  const e=SS.enemies[i];if(!e)return;
+  const id=e._id;
+  SS.enemies.splice(i,1);
+  if(id)markDirty('svs/enemies/'+id);else markDirty('svs/enemies');
+  scheduleSave();render();
+}
 
 // ============================================================
 // 霜竜 アクション
@@ -1389,55 +1464,137 @@ function fAddM(){
   if(FS.members.length>=20){toast('最大20名まで登録できます');return;}
   if(FS.members.find(m=>m.name===n)){toast('同じ名前が既に存在します');return;}
   FS.members.push({id:Date.now(),name:n,team:'A',march:null,petMarch:null});
-  document.getElementById('fnn').value='';render();
+  document.getElementById('fnn').value='';
+  markDirty('frost/members');scheduleSave();render();
 }
-function fRmv(id){FS.members=FS.members.filter(m=>m.id!==id);FS.active=FS.active.filter(a=>a!==id);delete FS.pet[id];render();}
-function fJoin(id){if(!FS.active.includes(id))FS.active.push(id);render();}
-function fLv(id){FS.active=FS.active.filter(a=>a!==id);render();}
-function fSetMarch(id,key,val){const m=FS.members.find(m=>m.id===id);if(m)m[key]=val?parseInt(val):null;saveAll();render();}
-function fTp(id){FS.pet[id]?(FS.pet[id]=false,delete FS.petStart[id]):(FS.pet[id]=true,FS.petStart[id]=Date.now());render();}
-function fCTeam(id,t){const m=FS.members.find(m=>m.id===id);if(m)m.team=t;render();}
-function fSpetT(id,ts){const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);FS.petStart[id]=t.getTime();render();}
-function fSpetN(id){FS.petStart[id]=Date.now();render();}
+function fRmv(id){
+  FS.members=FS.members.filter(m=>m.id!==id);FS.active=FS.active.filter(a=>a!==id);delete FS.pet[id];
+  markDirty('frost/members','frost/active','frost/pet');scheduleSave();render();
+}
+function fJoin(id){
+  if(!FS.active.includes(id))FS.active.push(id);
+  markDirty('frost/active');scheduleSave();render();
+}
+function fLv(id){
+  FS.active=FS.active.filter(a=>a!==id);
+  markDirty('frost/active');scheduleSave();render();
+}
+function fSetMarch(id,key,val){
+  const m=FS.members.find(m=>m.id===id);if(m)m[key]=val?parseInt(val):null;
+  markDirty('frost/members');scheduleSave();render();
+}
+function fTp(id){
+  FS.pet[id]?(FS.pet[id]=false,delete FS.petStart[id]):(FS.pet[id]=true,FS.petStart[id]=Date.now());
+  markDirty('frost/pet','frost/petStart');scheduleSave();render();
+}
+function fCTeam(id,t){
+  const m=FS.members.find(m=>m.id===id);if(m)m.team=t;
+  markDirty('frost/members');scheduleSave();render();
+}
+function fSpetT(id,ts){
+  const[h,mn]=ts.split(':').map(Number),now=new Date(),t=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,mn,0);if(t-now>43200000)t.setDate(t.getDate()-1);FS.petStart[id]=t.getTime();
+  markDirty('frost/petStart');scheduleSave();render();
+}
+function fSpetN(id){
+  FS.petStart[id]=Date.now();
+  markDirty('frost/petStart');scheduleSave();render();
+}
 function fAddE(){
   const n=document.getElementById('en')?.value?.trim();if(!n){toast('敵名を入力してください');return;}
   const note=document.getElementById('enote')?.value?.trim()||'';
-  FS.enemies.push({name:n,pet:document.getElementById('ep')?.checked||false,note});render();
+  const enemy={_id:'e'+Date.now()+Math.random().toString(36).slice(2,7),name:n,pet:document.getElementById('ep')?.checked||false,note};
+  FS.enemies.push(enemy);
+  markDirty('frost/enemies/'+enemy._id);scheduleSave();render();
 }
-function fToggleEnemyPet(i){const e=FS.enemies[i];if(!e)return;e.pet=!e.pet;render();}
-function fSetEnemyNote(i,v){const e=FS.enemies[i];if(!e)return;e.note=v;render();}
-function fRmE(i){FS.enemies.splice(i,1);render();}
+function fToggleEnemyPet(i){
+  const e=FS.enemies[i];if(!e)return;
+  if(!e._id){e._id='e'+Date.now()+Math.random().toString(36).slice(2,7);}
+  e.pet=!e.pet;
+  markDirty('frost/enemies/'+e._id);scheduleSave();render();
+}
+function fSetEnemyNote(i,v){
+  const e=FS.enemies[i];if(!e)return;
+  if(!e._id){e._id='e'+Date.now()+Math.random().toString(36).slice(2,7);}
+  e.note=v;
+  markDirty('frost/enemies/'+e._id);scheduleSave();
+  // ノート入力中はキー入力のたびに全体再描画すると入力欄からフォーカスが
+  // 外れてしまうため、ここでは render() を呼ばない（DOM側の値は既にユーザー入力済み）。
+}
+function fRmE(i){
+  const e=FS.enemies[i];if(!e)return;
+  const id=e._id;
+  FS.enemies.splice(i,1);
+  if(id)markDirty('frost/enemies/'+id);else markDirty('frost/enemies');
+  scheduleSave();render();
+}
 
 // ============================================================
 // 保存・復元
 // ============================================================
+// enemies は配列のまま扱うとFirebase送信時に「全件まるごと」になり
+// 競合の元になるため、送信用にだけ _id をキーとしたオブジェクトへ変換する。
+// ローカルの SS.enemies / FS.enemies はこれまで通り配列のまま。
+function ensureEnemyIds(arr){
+  for(const e of arr){if(!e._id)e._id='e'+Date.now()+Math.random().toString(36).slice(2,7);}
+  return arr;
+}
+function enemiesToObj(arr){
+  const o={};for(const e of ensureEnemyIds(arr))o[e._id]=e;return o;
+}
+function enemiesFromObj(obj){
+  if(Array.isArray(obj))return ensureEnemyIds(obj); // 後方互換（旧形式が残っていた場合）
+  return Object.values(obj||{});
+}
+
 function getStatePayload(){
   return {
-    version:1,
+    version:2,
     updatedAt:Date.now(),
     svs:{
       split:SS.split,faction:SS.faction,placementA:SS.placementA,placementB:SS.placementB,
-      members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,enemies:SS.enemies,adjust:SS.adjust
+      members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,
+      enemies:enemiesToObj(SS.enemies),adjust:SS.adjust
     },
     frost:{
-      members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,enemies:FS.enemies,baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
+      members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,
+      enemies:enemiesToObj(FS.enemies),baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,
+      delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
     }
   };
+}
+// フィールドパス（例 'svs/pet'）が、今ローカルで編集中の項目と衝突するか判定。
+// 衝突する場合はその1パスだけ遠隔反映をスキップし、入力中の巻き戻りを防ぐ。
+function isPathProtected(path){
+  if(!focusedFieldPath)return false;
+  return focusedFieldPath===path||focusedFieldPath.startsWith(path+'/');
 }
 function applyStatePayload(d){
   if(!d)return;
   const s=d.svs||d.SS||{};
-  if(s.split)SS.split=s.split;if(s.faction)SS.faction=s.faction;
-  if(s.placementA)SS.placementA=s.placementA;if(s.placementB)SS.placementB=s.placementB;
-  if(s.members)SS.members=s.members;if(s.cityAssign)SS.cityAssign=s.cityAssign;
-  if(s.active)SS.active=s.active;if(s.pet)SS.pet=s.pet;if(s.petStart)SS.petStart=s.petStart;
-  if(s.enemies)SS.enemies=s.enemies;if(s.adjust)SS.adjust=s.adjust;
+  if(s.split&&!isPathProtected('svs/split'))SS.split=s.split;
+  if(s.faction&&!isPathProtected('svs/faction'))SS.faction=s.faction;
+  if(s.placementA&&!isPathProtected('svs/placementA'))SS.placementA=s.placementA;
+  if(s.placementB&&!isPathProtected('svs/placementB'))SS.placementB=s.placementB;
+  if(s.members&&!isPathProtected('svs/members'))SS.members=s.members;
+  if(s.cityAssign&&!isPathProtected('svs/cityAssign'))SS.cityAssign=s.cityAssign;
+  if(s.active&&!isPathProtected('svs/active'))SS.active=s.active;
+  if(s.pet&&!isPathProtected('svs/pet'))SS.pet=s.pet;
+  if(s.petStart&&!isPathProtected('svs/petStart'))SS.petStart=s.petStart;
+  if(s.enemies&&!isPathProtected('svs/enemies'))SS.enemies=enemiesFromObj(s.enemies);
+  if(s.adjust&&!isPathProtected('svs/adjust'))SS.adjust=s.adjust;
   const f=d.frost||d.FS||{};
-  if(f.members)FS.members=f.members;if(f.active)FS.active=f.active;
-  if(f.pet)FS.pet=f.pet;if(f.petStart)FS.petStart=f.petStart;if(f.enemies)FS.enemies=f.enemies;
-  if(f.baseId!==undefined)FS.baseId=f.baseId;
-  if(f.calcMode)FS.calcMode=f.calcMode;if(f.delaySource)FS.delaySource=f.delaySource;
-  if(f.delayOrder)FS.delayOrder=f.delayOrder;if(f.delayGaps)FS.delayGaps=f.delayGaps;if(f.delayAssign)FS.delayAssign=f.delayAssign;if(f.delayCopyMode)FS.delayCopyMode=f.delayCopyMode;
+  if(f.members&&!isPathProtected('frost/members'))FS.members=f.members;
+  if(f.active&&!isPathProtected('frost/active'))FS.active=f.active;
+  if(f.pet&&!isPathProtected('frost/pet'))FS.pet=f.pet;
+  if(f.petStart&&!isPathProtected('frost/petStart'))FS.petStart=f.petStart;
+  if(f.enemies&&!isPathProtected('frost/enemies'))FS.enemies=enemiesFromObj(f.enemies);
+  if(f.baseId!==undefined&&!isPathProtected('frost/baseId'))FS.baseId=f.baseId;
+  if(f.calcMode&&!isPathProtected('frost/calcMode'))FS.calcMode=f.calcMode;
+  if(f.delaySource&&!isPathProtected('frost/delaySource'))FS.delaySource=f.delaySource;
+  if(f.delayOrder&&!isPathProtected('frost/delayOrder'))FS.delayOrder=f.delayOrder;
+  if(f.delayGaps&&!isPathProtected('frost/delayGaps'))FS.delayGaps=f.delayGaps;
+  if(f.delayAssign&&!isPathProtected('frost/delayAssign'))FS.delayAssign=f.delayAssign;
+  if(f.delayCopyMode&&!isPathProtected('frost/delayCopyMode'))FS.delayCopyMode=f.delayCopyMode;
 }
 function saveLocal(){
   try{localStorage.setItem('app_svs',JSON.stringify({
@@ -1448,16 +1605,31 @@ function saveLocal(){
     members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,enemies:FS.enemies,baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
   }));}catch(e){}
 }
+// 旧API互換: 呼び出し側で markDirty せずに saveAll() だけ呼んでいる箇所が
+// 残っていても、全フィールドdirty扱いにして従来通り動く（保険）。
 function saveAll(){
+  markDirty('svs/split','svs/faction','svs/placementA','svs/placementB','svs/members','svs/cityAssign',
+    'svs/active','svs/pet','svs/petStart','svs/enemies','svs/adjust',
+    'frost/members','frost/active','frost/pet','frost/petStart','frost/enemies','frost/baseId',
+    'frost/calcMode','frost/delaySource','frost/delayOrder','frost/delayGaps','frost/delayAssign','frost/delayCopyMode');
+  scheduleSave();
+}
+function scheduleSave(){
   saveLocal();
   if(isRemoteApplying)return;
-  if(fbDb&&roomRef&&roomKey){
-    clearTimeout(fbSaveTimer);
-    fbSaveTimer=setTimeout(()=>{
-      if(isRemoteApplying)return;
-      try{roomRef.set(getStatePayload()).catch(()=>{});}catch(e){}
-    },250);
-  }
+  if(!fbDb||!roomRef||!roomKey){dirtyPaths.clear();return;}
+  clearTimeout(fbSaveTimer);
+  fbSaveTimer=setTimeout(()=>{
+    if(isRemoteApplying||dirtyPaths.size===0)return;
+    const payload=getStatePayload();
+    const updates={};
+    for(const path of dirtyPaths){
+      const val=getByPath(payload,path);
+      updates[path]=(val===undefined)?null:val;
+    }
+    dirtyPaths.clear();
+    try{roomRef.update(updates).catch(()=>{});}catch(e){}
+  },250);
 }
 function loadAll(){
   try{
@@ -1466,12 +1638,12 @@ function loadAll(){
     if(s.placementA)SS.placementA=s.placementA;if(s.placementB)SS.placementB=s.placementB;
     if(s.members)SS.members=s.members;if(s.cityAssign)SS.cityAssign=s.cityAssign;
     if(s.active)SS.active=s.active;if(s.pet)SS.pet=s.pet;if(s.petStart)SS.petStart=s.petStart;
-    if(s.enemies)SS.enemies=s.enemies;if(s.adjust)SS.adjust=s.adjust;
+    if(s.enemies)SS.enemies=enemiesFromObj(s.enemies);if(s.adjust)SS.adjust=s.adjust;
   }catch(e){}
   try{
     const f=JSON.parse(localStorage.getItem('app_frost')||'{}');
     if(f.members)FS.members=f.members;if(f.active)FS.active=f.active;
-    if(f.pet)FS.pet=f.pet;if(f.petStart)FS.petStart=f.petStart;if(f.enemies)FS.enemies=f.enemies;if(f.baseId!==undefined)FS.baseId=f.baseId;
+    if(f.pet)FS.pet=f.pet;if(f.petStart)FS.petStart=f.petStart;if(f.enemies)FS.enemies=enemiesFromObj(f.enemies);if(f.baseId!==undefined)FS.baseId=f.baseId;
   if(f.calcMode)FS.calcMode=f.calcMode;if(f.delaySource)FS.delaySource=f.delaySource;
   if(f.delayOrder)FS.delayOrder=f.delayOrder;if(f.delayGaps)FS.delayGaps=f.delayGaps;if(f.delayAssign)FS.delayAssign=f.delayAssign;if(f.delayCopyMode)FS.delayCopyMode=f.delayCopyMode;
   }catch(e){}
@@ -1489,6 +1661,7 @@ function connectRoom(mode,key){
   }
   try{if(roomRef)roomRef.off();}catch(e){}
   roomRef=null;
+  dirtyPaths.clear();
   if(!fbDb||!roomKey){fetchMembers();return;}
   roomRef=fbDb.ref(roomPath(mode,roomKey));
   let first=true;
@@ -1763,8 +1936,12 @@ function startVideo(mode){
 // ============================================================
 // 初期化
 // ============================================================
+// render() は描画専用に変更。以前は呼ぶたびに全フィールドを
+// Firebaseへ送信していたが（lost updateの原因）、現在は各編集関数が
+// markDirty()で「自分が変更したフィールドだけ」を宣言し、
+// scheduleSave()でデバウンスして部分送信する。
 const _r=render;
-window.render=function(){_r();saveAll();};
+window.render=function(){_r();};
 
 setInterval(()=>{
   const e=document.getElementById('hdr-clock');
