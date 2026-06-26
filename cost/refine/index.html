@@ -2,95 +2,196 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>精錬火晶計画</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;min-height:100%}
 body{
-  font-family:"Segoe UI",sans-serif;color:#fff;background:#05080d;
-  min-height:100vh;overflow-x:hidden;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 72px)
+  font-family:"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;
+  color:#fff;background:#05080d;
+  min-height:100vh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 72px)
 }
+
+/* ─── 背景 ─── */
 body::before{
   content:"";position:fixed;inset:0;z-index:-3;
-  background:url("refine-bg.jpg") center center/cover no-repeat;
+  background:url("./refine-bg.jpg") center center/cover no-repeat;
 }
-body::after{content:"";position:fixed;inset:0;z-index:-2;background:rgba(0,0,0,.34)}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-2;
+  background:rgba(0,0,0,.50)
+}
+
+/* ─── ページ本体 ─── */
 .page{
-  width:100%;max-width:520px;margin:0 auto;
-  padding:calc(env(safe-area-inset-top,0px) + 22px) 14px 24px
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 14px 24px
 }
-.header{margin-bottom:14px;text-align:left}
+
+/* ─── ヘッダー ─── */
+.header{margin-bottom:10px}
 .logo{
-  font-size:23px;font-weight:1000;letter-spacing:.02em;
-  text-shadow:0 0 12px rgba(255,216,132,.6),0 0 24px rgba(255,146,54,.3)
+  font-size:22px;font-weight:900;letter-spacing:.03em;
+  text-shadow:0 0 14px rgba(255,120,40,.75),0 0 28px rgba(255,60,10,.35)
 }
-.sub{margin-top:4px;font-size:12px;color:rgba(218,238,255,.82);line-height:1.45}
-.ui-visual{
-  width:100%;overflow:hidden;border-radius:18px;margin:0 0 12px;
-  border:1px solid rgba(255,184,77,.30);
-  background:rgba(0,0,0,.28);
-  box-shadow:0 14px 42px rgba(0,0,0,.36),0 0 26px rgba(255,96,26,.12);
+.sub{
+  margin-top:5px;font-size:12px;
+  color:rgba(255,220,190,.78);line-height:1.5
 }
-.ui-visual img{display:block;width:100%;height:auto}
+
+/* ─── UI ビジュアル画像 ─── */
+.refine-visual{
+  width:100%;
+  display:block;
+  border-radius:16px;
+  margin:12px 0 14px;
+  box-shadow:0 12px 36px rgba(0,0,0,.55),0 0 24px rgba(255,80,20,.18);
+  border:1px solid rgba(255,120,40,.38);
+  background:rgba(0,0,0,.3);
+}
+
+/* ─── メインカード ─── */
 .card{
-  background:rgba(6,16,31,.66);border:1px solid rgba(142,213,255,.24);
-  border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.38);
-  backdrop-filter:blur(10px);padding:12px
+  background:rgba(6,14,28,.70);
+  border:1px solid rgba(255,120,40,.22);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);
+  backdrop-filter:blur(12px);
+  padding:14px
 }
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+
+/* ─── タブ ─── */
+.tabs{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;margin-bottom:14px
+}
 .tab-btn{
-  border:1px solid rgba(255,255,255,.18);border-radius:13px;padding:10px 8px;
-  background:rgba(255,255,255,.08);color:rgba(255,255,255,.78);
-  font-size:13px;font-weight:900;-webkit-tap-highlight-color:transparent
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:13px;padding:10px 8px;
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.75);
+  font-size:13px;font-weight:900;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s,border-color .15s
 }
 .tab-btn.active{
-  background:linear-gradient(135deg,rgba(255,178,58,.95),rgba(255,112,37,.86));
-  color:#170b02;border-color:rgba(255,220,140,.85);
-  box-shadow:0 0 18px rgba(255,162,50,.25)
+  background:linear-gradient(135deg,rgba(255,120,40,.92),rgba(220,60,10,.88));
+  color:#fff;
+  border-color:rgba(255,180,100,.7);
+  box-shadow:0 0 18px rgba(255,90,20,.3)
 }
+
+/* ─── パネル ─── */
 .panel{display:none}.panel.active{display:block}
+
+/* ─── 入力 ─── */
 .field{margin:10px 0 12px}
-label{display:block;font-size:12px;font-weight:900;color:#d7efff;margin-bottom:6px}
-input{
-  width:100%;height:44px;border-radius:12px;border:1px solid rgba(156,219,255,.28);
-  background:rgba(0,0,0,.38);color:#fff;font-size:18px;font-weight:900;
-  padding:0 12px;outline:none
+label{
+  display:block;font-size:12px;font-weight:900;
+  color:#ffd4b0;margin-bottom:6px
 }
-input:focus{border-color:#ffc34a;box-shadow:0 0 0 3px rgba(255,195,74,.16)}
-.hint{font-size:11px;color:rgba(222,241,255,.72);margin-top:4px;line-height:1.4}
-.notice{
-  margin:12px 0;padding:10px 11px;border-radius:13px;
-  background:rgba(255,193,74,.12);border:1px solid rgba(255,211,122,.32);
-  color:rgba(255,244,218,.95);font-size:12px;line-height:1.55
+input[type=number]{
+  width:100%;height:44px;border-radius:12px;
+  border:1px solid rgba(255,140,60,.30);
+  background:rgba(0,0,0,.40);
+  color:#fff;font-size:18px;font-weight:900;
+  padding:0 12px;outline:none;
+  -moz-appearance:textfield;
 }
-.notice-title{font-weight:1000;margin-bottom:3px}
-.result-title{font-size:13px;font-weight:1000;margin:12px 0 8px;color:#fff}
-.table-wrap{width:100%;overflow-x:auto;border-radius:13px;border:1px solid rgba(255,255,255,.14)}
-table{width:100%;border-collapse:collapse;background:rgba(0,0,0,.24);min-width:330px}
-th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.1);font-size:12px;text-align:right;white-space:nowrap}
-th{background:rgba(255,255,255,.08);color:#bfeaff;font-size:11px;font-weight:1000}
-th:first-child,td:first-child{text-align:left;font-weight:1000;color:#fff}
-tr:last-child td{border-bottom:none}
-.empty{color:rgba(255,255,255,.45)}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]:focus{
+  border-color:#ff8c30;
+  box-shadow:0 0 0 3px rgba(255,120,40,.18)
+}
+
+/* ─── 不足表示 ─── */
 .lack-box{
-  margin:8px 0 10px;padding:9px 10px;border-radius:12px;
-  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  margin:8px 0 10px;padding:9px 12px;
+  border-radius:12px;
+  background:rgba(255,80,10,.10);
+  border:1px solid rgba(255,140,60,.22);
   display:flex;align-items:center;justify-content:space-between;gap:10px
 }
-.lack-box span:first-child{font-size:12px;color:rgba(220,240,255,.76);font-weight:900}
-.lack-box span:last-child{font-size:18px;color:#ffd787;font-weight:1000}
+.lack-box span:first-child{
+  font-size:12px;color:rgba(255,220,180,.78);font-weight:900
+}
+.lack-box span:last-child{
+  font-size:18px;color:#ffb87a;font-weight:1000
+}
+
+/* ─── 注意事項 ─── */
+.notice{
+  margin:10px 0 12px;padding:10px 11px;
+  border-radius:13px;
+  background:rgba(255,160,50,.10);
+  border:1px solid rgba(255,200,100,.28);
+  color:rgba(255,240,210,.90);
+  font-size:12px;line-height:1.6
+}
+.notice-title{font-weight:900;margin-bottom:3px}
+
+/* ─── 結果テーブル ─── */
+.result-title{
+  font-size:13px;font-weight:900;
+  margin:12px 0 8px;color:#ffd4b0
+}
+.table-wrap{
+  width:100%;overflow-x:auto;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.13)
+}
+table{
+  width:100%;border-collapse:collapse;
+  background:rgba(0,0,0,.22);min-width:300px
+}
+th,td{
+  padding:9px 8px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+  font-size:12px;text-align:right;white-space:nowrap
+}
+th{
+  background:rgba(255,80,20,.15);
+  color:#ffcfa0;font-size:11px;font-weight:900
+}
+th:first-child,td:first-child{
+  text-align:left;font-weight:900;color:#fff
+}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+.empty{color:rgba(255,255,255,.38)}
+
+/* ─── 戻るボタン ─── */
 .back-btn{
-  position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:9999;
-  min-height:38px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.28);
-  background:rgba(0,0,0,.72);color:#fff;text-decoration:none;font-size:12px;font-weight:900;
-  display:inline-flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);
-  box-shadow:0 8px 24px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent
+  position:fixed;left:10px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+  z-index:9999;min-height:38px;padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(0,0,0,.75);
+  color:#fff;text-decoration:none;font-size:12px;font-weight:900;
+  display:inline-flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+  box-shadow:0 8px 24px rgba(0,0,0,.40);
+  -webkit-tap-highlight-color:transparent
 }
 .back-btn:active{transform:scale(.96)}
-@media(max-width:360px){.logo{font-size:21px}th,td{padding:8px 6px;font-size:11px}.tab-btn{font-size:12px}}
+
+@media(max-width:360px){
+  .logo{font-size:20px}
+  th,td{padding:8px 6px;font-size:11px}
+  .tab-btn{font-size:12px}
+}
 </style>
 <script>
+/* ─── 認証チェック・直打ち防止 ─── */
 (function(){
   const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
   const PROFILE_SETUP_URL="/1648-portal/profile-setup/";
@@ -102,6 +203,7 @@ tr:last-child td{border-bottom:none}
     if(!data || data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
     if(data.status==="pending_profile"){ location.replace(PROFILE_SETUP_URL); return; }
     if(data.status!=="active"){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
+    /* 直打ち防止：portal_entry と refine_plan_entry の両方を要求 */
     if(sessionStorage.getItem("portal_entry")!=="1" || sessionStorage.getItem("refine_plan_entry")!=="1"){
       location.replace(COST_URL);
       return;
@@ -114,23 +216,29 @@ tr:last-child td{border-bottom:none}
 </script>
 </head>
 <body>
+
 <div class="page">
+
+  <!-- ヘッダー -->
   <header class="header">
-    <div class="logo">精錬火晶計画</div>
+    <div class="logo">🔥 精錬火晶計画</div>
     <div class="sub">手持ち火晶から作れる数、目標までの期間と必要火晶を確認できます。</div>
   </header>
 
-  <div class="ui-visual" aria-label="精錬火晶計画イメージ">
-    <img src="./refine-ui.jpg" alt="火晶から精錬火晶へ精製するイメージ">
-  </div>
+  <!-- UI ビジュアル（仕様必須） -->
+  <img src="./refine-ui.jpg" alt="火晶精製装置 — 通常火晶から精錬火晶へ" class="refine-visual">
 
+  <!-- メインカード -->
   <main class="card">
-    <div class="tabs" role="tablist" aria-label="計算切替">
-      <button class="tab-btn active" type="button" data-tab="owned">手持ち火晶</button>
-      <button class="tab-btn" type="button" data-tab="target">必要精錬火晶</button>
+
+    <!-- タブ -->
+    <div class="tabs" role="tablist" aria-label="計算モード切替">
+      <button class="tab-btn active" type="button" data-tab="owned" role="tab" aria-selected="true">手持ち火晶</button>
+      <button class="tab-btn" type="button" data-tab="target" role="tab" aria-selected="false">必要精錬火晶</button>
     </div>
 
-    <section class="panel active" id="panel-owned">
+    <!-- タブ①：手持ち火晶 -->
+    <section class="panel active" id="panel-owned" role="tabpanel">
       <div class="field">
         <label for="ownedCrystal">保有火晶</label>
         <input id="ownedCrystal" type="number" inputmode="numeric" min="0" placeholder="例：8000">
@@ -144,13 +252,16 @@ tr:last-child td{border-bottom:none}
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>運用</th><th>期待精錬火晶</th><th>持続週</th></tr></thead>
+          <thead>
+            <tr><th>運用</th><th>期待精錬火晶</th><th>持続週</th></tr>
+          </thead>
           <tbody id="ownedRows"></tbody>
         </table>
       </div>
     </section>
 
-    <section class="panel" id="panel-target">
+    <!-- タブ②：必要精錬火晶 -->
+    <section class="panel" id="panel-target" role="tabpanel">
       <div class="field">
         <label for="targetRefine">目標精錬火晶</label>
         <input id="targetRefine" type="number" inputmode="numeric" min="0" placeholder="例：500">
@@ -160,7 +271,10 @@ tr:last-child td{border-bottom:none}
         <input id="currentRefine" type="number" inputmode="numeric" min="0" placeholder="例：120">
       </div>
 
-      <div class="lack-box"><span>不足精錬火晶</span><span id="lackValue">0個</span></div>
+      <div class="lack-box">
+        <span>不足精錬火晶</span>
+        <span id="lackValue">0個</span>
+      </div>
 
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
@@ -170,77 +284,109 @@ tr:last-child td{border-bottom:none}
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>運用</th><th>必要期間</th><th>必要火晶</th></tr></thead>
+          <thead>
+            <tr><th>運用</th><th>必要期間</th><th>必要火晶</th></tr>
+          </thead>
           <tbody id="targetRows"></tbody>
         </table>
       </div>
     </section>
+
   </main>
 </div>
 
-<a class="back-btn" href="/1648-portal/cost/">コストRoomへ戻る</a>
+<a class="back-btn" href="/1648-portal/cost/">← コストRoomへ戻る</a>
 
 <script>
+/* ─── マスターデータ ─── */
 const refineMaster=[
- {week:20,cost:330,expected:29.0},
- {week:26,cost:540,expected:41.9},
- {week:40,cost:1240,expected:72.0},
- {week:46,cost:1690,expected:91.1},
- {week:60,cost:3090,expected:135.6},
- {week:66,cost:3780,expected:156.2},
- {week:80,cost:5600,expected:204.3},
- {week:86,cost:6470,expected:226.6},
- {week:100,cost:8710,expected:278.5}
+  {week:20, cost:330,  expected:29.0},
+  {week:26, cost:540,  expected:41.9},
+  {week:40, cost:1240, expected:72.0},
+  {week:46, cost:1690, expected:91.1},
+  {week:60, cost:3090, expected:135.6},
+  {week:66, cost:3780, expected:156.2},
+  {week:80, cost:5600, expected:204.3},
+  {week:86, cost:6470, expected:226.6},
+  {week:100,cost:8710, expected:278.5}
 ];
 
-const yen=new Intl.NumberFormat("ja-JP");
-const ownedRows=document.getElementById("ownedRows");
-const targetRows=document.getElementById("targetRows");
-const ownedCrystal=document.getElementById("ownedCrystal");
-const targetRefine=document.getElementById("targetRefine");
-const currentRefine=document.getElementById("currentRefine");
-const lackValue=document.getElementById("lackValue");
+/* ─── ユーティリティ ─── */
+const fmt=new Intl.NumberFormat("ja-JP");
+const ownedRows   =document.getElementById("ownedRows");
+const targetRows  =document.getElementById("targetRows");
+const ownedInput  =document.getElementById("ownedCrystal");
+const targetInput =document.getElementById("targetRefine");
+const currentInput=document.getElementById("currentRefine");
+const lackSpan    =document.getElementById("lackValue");
 
-function n(v){const x=Number(v);return Number.isFinite(x)&&x>0?x:0}
-function floorInt(v){return Math.max(0,Math.floor(v))}
-function floor1(v){return Math.max(0,Math.floor(v*10)/10)}
-function fmtInt(v){return yen.format(Math.max(0,Math.floor(v)))}
-function fmtWeek(v){return yen.format(floor1(v).toFixed(1))}
+function n(v){const x=Number(v);return(Number.isFinite(x)&&x>0)?x:0}
+function fmtInt(v){return fmt.format(Math.max(0,Math.floor(v)))}
+function fmtFloor1(v){
+  const f=Math.max(0,Math.floor(v*10)/10);
+  return fmt.format(f.toFixed(1));
+}
 function empty(){return '<span class="empty">—</span>'}
 
+/* ─── タブ①：手持ち火晶 → 期待精錬火晶 & 持続週 ─── */
 function renderOwned(){
-  const owned=n(ownedCrystal.value);
+  const owned=n(ownedInput.value);
   ownedRows.innerHTML=refineMaster.map(m=>{
-    if(!owned){return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`}
-    const weeks=owned/m.cost;
-    const expected=weeks*m.expected;
-    return `<tr><td>週${m.week}回</td><td>${fmtInt(expected)}個</td><td>${fmtWeek(weeks)}週</td></tr>`;
+    if(!owned){
+      return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    }
+    const weeks  = owned / m.cost;
+    const expect = weeks * m.expected;
+    return `<tr>
+      <td>週${m.week}回</td>
+      <td>${fmtInt(expect)}個</td>
+      <td>${fmtFloor1(weeks)}週</td>
+    </tr>`;
   }).join("");
 }
 
+/* ─── タブ②：目標精錬火晶 → 必要期間・必要火晶 ─── */
 function renderTarget(){
-  const target=n(targetRefine.value);
-  const current=n(currentRefine.value);
-  const lack=Math.max(0,target-current);
-  lackValue.textContent=fmtInt(lack)+"個";
+  const target =n(targetInput.value);
+  const current=n(currentInput.value);
+  const lack   =Math.max(0,target-current);
+  lackSpan.textContent=fmtInt(lack)+"個";
+
   targetRows.innerHTML=refineMaster.map(m=>{
-    if(!lack){return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`}
+    if(!lack){
+      return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    }
     const weeks=Math.ceil(lack/m.expected);
-    const days=weeks*7;
-    const cost=weeks*m.cost;
-    return `<tr><td>週${m.week}回</td><td>約${yen.format(weeks)}週（約${yen.format(days)}日）</td><td>${fmtInt(cost)}個</td></tr>`;
+    const days =weeks*7;
+    const cost =weeks*m.cost;
+    return `<tr>
+      <td>週${m.week}回</td>
+      <td>約${fmt.format(weeks)}週（約${fmt.format(days)}日）</td>
+      <td>${fmtInt(cost)}個</td>
+    </tr>`;
   }).join("");
 }
 
+/* ─── タブ切替 ─── */
 function switchTab(name){
-  document.querySelectorAll(".tab-btn").forEach(btn=>btn.classList.toggle("active",btn.dataset.tab===name));
-  document.querySelectorAll(".panel").forEach(panel=>panel.classList.toggle("active",panel.id==="panel-"+name));
+  document.querySelectorAll(".tab-btn").forEach(btn=>{
+    const active=btn.dataset.tab===name;
+    btn.classList.toggle("active",active);
+    btn.setAttribute("aria-selected",active?"true":"false");
+  });
+  document.querySelectorAll(".panel").forEach(p=>{
+    p.classList.toggle("active",p.id==="panel-"+name);
+  });
 }
 
-document.querySelectorAll(".tab-btn").forEach(btn=>btn.addEventListener("click",()=>switchTab(btn.dataset.tab)));
-ownedCrystal.addEventListener("input",renderOwned);
-targetRefine.addEventListener("input",renderTarget);
-currentRefine.addEventListener("input",renderTarget);
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>switchTab(btn.dataset.tab));
+});
+
+ownedInput.addEventListener("input",renderOwned);
+targetInput.addEventListener("input",renderTarget);
+currentInput.addEventListener("input",renderTarget);
+
 renderOwned();
 renderTarget();
 </script>
