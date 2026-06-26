@@ -15,8 +15,6 @@ body{
   overflow-y:auto;
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 72px)
 }
-
-/* ─── 背景 ─── */
 body::before{
   content:"";position:fixed;inset:0;z-index:-3;
   background:url("./refine-bg.jpg") center center/cover no-repeat;
@@ -25,16 +23,10 @@ body::after{
   content:"";position:fixed;inset:0;z-index:-2;
   background:rgba(0,0,0,.50)
 }
-
-/* ─── ページ本体 ─── */
 .page{
-  width:100%;
-  max-width:420px;
-  margin:0 auto;
+  width:100%;max-width:420px;margin:0 auto;
   padding:calc(env(safe-area-inset-top,0px) + 20px) 14px 24px
 }
-
-/* ─── ヘッダー ─── */
 .header{margin-bottom:10px}
 .logo{
   font-size:22px;font-weight:900;letter-spacing:.03em;
@@ -44,19 +36,13 @@ body::after{
   margin-top:5px;font-size:12px;
   color:rgba(255,220,190,.78);line-height:1.5
 }
-
-/* ─── UI ビジュアル画像 ─── */
 .refine-visual{
-  width:100%;
-  display:block;
-  border-radius:16px;
+  width:100%;display:block;border-radius:16px;
   margin:12px 0 14px;
   box-shadow:0 12px 36px rgba(0,0,0,.55),0 0 24px rgba(255,80,20,.18);
   border:1px solid rgba(255,120,40,.38);
   background:rgba(0,0,0,.3);
 }
-
-/* ─── メインカード ─── */
 .card{
   background:rgba(6,14,28,.70);
   border:1px solid rgba(255,120,40,.22);
@@ -65,125 +51,72 @@ body::after{
   backdrop-filter:blur(12px);
   padding:14px
 }
-
-/* ─── タブ ─── */
-.tabs{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:8px;margin-bottom:14px
-}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .tab-btn{
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:13px;padding:10px 8px;
-  background:rgba(255,255,255,.07);
-  color:rgba(255,255,255,.75);
-  font-size:13px;font-weight:900;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  transition:background .15s,border-color .15s
+  border:1px solid rgba(255,255,255,.18);border-radius:13px;padding:10px 8px;
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.75);
+  font-size:13px;font-weight:900;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s
 }
 .tab-btn.active{
   background:linear-gradient(135deg,rgba(255,120,40,.92),rgba(220,60,10,.88));
-  color:#fff;
-  border-color:rgba(255,180,100,.7);
+  color:#fff;border-color:rgba(255,180,100,.7);
   box-shadow:0 0 18px rgba(255,90,20,.3)
 }
-
-/* ─── パネル ─── */
 .panel{display:none}.panel.active{display:block}
-
-/* ─── 入力 ─── */
 .field{margin:10px 0 12px}
-label{
-  display:block;font-size:12px;font-weight:900;
-  color:#ffd4b0;margin-bottom:6px
-}
+label{display:block;font-size:12px;font-weight:900;color:#ffd4b0;margin-bottom:6px}
 input[type=number]{
   width:100%;height:44px;border-radius:12px;
   border:1px solid rgba(255,140,60,.30);
-  background:rgba(0,0,0,.40);
-  color:#fff;font-size:18px;font-weight:900;
-  padding:0 12px;outline:none;
+  background:rgba(0,0,0,.40);color:#fff;
+  font-size:18px;font-weight:900;padding:0 12px;outline:none;
   -moz-appearance:textfield;
 }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
 input[type=number]:focus{
-  border-color:#ff8c30;
-  box-shadow:0 0 0 3px rgba(255,120,40,.18)
+  border-color:#ff8c30;box-shadow:0 0 0 3px rgba(255,120,40,.18)
 }
-
-/* ─── 不足表示 ─── */
 .lack-box{
-  margin:8px 0 10px;padding:9px 12px;
-  border-radius:12px;
-  background:rgba(255,80,10,.10);
-  border:1px solid rgba(255,140,60,.22);
+  margin:8px 0 10px;padding:9px 12px;border-radius:12px;
+  background:rgba(255,80,10,.10);border:1px solid rgba(255,140,60,.22);
   display:flex;align-items:center;justify-content:space-between;gap:10px
 }
-.lack-box span:first-child{
-  font-size:12px;color:rgba(255,220,180,.78);font-weight:900
-}
-.lack-box span:last-child{
-  font-size:18px;color:#ffb87a;font-weight:1000
-}
-
-/* ─── 注意事項 ─── */
+.lack-box span:first-child{font-size:12px;color:rgba(255,220,180,.78);font-weight:900}
+.lack-box span:last-child{font-size:18px;color:#ffb87a;font-weight:1000}
 .notice{
-  margin:10px 0 12px;padding:10px 11px;
-  border-radius:13px;
-  background:rgba(255,160,50,.10);
-  border:1px solid rgba(255,200,100,.28);
-  color:rgba(255,240,210,.90);
-  font-size:12px;line-height:1.6
+  margin:10px 0 12px;padding:10px 11px;border-radius:13px;
+  background:rgba(255,160,50,.10);border:1px solid rgba(255,200,100,.28);
+  color:rgba(255,240,210,.90);font-size:12px;line-height:1.6
 }
 .notice-title{font-weight:900;margin-bottom:3px}
-
-/* ─── 結果テーブル ─── */
-.result-title{
-  font-size:13px;font-weight:900;
-  margin:12px 0 8px;color:#ffd4b0
-}
+.result-title{font-size:13px;font-weight:900;margin:12px 0 8px;color:#ffd4b0}
 .table-wrap{
-  width:100%;overflow-x:auto;
-  border-radius:13px;
+  width:100%;overflow-x:auto;border-radius:13px;
   border:1px solid rgba(255,255,255,.13)
 }
-table{
-  width:100%;border-collapse:collapse;
-  background:rgba(0,0,0,.22);min-width:300px
-}
+table{width:100%;border-collapse:collapse;background:rgba(0,0,0,.22);min-width:300px}
 th,td{
-  padding:9px 8px;
-  border-bottom:1px solid rgba(255,255,255,.09);
+  padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.09);
   font-size:12px;text-align:right;white-space:nowrap
 }
-th{
-  background:rgba(255,80,20,.15);
-  color:#ffcfa0;font-size:11px;font-weight:900
-}
-th:first-child,td:first-child{
-  text-align:left;font-weight:900;color:#fff
-}
+th{background:rgba(255,80,20,.15);color:#ffcfa0;font-size:11px;font-weight:900}
+th:first-child,td:first-child{text-align:left;font-weight:900;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:nth-child(even) td{background:rgba(255,255,255,.03)}
 .empty{color:rgba(255,255,255,.38)}
-
-/* ─── 戻るボタン ─── */
 .back-btn{
   position:fixed;left:10px;
   bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
-  z-index:9999;min-height:38px;padding:0 14px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.28);
-  background:rgba(0,0,0,.75);
+  z-index:9999;min-height:38px;padding:0 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.75);
   color:#fff;text-decoration:none;font-size:12px;font-weight:900;
   display:inline-flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(8px);
-  box-shadow:0 8px 24px rgba(0,0,0,.40);
+  backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.40);
   -webkit-tap-highlight-color:transparent
 }
 .back-btn:active{transform:scale(.96)}
-
 @media(max-width:360px){
   .logo{font-size:20px}
   th,td{padding:8px 6px;font-size:11px}
@@ -191,7 +124,6 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
 }
 </style>
 <script>
-/* ─── 認証チェック・直打ち防止 ─── */
 (function(){
   const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
   const PROFILE_SETUP_URL="/1648-portal/profile-setup/";
@@ -203,10 +135,8 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
     if(!data || data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
     if(data.status==="pending_profile"){ location.replace(PROFILE_SETUP_URL); return; }
     if(data.status!=="active"){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
-    /* 直打ち防止：portal_entry と refine_plan_entry の両方を要求 */
     if(sessionStorage.getItem("portal_entry")!=="1" || sessionStorage.getItem("refine_plan_entry")!=="1"){
-      location.replace(COST_URL);
-      return;
+      location.replace(COST_URL); return;
     }
   }catch(e){
     localStorage.removeItem("discord_user");
@@ -216,52 +146,41 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
 </script>
 </head>
 <body>
-
 <div class="page">
-
-  <!-- ヘッダー -->
   <header class="header">
     <div class="logo">🔥 精錬火晶計画</div>
     <div class="sub">手持ち火晶から作れる数、目標までの期間と必要火晶を確認できます。</div>
   </header>
 
-  <!-- UI ビジュアル（仕様必須） -->
-  <img src="./refine-ui.jpg" alt="火晶精製装置 — 通常火晶から精錬火晶へ" class="refine-visual">
+  <img src="./refine-ui.jpg" alt="火晶精製装置" class="refine-visual">
 
-  <!-- メインカード -->
   <main class="card">
-
-    <!-- タブ -->
-    <div class="tabs" role="tablist" aria-label="計算モード切替">
-      <button class="tab-btn active" type="button" data-tab="owned" role="tab" aria-selected="true">手持ち火晶</button>
-      <button class="tab-btn" type="button" data-tab="target" role="tab" aria-selected="false">必要精錬火晶</button>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" type="button" data-tab="owned">手持ち火晶</button>
+      <button class="tab-btn" type="button" data-tab="target">必要精錬火晶</button>
     </div>
 
     <!-- タブ①：手持ち火晶 -->
-    <section class="panel active" id="panel-owned" role="tabpanel">
+    <section class="panel active" id="panel-owned">
       <div class="field">
         <label for="ownedCrystal">保有火晶</label>
         <input id="ownedCrystal" type="number" inputmode="numeric" min="0" placeholder="例：8000">
       </div>
-
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
         <div>※期待値を基準とした概算です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
       </div>
-
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr><th>運用</th><th>期待精錬火晶</th><th>持続週</th></tr>
-          </thead>
+          <thead><tr><th>運用</th><th>期待精錬火晶</th><th>回せる回数</th></tr></thead>
           <tbody id="ownedRows"></tbody>
         </table>
       </div>
     </section>
 
     <!-- タブ②：必要精錬火晶 -->
-    <section class="panel" id="panel-target" role="tabpanel">
+    <section class="panel" id="panel-target">
       <div class="field">
         <label for="targetRefine">目標精錬火晶</label>
         <input id="targetRefine" type="number" inputmode="numeric" min="0" placeholder="例：500">
@@ -270,122 +189,157 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
         <label for="currentRefine">現在保有精錬火晶</label>
         <input id="currentRefine" type="number" inputmode="numeric" min="0" placeholder="例：120">
       </div>
-
       <div class="lack-box">
         <span>不足精錬火晶</span>
         <span id="lackValue">0個</span>
       </div>
-
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
         <div>※期待値を基準とした概算です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
       </div>
-
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr><th>運用</th><th>必要期間</th><th>必要火晶</th></tr>
-          </thead>
+          <thead><tr><th>運用</th><th>必要期間</th><th>必要火晶</th></tr></thead>
           <tbody id="targetRows"></tbody>
         </table>
       </div>
     </section>
-
   </main>
 </div>
 
 <a class="back-btn" href="/1648-portal/cost/">← コストRoomへ戻る</a>
 
 <script>
-/* ─── マスターデータ ─── */
-const refineMaster=[
-  {week:20, cost:330,  expected:29.0},
-  {week:26, cost:540,  expected:41.9},
-  {week:40, cost:1240, expected:72.0},
-  {week:46, cost:1690, expected:91.1},
-  {week:60, cost:3090, expected:135.6},
-  {week:66, cost:3780, expected:156.2},
-  {week:80, cost:5600, expected:204.3},
-  {week:86, cost:6470, expected:226.6},
-  {week:100,cost:8710, expected:278.5}
-];
+// ─── 確率テーブルから導出した1回あたり期待値 ───
+// 1〜20回:  {1:65%, 2:25%, 3:10%}          → 1.45個/回
+// 21〜40回: {2:85%, 3:15%}                  → 2.15個/回
+// 41〜60回: {3:85%, 4:12.5%, 5:2%, 6:0.5%} → 3.18個/回
+// 61〜80回: {3:75%, 4:15%, 5:5%, 6:3%, 7:1%, 8:0.5%, 9:0.5%} → 3.435個/回
+// 81〜100回: {3:70%, 4:12%, 5:9%, 6:4%, 7:1.5%, 8:1%, 9:1%, 10:0.5%, 11:0.5%, 12:0.5%} → 3.71個/回
 
-/* ─── ユーティリティ ─── */
-const fmt=new Intl.NumberFormat("ja-JP");
-const ownedRows   =document.getElementById("ownedRows");
-const targetRows  =document.getElementById("targetRows");
-const ownedInput  =document.getElementById("ownedCrystal");
-const targetInput =document.getElementById("targetRefine");
-const currentInput=document.getElementById("currentRefine");
-const lackSpan    =document.getElementById("lackValue");
+const EV = [1.45, 2.15, 3.18, 3.435, 3.71]; // 各帯の1回期待値
 
-function n(v){const x=Number(v);return(Number.isFinite(x)&&x>0)?x:0}
-function fmtInt(v){return fmt.format(Math.max(0,Math.floor(v)))}
-function fmtFloor1(v){
-  const f=Math.max(0,Math.floor(v*10)/10);
-  return fmt.format(f.toFixed(1));
+// 1回ごとのコスト（累積コストから逆算）
+// 1〜20回: 16.5/回, 21〜26回: 35/回, 27〜40回: 50/回
+// 41〜46回: 75/回, 47〜60回: 100/回, 61〜66回: 115/回
+// 67〜80回: 130/回, 81〜86回: 145/回, 87〜100回: 160/回
+function costPerRoll(i) {
+  if (i <= 20)  return 16.5;
+  if (i <= 26)  return 35;
+  if (i <= 40)  return 50;
+  if (i <= 46)  return 75;
+  if (i <= 60)  return 100;
+  if (i <= 66)  return 115;
+  if (i <= 80)  return 130;
+  if (i <= 86)  return 145;
+  return 160;
 }
-function empty(){return '<span class="empty">—</span>'}
 
-/* ─── タブ①：手持ち火晶 → 期待精錬火晶 & 持続週 ─── */
-function renderOwned(){
-  const owned=n(ownedInput.value);
-  ownedRows.innerHTML=refineMaster.map(m=>{
-    if(!owned){
-      return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+function evPerRoll(i) {
+  if (i <= 20)  return EV[0];
+  if (i <= 40)  return EV[1];
+  if (i <= 60)  return EV[2];
+  if (i <= 80)  return EV[3];
+  return EV[4];
+}
+
+// 週○回運用した場合の累積コスト（仕様書のcostと同じ）
+const WEEKLY_PLANS = [20, 26, 40, 46, 60, 66, 80, 86, 100];
+const weeklyCost = {};
+let cumCost = 0;
+for (let i = 1; i <= 100; i++) {
+  cumCost += costPerRoll(i);
+  if (WEEKLY_PLANS.includes(i)) weeklyCost[i] = cumCost;
+}
+
+// ─── 保有火晶で何個作れるか（帯をまたいで正確に積み上げ） ───
+function calcExpected(owned) {
+  let remaining = owned;
+  let total = 0;
+  let rolls = 0;
+  for (let i = 1; i <= 100; i++) {
+    const c = costPerRoll(i);
+    if (remaining < c) {
+      // 端数分の期待値を加算
+      total += (remaining / c) * evPerRoll(i);
+      break;
     }
-    const weeks  = owned / m.cost;
-    const expect = weeks * m.expected;
+    remaining -= c;
+    total += evPerRoll(i);
+    rolls = i;
+  }
+  return { total, rolls };
+}
+
+// ─── 目標精錬火晶に必要な週数・火晶数 ───
+// 「週○回を何週繰り返せば目標に達するか」
+// 1週 = 週○回分の期待値が得られる、を繰り返す
+function calcWeeksNeeded(lack, weeklyRolls) {
+  if (!lack) return { weeks: 0, cost: 0 };
+  const ev = calcExpected(weeklyCost[weeklyRolls]).total; // 1週で得られる期待精錬火晶
+  const weeks = Math.ceil(lack / ev);
+  const cost = weeks * weeklyCost[weeklyRolls];
+  return { weeks, cost };
+}
+
+// ─── UI ───
+const fmt = new Intl.NumberFormat("ja-JP");
+const ownedRows   = document.getElementById("ownedRows");
+const targetRows  = document.getElementById("targetRows");
+const ownedInput  = document.getElementById("ownedCrystal");
+const targetInput = document.getElementById("targetRefine");
+const currentInput= document.getElementById("currentRefine");
+const lackSpan    = document.getElementById("lackValue");
+
+function n(v){ const x=Number(v); return (Number.isFinite(x)&&x>0)?x:0; }
+function empty(){ return '<span class="empty">—</span>'; }
+
+function renderOwned() {
+  const owned = n(ownedInput.value);
+  ownedRows.innerHTML = WEEKLY_PLANS.map(w => {
+    if (!owned) return `<tr><td>週${w}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    // 週○回分のコストで何回まわせるか
+    const cap = Math.min(owned, weeklyCost[w]);
+    const { total, rolls } = calcExpected(cap);
     return `<tr>
-      <td>週${m.week}回</td>
-      <td>${fmtInt(expect)}個</td>
-      <td>${fmtFloor1(weeks)}週</td>
+      <td>週${w}回</td>
+      <td>${fmt.format(Math.floor(total))}個</td>
+      <td>${fmt.format(rolls)}回</td>
     </tr>`;
   }).join("");
 }
 
-/* ─── タブ②：目標精錬火晶 → 必要期間・必要火晶 ─── */
-function renderTarget(){
-  const target =n(targetInput.value);
-  const current=n(currentInput.value);
-  const lack   =Math.max(0,target-current);
-  lackSpan.textContent=fmtInt(lack)+"個";
+function renderTarget() {
+  const target  = n(targetInput.value);
+  const current = n(currentInput.value);
+  const lack    = Math.max(0, target - current);
+  lackSpan.textContent = fmt.format(Math.floor(lack)) + "個";
 
-  targetRows.innerHTML=refineMaster.map(m=>{
-    if(!lack){
-      return `<tr><td>週${m.week}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
-    }
-    const weeks=Math.ceil(lack/m.expected);
-    const days =weeks*7;
-    const cost =weeks*m.cost;
+  targetRows.innerHTML = WEEKLY_PLANS.map(w => {
+    if (!lack) return `<tr><td>週${w}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    const { weeks, cost } = calcWeeksNeeded(lack, w);
+    const days = weeks * 7;
     return `<tr>
-      <td>週${m.week}回</td>
+      <td>週${w}回</td>
       <td>約${fmt.format(weeks)}週（約${fmt.format(days)}日）</td>
-      <td>${fmtInt(cost)}個</td>
+      <td>${fmt.format(cost)}個</td>
     </tr>`;
   }).join("");
 }
 
-/* ─── タブ切替 ─── */
-function switchTab(name){
-  document.querySelectorAll(".tab-btn").forEach(btn=>{
-    const active=btn.dataset.tab===name;
-    btn.classList.toggle("active",active);
-    btn.setAttribute("aria-selected",active?"true":"false");
-  });
-  document.querySelectorAll(".panel").forEach(p=>{
-    p.classList.toggle("active",p.id==="panel-"+name);
-  });
+function switchTab(name) {
+  document.querySelectorAll(".tab-btn").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.tab === name));
+  document.querySelectorAll(".panel").forEach(p =>
+    p.classList.toggle("active", p.id === "panel-" + name));
 }
 
-document.querySelectorAll(".tab-btn").forEach(btn=>{
-  btn.addEventListener("click",()=>switchTab(btn.dataset.tab));
-});
-
-ownedInput.addEventListener("input",renderOwned);
-targetInput.addEventListener("input",renderTarget);
-currentInput.addEventListener("input",renderTarget);
+document.querySelectorAll(".tab-btn").forEach(btn =>
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+ownedInput.addEventListener("input", renderOwned);
+targetInput.addEventListener("input", renderTarget);
+currentInput.addEventListener("input", renderTarget);
 
 renderOwned();
 renderTarget();
