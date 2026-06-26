@@ -10,46 +10,27 @@ html,body{width:100%;min-height:100%}
 body{
   font-family:"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;
   color:#fff;background:#05080d;
-  min-height:100vh;
-  overflow-x:hidden;
-  overflow-y:auto;
+  min-height:100vh;overflow-x:hidden;overflow-y:auto;
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 72px)
 }
 body::before{
   content:"";position:fixed;inset:0;z-index:-3;
   background:url("./refine-bg.jpg") center center/cover no-repeat;
 }
-body::after{
-  content:"";position:fixed;inset:0;z-index:-2;
-  background:rgba(0,0,0,.50)
-}
-.page{
-  width:100%;max-width:420px;margin:0 auto;
-  padding:calc(env(safe-area-inset-top,0px) + 20px) 14px 24px
-}
+body::after{content:"";position:fixed;inset:0;z-index:-2;background:rgba(0,0,0,.50)}
+.page{width:100%;max-width:420px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 14px 24px}
 .header{margin-bottom:10px}
-.logo{
-  font-size:22px;font-weight:900;letter-spacing:.03em;
-  text-shadow:0 0 14px rgba(255,120,40,.75),0 0 28px rgba(255,60,10,.35)
-}
-.sub{
-  margin-top:5px;font-size:12px;
-  color:rgba(255,220,190,.78);line-height:1.5
-}
+.logo{font-size:22px;font-weight:900;letter-spacing:.03em;text-shadow:0 0 14px rgba(255,120,40,.75),0 0 28px rgba(255,60,10,.35)}
+.sub{margin-top:5px;font-size:12px;color:rgba(255,220,190,.78);line-height:1.5}
 .refine-visual{
-  width:100%;display:block;border-radius:16px;
-  margin:12px 0 14px;
+  width:100%;display:block;border-radius:16px;margin:12px 0 14px;
   box-shadow:0 12px 36px rgba(0,0,0,.55),0 0 24px rgba(255,80,20,.18);
-  border:1px solid rgba(255,120,40,.38);
-  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,120,40,.38);background:rgba(0,0,0,.3);
 }
 .card{
-  background:rgba(6,14,28,.70);
-  border:1px solid rgba(255,120,40,.22);
-  border-radius:18px;
-  box-shadow:0 18px 50px rgba(0,0,0,.45);
-  backdrop-filter:blur(12px);
-  padding:14px
+  background:rgba(6,14,28,.70);border:1px solid rgba(255,120,40,.22);
+  border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.45);
+  backdrop-filter:blur(12px);padding:14px
 }
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .tab-btn{
@@ -60,8 +41,7 @@ body::after{
 }
 .tab-btn.active{
   background:linear-gradient(135deg,rgba(255,120,40,.92),rgba(220,60,10,.88));
-  color:#fff;border-color:rgba(255,180,100,.7);
-  box-shadow:0 0 18px rgba(255,90,20,.3)
+  color:#fff;border-color:rgba(255,180,100,.7);box-shadow:0 0 18px rgba(255,90,20,.3)
 }
 .panel{display:none}.panel.active{display:block}
 .field{margin:10px 0 12px}
@@ -75,9 +55,7 @@ input[type=number]{
 }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
-input[type=number]:focus{
-  border-color:#ff8c30;box-shadow:0 0 0 3px rgba(255,120,40,.18)
-}
+input[type=number]:focus{border-color:#ff8c30;box-shadow:0 0 0 3px rgba(255,120,40,.18)}
 .lack-box{
   margin:8px 0 10px;padding:9px 12px;border-radius:12px;
   background:rgba(255,80,10,.10);border:1px solid rgba(255,140,60,.22);
@@ -92,23 +70,18 @@ input[type=number]:focus{
 }
 .notice-title{font-weight:900;margin-bottom:3px}
 .result-title{font-size:13px;font-weight:900;margin:12px 0 8px;color:#ffd4b0}
-.table-wrap{
-  width:100%;overflow-x:auto;border-radius:13px;
-  border:1px solid rgba(255,255,255,.13)
-}
+.table-wrap{width:100%;overflow-x:auto;border-radius:13px;border:1px solid rgba(255,255,255,.13)}
 table{width:100%;border-collapse:collapse;background:rgba(0,0,0,.22);min-width:300px}
-th,td{
-  padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.09);
-  font-size:12px;text-align:right;white-space:nowrap
-}
+th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.09);font-size:12px;text-align:right;white-space:nowrap}
 th{background:rgba(255,80,20,.15);color:#ffcfa0;font-size:11px;font-weight:900}
 th:first-child,td:first-child{text-align:left;font-weight:900;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:nth-child(even) td{background:rgba(255,255,255,.03)}
 .empty{color:rgba(255,255,255,.38)}
+.row-disabled td{color:rgba(255,255,255,.28)!important;font-weight:400!important}
+.insufficient{text-align:left!important;font-size:11px;color:rgba(255,255,255,.28)!important;font-weight:400!important}
 .back-btn{
-  position:fixed;left:10px;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+  position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
   z-index:9999;min-height:38px;padding:0 14px;border-radius:999px;
   border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.75);
   color:#fff;text-decoration:none;font-size:12px;font-weight:900;
@@ -132,16 +105,13 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
     const raw=localStorage.getItem("discord_user");
     if(!raw){ location.replace(LOGIN_URL); return; }
     const data=JSON.parse(raw);
-    if(!data || data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
+    if(!data||data.ok!==true){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
     if(data.status==="pending_profile"){ location.replace(PROFILE_SETUP_URL); return; }
     if(data.status!=="active"){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); return; }
-    if(sessionStorage.getItem("portal_entry")!=="1" || sessionStorage.getItem("refine_plan_entry")!=="1"){
+    if(sessionStorage.getItem("portal_entry")!=="1"||sessionStorage.getItem("refine_plan_entry")!=="1"){
       location.replace(COST_URL); return;
     }
-  }catch(e){
-    localStorage.removeItem("discord_user");
-    location.replace(LOGIN_URL);
-  }
+  }catch(e){ localStorage.removeItem("discord_user"); location.replace(LOGIN_URL); }
 })();
 </script>
 </head>
@@ -168,12 +138,12 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
       </div>
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
-        <div>※期待値を基準とした概算です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
+        <div>※期待値を基準とした概算です。週○回運用を継続した場合の累計です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
       </div>
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>運用</th><th>期待精錬火晶</th><th>回せる回数</th></tr></thead>
+          <thead><tr><th>運用</th><th>期待精錬火晶</th><th>累計回数</th></tr></thead>
           <tbody id="ownedRows"></tbody>
         </table>
       </div>
@@ -211,101 +181,116 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
 <a class="back-btn" href="/1648-portal/cost/">← コストRoomへ戻る</a>
 
 <script>
-// ─── 確率テーブルから導出した1回あたり期待値 ───
-// 1〜20回:  {1:65%, 2:25%, 3:10%}          → 1.45個/回
-// 21〜40回: {2:85%, 3:15%}                  → 2.15個/回
-// 41〜60回: {3:85%, 4:12.5%, 5:2%, 6:0.5%} → 3.18個/回
-// 61〜80回: {3:75%, 4:15%, 5:5%, 6:3%, 7:1%, 8:0.5%, 9:0.5%} → 3.435個/回
-// 81〜100回: {3:70%, 4:12%, 5:9%, 6:4%, 7:1.5%, 8:1%, 9:1%, 10:0.5%, 11:0.5%, 12:0.5%} → 3.71個/回
-
-const EV = [1.45, 2.15, 3.18, 3.435, 3.71]; // 各帯の1回期待値
-
-// 1回ごとのコスト（累積コストから逆算）
-// 1〜20回: 16.5/回, 21〜26回: 35/回, 27〜40回: 50/回
-// 41〜46回: 75/回, 47〜60回: 100/回, 61〜66回: 115/回
-// 67〜80回: 130/回, 81〜86回: 145/回, 87〜100回: 160/回
+// ─── 1回あたりコスト（累積コストから逆算） ───
 function costPerRoll(i) {
-  if (i <= 20)  return 16.5;
-  if (i <= 26)  return 35;
-  if (i <= 40)  return 50;
-  if (i <= 46)  return 75;
-  if (i <= 60)  return 100;
-  if (i <= 66)  return 115;
-  if (i <= 80)  return 130;
-  if (i <= 86)  return 145;
+  if (i <= 20) return 16.5;
+  if (i <= 26) return 35;
+  if (i <= 40) return 50;
+  if (i <= 46) return 75;
+  if (i <= 60) return 100;
+  if (i <= 66) return 115;
+  if (i <= 80) return 130;
+  if (i <= 86) return 145;
   return 160;
 }
 
+// ─── 1回あたり期待精錬火晶（確率テーブルから計算） ───
+// 1〜20回:  {1:65%, 2:25%, 3:10%}                              → 1.45
+// 21〜40回: {2:85%, 3:15%}                                     → 2.15
+// 41〜60回: {3:85%, 4:12.5%, 5:2%, 6:0.5%}                    → 3.18
+// 61〜80回: {3:75%, 4:15%, 5:5%, 6:3%, 7:1%, 8:0.5%, 9:0.5%} → 3.435
+// 81〜100回: {3:70%, 4:12%, 5:9%, 6:4%, 7:1.5%, 8:1%, 9:1%, 10:0.5%, 11:0.5%, 12:0.5%} → 3.71
 function evPerRoll(i) {
-  if (i <= 20)  return EV[0];
-  if (i <= 40)  return EV[1];
-  if (i <= 60)  return EV[2];
-  if (i <= 80)  return EV[3];
-  return EV[4];
+  if (i <= 20) return 1.45;
+  if (i <= 40) return 2.15;
+  if (i <= 60) return 3.18;
+  if (i <= 80) return 3.435;
+  return 3.71;
 }
 
-// 週○回運用した場合の累積コスト（仕様書のcostと同じ）
+// ─── 週○回運用の1週コスト ───
 const WEEKLY_PLANS = [20, 26, 40, 46, 60, 66, 80, 86, 100];
 const weeklyCost = {};
-let cumCost = 0;
+let cc = 0;
 for (let i = 1; i <= 100; i++) {
-  cumCost += costPerRoll(i);
-  if (WEEKLY_PLANS.includes(i)) weeklyCost[i] = cumCost;
+  cc += costPerRoll(i);
+  if (WEEKLY_PLANS.includes(i)) weeklyCost[i] = Math.round(cc * 10) / 10;
 }
 
-// ─── 保有火晶で何個作れるか（帯をまたいで正確に積み上げ） ───
-function calcExpected(owned) {
-  let remaining = owned;
-  let total = 0;
-  let rolls = 0;
-  for (let i = 1; i <= 100; i++) {
+// ─── 週○回を繰り返した場合の合計回数・期待精錬火晶 ───
+// 毎週 1〜weeklyRolls 回目を繰り返す（週ごとに確率帯リセット）
+function calcOwnedResult(owned, weeklyRolls) {
+  const wCost = weeklyCost[weeklyRolls];
+
+  // 1週あたりの期待精錬火晶
+  let evPerWeek = 0;
+  for (let i = 1; i <= weeklyRolls; i++) evPerWeek += evPerRoll(i);
+
+  // フルで回せる週数
+  const fullWeeks = Math.floor(owned / wCost);
+  const remainder = owned - fullWeeks * wCost;
+
+  let totalEv   = fullWeeks * evPerWeek;
+  let totalRolls = fullWeeks * weeklyRolls;
+
+  // 端数の週（途中まで）
+  let rem = remainder;
+  for (let i = 1; i <= weeklyRolls; i++) {
     const c = costPerRoll(i);
-    if (remaining < c) {
-      // 端数分の期待値を加算
-      total += (remaining / c) * evPerRoll(i);
+    if (rem < c) {
+      totalEv += (rem / c) * evPerRoll(i);
       break;
     }
-    remaining -= c;
-    total += evPerRoll(i);
-    rolls = i;
+    rem -= c;
+    totalEv    += evPerRoll(i);
+    totalRolls += 1;
   }
-  return { total, rolls };
+
+  return { totalRolls, totalEv };
 }
 
-// ─── 目標精錬火晶に必要な週数・火晶数 ───
-// 「週○回を何週繰り返せば目標に達するか」
-// 1週 = 週○回分の期待値が得られる、を繰り返す
+// ─── 目標達成に必要な週数・火晶 ───
 function calcWeeksNeeded(lack, weeklyRolls) {
   if (!lack) return { weeks: 0, cost: 0 };
-  const ev = calcExpected(weeklyCost[weeklyRolls]).total; // 1週で得られる期待精錬火晶
-  const weeks = Math.ceil(lack / ev);
-  const cost = weeks * weeklyCost[weeklyRolls];
+  // 1週の期待精錬火晶
+  let evPerWeek = 0;
+  for (let i = 1; i <= weeklyRolls; i++) evPerWeek += evPerRoll(i);
+  const weeks = Math.ceil(lack / evPerWeek);
+  const cost  = weeks * weeklyCost[weeklyRolls];
   return { weeks, cost };
 }
 
 // ─── UI ───
 const fmt = new Intl.NumberFormat("ja-JP");
-const ownedRows   = document.getElementById("ownedRows");
-const targetRows  = document.getElementById("targetRows");
-const ownedInput  = document.getElementById("ownedCrystal");
-const targetInput = document.getElementById("targetRefine");
-const currentInput= document.getElementById("currentRefine");
-const lackSpan    = document.getElementById("lackValue");
+const ownedRows    = document.getElementById("ownedRows");
+const targetRows   = document.getElementById("targetRows");
+const ownedInput   = document.getElementById("ownedCrystal");
+const targetInput  = document.getElementById("targetRefine");
+const currentInput = document.getElementById("currentRefine");
+const lackSpan     = document.getElementById("lackValue");
 
-function n(v){ const x=Number(v); return (Number.isFinite(x)&&x>0)?x:0; }
-function empty(){ return '<span class="empty">—</span>'; }
+function n(v) { const x = Number(v); return (Number.isFinite(x) && x > 0) ? x : 0; }
+function empty() { return '<span class="empty">—</span>'; }
 
 function renderOwned() {
   const owned = n(ownedInput.value);
   ownedRows.innerHTML = WEEKLY_PLANS.map(w => {
-    if (!owned) return `<tr><td>週${w}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
-    // 週○回分のコストで何回まわせるか
-    const cap = Math.min(owned, weeklyCost[w]);
-    const { total, rolls } = calcExpected(cap);
+    if (!owned) return `<tr><td>週${w}回まで</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+
+    const wCost = weeklyCost[w];
+    // 1週分すら賄えない → グレーアウト
+    if (owned < wCost) {
+      return `<tr class="row-disabled">
+        <td>週${w}回まで</td>
+        <td colspan="2" class="insufficient">火晶不足（1週${fmt.format(wCost)}個必要）</td>
+      </tr>`;
+    }
+
+    const { totalRolls, totalEv } = calcOwnedResult(owned, w);
     return `<tr>
-      <td>週${w}回</td>
-      <td>${fmt.format(Math.floor(total))}個</td>
-      <td>${fmt.format(rolls)}回</td>
+      <td>週${w}回まで</td>
+      <td>${fmt.format(Math.floor(totalEv))}個</td>
+      <td>${fmt.format(totalRolls)}回</td>
     </tr>`;
   }).join("");
 }
@@ -317,13 +302,12 @@ function renderTarget() {
   lackSpan.textContent = fmt.format(Math.floor(lack)) + "個";
 
   targetRows.innerHTML = WEEKLY_PLANS.map(w => {
-    if (!lack) return `<tr><td>週${w}回</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    if (!lack) return `<tr><td>週${w}回まで</td><td>${empty()}</td><td>${empty()}</td></tr>`;
     const { weeks, cost } = calcWeeksNeeded(lack, w);
-    const days = weeks * 7;
     return `<tr>
-      <td>週${w}回</td>
-      <td>約${fmt.format(weeks)}週（約${fmt.format(days)}日）</td>
-      <td>${fmt.format(cost)}個</td>
+      <td>週${w}回まで</td>
+      <td>約${fmt.format(weeks)}週（約${fmt.format(weeks * 7)}日）</td>
+      <td>${fmt.format(Math.ceil(cost))}個</td>
     </tr>`;
   }).join("");
 }
@@ -340,7 +324,6 @@ document.querySelectorAll(".tab-btn").forEach(btn =>
 ownedInput.addEventListener("input", renderOwned);
 targetInput.addEventListener("input", renderTarget);
 currentInput.addEventListener("input", renderTarget);
-
 renderOwned();
 renderTarget();
 </script>
