@@ -26,6 +26,13 @@ body::after{content:"";position:fixed;inset:0;z-index:-2;background:rgba(0,0,0,.
   text-shadow:0 0 12px rgba(255,216,132,.6),0 0 24px rgba(255,146,54,.3)
 }
 .sub{margin-top:4px;font-size:12px;color:rgba(218,238,255,.82);line-height:1.45}
+.ui-visual{
+  width:100%;overflow:hidden;border-radius:18px;margin:0 0 12px;
+  border:1px solid rgba(255,184,77,.30);
+  background:rgba(0,0,0,.28);
+  box-shadow:0 14px 42px rgba(0,0,0,.36),0 0 26px rgba(255,96,26,.12);
+}
+.ui-visual img{display:block;width:100%;height:auto}
 .card{
   background:rgba(6,16,31,.66);border:1px solid rgba(142,213,255,.24);
   border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.38);
@@ -112,6 +119,10 @@ tr:last-child td{border-bottom:none}
     <div class="logo">精錬火晶計画</div>
     <div class="sub">手持ち火晶から作れる数、目標までの期間と必要火晶を確認できます。</div>
   </header>
+
+  <div class="ui-visual" aria-label="精錬火晶計画イメージ">
+    <img src="./refine-ui.jpg" alt="火晶から精錬火晶へ精製するイメージ">
+  </div>
 
   <main class="card">
     <div class="tabs" role="tablist" aria-label="計算切替">
