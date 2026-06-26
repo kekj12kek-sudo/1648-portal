@@ -138,7 +138,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
       </div>
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
-        <div>※期待値を基準とした概算です。週○回運用を継続した場合の累計です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
+        <div>※期待値を基準とした概算です。週○回運用を継続した場合の累計です。<br>「持続」は4週を1ヶ月として表示しています。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
       </div>
       <div class="result-title">結果</div>
       <div class="table-wrap">
@@ -296,12 +296,17 @@ function renderOwned() {
     }
 
     const { totalEv } = calcOwnedResult(owned, w);
-    const sustainWeeks = Math.floor((owned / wCost) * 10) / 10;
+    const sustainWeeks = Math.floor(owned / wCost);
+    const months = Math.floor(sustainWeeks / 4);
+    const remWeeks = sustainWeeks % 4;
+    const sustainStr = months > 0 && remWeeks > 0 ? `${months}ヶ月${remWeeks}週`
+                     : months > 0                  ? `${months}ヶ月`
+                     : `${remWeeks}週`;
     return `<tr>
       <td>週${w}回まで</td>
       <td>${evPerWeekStr}個</td>
       <td>${fmt.format(Math.floor(totalEv))}個</td>
-      <td>${sustainWeeks.toFixed(1)}週</td>
+      <td>${sustainStr}</td>
     </tr>`;
   }).join("");
 }
