@@ -6,8 +6,9 @@
 <title>コスト計算room</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{overflow:hidden;font-family:"Segoe UI",sans-serif;background:#000}
-video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+html,body{width:100%;height:100%}
+body{overflow:hidden;font-family:"Segoe UI",sans-serif;background:#000;color:#fff}
+video.bg-video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:-1}
 
 .menu{
@@ -26,59 +27,44 @@ video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-inde
   -webkit-tap-highlight-color:transparent
 }
 .menu a.tool-link:active{transform:translateX(4px);border-color:#ffc34a}
-@media(hover:hover){
-  .menu a.tool-link:hover{transform:translateX(5px);border-color:#ffc34a}
-}
+@media(hover:hover){.menu a.tool-link:hover{transform:translateX(5px);border-color:#ffc34a}}
 .title{font-size:16px;font-weight:800}
-.desc{margin-top:3px;font-size:11px;color:#b8dfff;opacity:.8}
+.desc{margin-top:3px;font-size:11px;color:#b8dfff;opacity:.8;line-height:1.35}
 
 .home-btn{
   display:flex;align-items:center;justify-content:center;gap:6px;
-  margin-top:4px;
-  text-decoration:none;
-  color:rgba(255,255,255,.75);
-  font-size:13px;font-weight:700;
-  padding:11px 14px;
-  border-radius:12px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  backdrop-filter:blur(8px);
-  transition:.2s;
-  -webkit-tap-highlight-color:transparent
+  margin-top:4px;text-decoration:none;color:rgba(255,255,255,.75);
+  font-size:13px;font-weight:700;padding:11px 14px;border-radius:12px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(8px);transition:.2s;-webkit-tap-highlight-color:transparent
 }
-.home-btn:active,.home-btn:hover{
-  background:rgba(255,255,255,.15);
-  color:#fff;
-  border-color:rgba(255,255,255,.35)
+.home-btn:active,.home-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.35)}
+
+.transition-layer{
+  position:fixed;inset:0;z-index:100000;display:none;background:#000;
+  align-items:center;justify-content:center;opacity:0;transition:opacity .25s ease
+}
+.transition-layer.show{display:flex;opacity:1}
+.transition-layer.fadeout{opacity:0}
+.transition-layer video{width:100%;height:100%;object-fit:cover}
+.transition-caption{
+  position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);
+  text-align:center;font-size:13px;font-weight:900;color:rgba(255,255,255,.9);
+  text-shadow:0 0 12px rgba(0,0,0,.9)
 }
 
-<style id="portal-bottom-back-style">
 .portal-bottom-back{
-  position:fixed;
-  left:10px;
-  bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
-  z-index:99999;
-  min-height:38px;
-  padding:0 14px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.28);
-  background:rgba(0,0,0,.72);
-  color:#fff;
-  text-decoration:none;
-  font-size:12px;
-  font-weight:900;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  -webkit-tap-highlight-color:transparent;
-  backdrop-filter:blur(8px);
-  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+  z-index:99999;min-height:38px;padding:0 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.72);
+  color:#fff;text-decoration:none;font-size:12px;font-weight:900;
+  display:inline-flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;backdrop-filter:blur(8px);
+  box-shadow:0 8px 24px rgba(0,0,0,.35)
 }
-.portal-bottom-back:active{transform:scale(.96);}
-body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px);}
+.portal-bottom-back:active{transform:scale(.96)}
+body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px)}
 </style>
-</style>
-
 <script>
 (function(){
   const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
@@ -99,10 +85,11 @@ body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px);}
 </script>
 </head>
 <body>
-<video autoplay muted loop playsinline>
+<video class="bg-video" autoplay muted loop playsinline>
   <source src="background.mp4" type="video/mp4">
 </video>
 <div class="overlay"></div>
+
 <div class="menu">
   <div class="logo">コスト計算room</div>
 
@@ -110,9 +97,15 @@ body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px);}
     <div class="title">英雄装備コスト計算</div>
     <div class="desc">神話装備・精錬鍛造・配能計算</div>
   </a>
+
   <a class="tool-link" href="./wos-lord-gem-planner/">
     <div class="title">宝石・領主装備コスト計算</div>
     <div class="desc">宝石LvUP・領主装備強化</div>
+  </a>
+
+  <a class="tool-link" href="./refine/" id="refineLink">
+    <div class="title">精錬火晶計画</div>
+    <div class="desc">手持ち火晶・目標精錬火晶から期間と必要数を計算</div>
   </a>
 
   <a class="home-btn" href="/1648-portal/">
@@ -122,5 +115,45 @@ body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px);}
     ポータルへ戻る
   </a>
 </div>
+
+<div class="transition-layer" id="transitionLayer" aria-hidden="true">
+  <video id="transitionVideo" muted playsinline preload="auto">
+    <source src="refine-transition.mp4" type="video/mp4">
+  </video>
+  <div class="transition-caption">精錬火晶計画へ移動中</div>
+</div>
+
+<script>
+(function(){
+  const link=document.getElementById("refineLink");
+  const layer=document.getElementById("transitionLayer");
+  const video=document.getElementById("transitionVideo");
+  let moving=false;
+
+  function goRefine(){
+    sessionStorage.setItem("refine_plan_entry","1");
+    location.href="./refine/";
+  }
+
+  link.addEventListener("click",function(e){
+    e.preventDefault();
+    if(moving) return;
+    moving=true;
+    sessionStorage.setItem("refine_plan_entry","1");
+    layer.classList.add("show");
+    try{ video.currentTime=0; }catch(err){}
+    const fallback=setTimeout(goRefine,3400);
+    video.onended=function(){
+      clearTimeout(fallback);
+      layer.classList.add("fadeout");
+      setTimeout(goRefine,260);
+    };
+    const p=video.play();
+    if(p && typeof p.catch==="function"){
+      p.catch(function(){ clearTimeout(fallback); goRefine(); });
+    }
+  });
+})();
+</script>
 </body>
 </html>
