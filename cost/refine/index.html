@@ -71,7 +71,7 @@ input[type=number]:focus{border-color:#ff8c30;box-shadow:0 0 0 3px rgba(255,120,
 .notice-title{font-weight:900;margin-bottom:3px}
 .result-title{font-size:13px;font-weight:900;margin:12px 0 8px;color:#ffd4b0}
 .table-wrap{width:100%;overflow-x:auto;border-radius:13px;border:1px solid rgba(255,255,255,.13)}
-table{width:100%;border-collapse:collapse;background:rgba(0,0,0,.22);min-width:300px}
+table{width:100%;border-collapse:collapse;background:rgba(0,0,0,.22);min-width:340px}
 th,td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.09);font-size:12px;text-align:right;white-space:nowrap}
 th{background:rgba(255,80,20,.15);color:#ffcfa0;font-size:11px;font-weight:900}
 th:first-child,td:first-child{text-align:left;font-weight:900;color:#fff}
@@ -143,7 +143,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
       <div class="result-title">結果</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>運用</th><th>期待精錬火晶</th><th>累計回数</th></tr></thead>
+          <thead><tr><th>運用</th><th>1週期待</th><th>累計精錬火晶</th><th>持続週</th></tr></thead>
           <tbody id="ownedRows"></tbody>
         </table>
       </div>
@@ -275,22 +275,33 @@ function empty() { return '<span class="empty">—</span>'; }
 function renderOwned() {
   const owned = n(ownedInput.value);
   ownedRows.innerHTML = WEEKLY_PLANS.map(w => {
-    if (!owned) return `<tr><td>週${w}回まで</td><td>${empty()}</td><td>${empty()}</td></tr>`;
+    if (!owned) return `<tr><td>週${w}回まで</td><td>${empty()}</td><td>${empty()}</td><td>${empty()}</td></tr>`;
 
     const wCost = weeklyCost[w];
+
+    // 1週あたり期待精錬火晶
+    let evPerWeek = 0;
+    for (let i = 1; i <= w; i++) evPerWeek += evPerRoll(i);
+    const evPerWeekStr = evPerWeek % 1 === 0
+      ? fmt.format(evPerWeek)
+      : fmt.format(Math.round(evPerWeek * 10) / 10);
+
     // 1週分すら賄えない → グレーアウト
     if (owned < wCost) {
       return `<tr class="row-disabled">
         <td>週${w}回まで</td>
+        <td>${evPerWeekStr}個</td>
         <td colspan="2" class="insufficient">火晶不足（1週${fmt.format(wCost)}個必要）</td>
       </tr>`;
     }
 
-    const { totalRolls, totalEv } = calcOwnedResult(owned, w);
+    const { totalEv } = calcOwnedResult(owned, w);
+    const sustainWeeks = Math.floor((owned / wCost) * 10) / 10;
     return `<tr>
       <td>週${w}回まで</td>
+      <td>${evPerWeekStr}個</td>
       <td>${fmt.format(Math.floor(totalEv))}個</td>
-      <td>${fmt.format(totalRolls)}回</td>
+      <td>${sustainWeeks.toFixed(1)}週</td>
     </tr>`;
   }).join("");
 }
