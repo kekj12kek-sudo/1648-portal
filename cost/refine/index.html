@@ -22,11 +22,26 @@ body::after{content:"";position:fixed;inset:0;z-index:-2;background:rgba(0,0,0,.
 .header{margin-bottom:10px}
 .logo{font-size:22px;font-weight:900;letter-spacing:.03em;text-shadow:0 0 14px rgba(255,120,40,.75),0 0 28px rgba(255,60,10,.35)}
 .sub{margin-top:5px;font-size:12px;color:rgba(255,220,190,.78);line-height:1.5}
-.refine-visual{
-  width:100%;display:block;border-radius:16px;margin:12px 0 14px;
+.refine-visual-wrap{
+  position:relative;width:100%;margin:12px 0 14px;
+  border-radius:16px;overflow:hidden;
   box-shadow:0 12px 36px rgba(0,0,0,.55),0 0 24px rgba(255,80,20,.18);
-  border:1px solid rgba(255,120,40,.38);background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,120,40,.38);
+  -webkit-tap-highlight-color:transparent;
 }
+.refine-visual{width:100%;display:block;background:rgba(0,0,0,.3);}
+/* 左右タップエリア */
+.tap-left,.tap-right{
+  position:absolute;top:0;bottom:0;width:38%;
+  cursor:pointer;transition:background .15s;
+}
+.tap-left{left:0}
+.tap-right{right:0}
+.tap-left:active{background:rgba(255,160,60,.18)}
+.tap-right:active{background:rgba(255,160,60,.18)}
+/* アクティブ時のグロー枠 */
+.refine-visual-wrap.active-left{box-shadow:0 12px 36px rgba(0,0,0,.55),-4px 0 18px rgba(255,120,40,.55)}
+.refine-visual-wrap.active-right{box-shadow:0 12px 36px rgba(0,0,0,.55),4px 0 18px rgba(255,120,40,.55)}
 .card{
   background:rgba(6,14,28,.70);border:1px solid rgba(255,120,40,.22);
   border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.45);
@@ -122,7 +137,11 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
     <div class="sub">手持ち火晶から作れる数、目標までの期間と必要火晶を確認できます。</div>
   </header>
 
-  <img src="./refine-ui.jpg" alt="火晶精製装置" class="refine-visual">
+  <div class="refine-visual-wrap active-left" id="visualWrap">
+    <img src="./refine-ui.jpg" alt="火晶精製装置" class="refine-visual">
+    <div class="tap-left"  id="tapLeft"  title="手持ち火晶から計算"></div>
+    <div class="tap-right" id="tapRight" title="目標精錬火晶から計算"></div>
+  </div>
 
   <main class="card">
     <div class="tabs" role="tablist">
@@ -165,7 +184,7 @@ tr:nth-child(even) td{background:rgba(255,255,255,.03)}
       </div>
       <div class="notice">
         <div class="notice-title">⚠️ 注意事項</div>
-        <div>※期待値を基準とした概算です。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
+        <div>※期待値を基準とした概算です。<br>「必要期間」は4週を1ヶ月として表示しています。<br>計算結果は長期間運用時の平均的な目安としてご利用ください。</div>
       </div>
       <div class="result-title">結果</div>
       <div class="table-wrap">
@@ -320,9 +339,14 @@ function renderTarget() {
   targetRows.innerHTML = WEEKLY_PLANS.map(w => {
     if (!lack) return `<tr><td>週${w}回まで</td><td>${empty()}</td><td>${empty()}</td></tr>`;
     const { weeks, cost } = calcWeeksNeeded(lack, w);
+    const months  = Math.floor(weeks / 4);
+    const remWeeks = weeks % 4;
+    const periodStr = months > 0 && remWeeks > 0 ? `${months}ヶ月${remWeeks}週`
+                    : months > 0                  ? `${months}ヶ月`
+                    : `${remWeeks}週`;
     return `<tr>
       <td>週${w}回まで</td>
-      <td>約${fmt.format(weeks)}週（約${fmt.format(weeks * 7)}日）</td>
+      <td>${periodStr}</td>
       <td>${fmt.format(Math.ceil(cost))}個</td>
     </tr>`;
   }).join("");
@@ -337,6 +361,24 @@ function switchTab(name) {
 
 document.querySelectorAll(".tab-btn").forEach(btn =>
   btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+
+// UI画像タップ連動
+const visualWrap = document.getElementById("visualWrap");
+document.getElementById("tapLeft").addEventListener("click", () => {
+  switchTab("owned");
+  visualWrap.className = "refine-visual-wrap active-left";
+});
+document.getElementById("tapRight").addEventListener("click", () => {
+  switchTab("target");
+  visualWrap.className = "refine-visual-wrap active-right";
+});
+// タブボタン側からも画像グローを同期
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    visualWrap.className = "refine-visual-wrap " +
+      (btn.dataset.tab === "owned" ? "active-left" : "active-right");
+  });
+});
 ownedInput.addEventListener("input", renderOwned);
 targetInput.addEventListener("input", renderTarget);
 currentInput.addEventListener("input", renderTarget);
