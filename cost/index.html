@@ -142,7 +142,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px)}
 
   function goRefine(){
     sessionStorage.setItem("refine_plan_entry","1");
-    location.href="./refine/";
+    location.href="./refine/?from=cost";
   }
 
   link.addEventListener("click",function(e){
@@ -155,8 +155,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 54px)}
     const fallback=setTimeout(goRefine,3400);
     video.onended=function(){
       clearTimeout(fallback);
-      layer.classList.add("fadeout");
-      setTimeout(goRefine,260);
+      goRefine();
     };
     const p=video.play();
     if(p && typeof p.catch==="function"){
