@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>1648 Portal 管理ダッシュボード</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:14px}
+.header{position:sticky;top:0;z-index:30;margin:-14px -14px 12px;padding:13px 14px 10px;background:rgba(7,11,18,.97);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:19px;color:#facc15}
+.sub{font-size:11px;color:#94a3b8;margin-top:4px}
+.back{display:inline-flex;margin-top:9px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:900}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#111827;color:#cbd5e1;padding:10px 13px;border-radius:999px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+.tab.active{background:#facc15;color:#111827;border-color:#facc15}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;margin-bottom:10px}
+.title{font-size:15px;font-weight:900;margin-bottom:7px}
+.desc{font-size:12px;line-height:1.65;color:#94a3b8}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.legend span{font-size:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);padding:7px 9px;border-radius:999px}
+.search{width:100%;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:0 13px;font:inherit;margin-bottom:10px}
+.row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:8px;min-height:48px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer}
+.row:last-child{border-bottom:none}
+.alliance{font-size:12px;color:#93c5fd;font-weight:900}
+.name{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{font-size:18px;letter-spacing:2px;white-space:nowrap}
+.empty{padding:24px 10px;text-align:center;color:#64748b;font-size:12px}
+.select{width:100%;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:0 12px;font:inherit;margin-bottom:10px}
+.note{border:1px solid rgba(251,191,36,.25);background:rgba(251,191,36,.08);color:#fde68a;border-radius:14px;padding:11px;font-size:12px;line-height:1.6;margin-bottom:10px}
+.lock{padding:24px;text-align:center}
+.lock a{color:#bfdbfe}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const PORTAL_URL="/1648-portal/";
+const ADMIN_URL="/1648-portal/admin/";
+
+function sess(){
+  const r=localStorage.getItem("discord_user");
+  if(!r){location.replace(LOGIN_URL);return null}
+  try{
+    const d=JSON.parse(r);
+    if(!d.ok){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    if(d.status==="pending_profile"){location.replace("/1648-portal/profile-setup/");return null}
+    if(d.status!=="active"){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    return d
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    location.replace(LOGIN_URL);
+    return null
+  }
+}
+function roleKey(d){return String(d?.role||d?.user?.role||"member").toLowerCase()}
+function level(d){return {developer:3,manager:2,technical:1,member:0,limited:-1}[roleKey(d)]??0}
+function role(l){return l>=3?"HQディベロッパー":l>=2?"HQマネージャー":l>=1?"テクニカルマネージャー":"HQメンバー"}
+
+function renderShell(s){
+  const l=level(s);
+  if(l<2){
+    app.innerHTML=`<div class="lock">管理ダッシュボードはマネージャー以上のみ利用できます。<br><br><a href="${ADMIN_URL}">管理ページへ戻る</a></div>`;
+    return;
+  }
+  app.innerHTML=`
+    <div class="header">
+      <h1>管理ダッシュボード</h1>
+      <div class="sub">${role(l)}｜スマートフォン向け参照画面</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="users">👥 参加者</button>
+      <button class="tab" data-tab="data">📈 データ検索</button>
+      <button class="tab" data-tab="survey">📝 アンケート結果</button>
+      <button class="tab" data-tab="office">🏛 官職結果</button>
+    </div>
+
+    <section class="panel active" id="panel-users">
+      <div class="card">
+        <div class="title">Portal参加者一覧</div>
+        <div class="desc">認証済み参加者を、同盟名・プレイヤー名・管理バッジで確認します。行をタップすると詳細・ロール・タグ・備考編集へ進みます。</div>
+        <div class="legend">
+          <span>🛡 集結主</span>
+          <span>👑 運営チーム</span>
+          <span>⚠ ネガティブ</span>
+        </div>
+        <input class="search" id="userSearch" placeholder="プレイヤー名・ゲームIDで検索">
+        <div id="userList" class="empty">Firestore連携後に参加者一覧を表示します。</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-data">
+      <div class="card">
+        <div class="title">データ検索</div>
+        <div class="desc">項目と条件を選択し、該当するプレイヤーを一覧表示します。</div>
+        <select class="select"><option>カテゴリを選択</option><option>ティア</option><option>T12</option><option>英雄</option><option>戦力</option><option>ペット</option></select>
+        <div class="empty">Firestoreの保存フィールド確認後に検索条件を接続します。</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-survey">
+      <div class="card">
+        <div class="title">アンケート結果</div>
+        <div class="desc">アンケート・質問・回答を選び、該当者を人数だけでなく一覧で確認します。</div>
+        <select class="select"><option>アンケートを選択</option></select>
+        <select class="select"><option>質問を選択</option></select>
+        <select class="select"><option>回答を選択</option></select>
+        <div class="empty">survey_rooms・survey_answers連携後に結果一覧を表示します。</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-office">
+      <div class="card">
+        <div class="title">官職確定結果</div>
+        <div class="desc">いつの官職アンケートか、教育部長または副執政官を選び、振り分け計算後の確定結果だけを表示します。</div>
+        <select class="select"><option>官職アンケートを選択</option></select>
+        <select class="select"><option>官職を選択</option><option>教育部長</option><option>副執政官</option></select>
+        <div class="empty">官職結果の保存フィールド確認後に確定結果を接続します。</div>
+      </div>
+    </section>
+
+    <div class="note">全項目のトータル一覧・詳細分析はスプレッドシートをPCでご利用ください。</div>
+  `;
+
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+    });
+  });
+}
+
+const s=sess();
+if(s) renderShell(s);
+</script>
+</body>
+</html>
