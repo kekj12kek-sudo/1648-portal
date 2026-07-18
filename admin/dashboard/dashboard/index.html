@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>1648 Portal 管理ダッシュボード</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:14px}
+.header{position:sticky;top:0;z-index:30;margin:-14px -14px 12px;padding:13px 14px 10px;background:rgba(7,11,18,.97);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:19px;color:#facc15}
+.sub{font-size:11px;color:#94a3b8;margin-top:4px}
+.back{display:inline-flex;margin-top:9px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:900}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);background:#111827;color:#cbd5e1;padding:10px 13px;border-radius:999px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+.tab.active{background:#facc15;color:#111827;border-color:#facc15}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;margin-bottom:10px}
+.title{font-size:15px;font-weight:900;margin-bottom:7px}
+.desc{font-size:12px;line-height:1.65;color:#94a3b8}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.legend span{font-size:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);padding:7px 9px;border-radius:999px}
+.search{width:100%;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:0 13px;font:inherit;margin-bottom:10px}
+.row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:8px;min-height:48px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer}
+.row:last-child{border-bottom:none}
+.row:active{background:rgba(255,255,255,.04)}
+.alliance{font-size:12px;color:#93c5fd;font-weight:900;white-space:nowrap}
+.name{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{font-size:18px;letter-spacing:2px;white-space:nowrap;text-align:right}
+.empty{padding:24px 10px;text-align:center;color:#64748b;font-size:12px}
+.select{width:100%;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:0 12px;font:inherit;margin-bottom:10px}
+.note{border:1px solid rgba(251,191,36,.25);background:rgba(251,191,36,.08);color:#fde68a;border-radius:14px;padding:11px;font-size:12px;line-height:1.6;margin-bottom:10px}
+.lock{padding:24px;text-align:center}
+.lock a{color:#bfdbfe}
+
+/* ----- participant detail modal ----- */
+.modal-overlay{position:fixed;inset:0;z-index:80;background:rgba(3,6,12,.72);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center}
+.modal-box{width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:#0b1120;border:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:16px 16px 20px}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.modal-title{font-size:16px;font-weight:900}
+.modal-sub{font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.6}
+.modal-close{border:none;background:rgba(255,255,255,.08);color:#fff;width:32px;height:32px;border-radius:999px;font-size:16px;cursor:pointer}
+.field-label{font-size:11px;color:#94a3b8;font-weight:900;margin:12px 0 6px}
+.field-input{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:10px 12px;font:inherit}
+textarea.field-input{min-height:70px;resize:vertical;line-height:1.6}
+.checkline{display:flex;align-items:center;gap:8px;font-size:13px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.checkline:last-of-type{border-bottom:none}
+.checkline input{width:18px;height:18px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
+.meta-item{background:rgba(255,255,255,.05);border-radius:12px;padding:9px 10px}
+.meta-item .k{font-size:10px;color:#64748b}
+.meta-item .v{font-size:12px;font-weight:800;margin-top:2px;word-break:break-all}
+.role-lock{font-size:11px;color:#fca5a5;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:10px;padding:9px 10px;margin-bottom:4px}
+.history-item{font-size:11px;color:#cbd5e1;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.history-item:last-child{border-bottom:none}
+.btn-row{display:flex;gap:8px;margin-top:16px}
+.btn{flex:1;height:46px;border-radius:12px;border:none;font:inherit;font-weight:900;cursor:pointer}
+.btn-primary{background:#facc15;color:#111827}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.btn-secondary{background:rgba(255,255,255,.08);color:#e5e7eb}
+.result-count{font-size:11px;color:#94a3b8;padding:6px 2px 10px}
+.t12-row{padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.t12-row:last-child{border-bottom:none}
+.t12-row-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.t12-row-head .alliance{font-size:12px;color:#93c5fd;font-weight:900}
+.t12-row-head .name{font-size:13px;font-weight:900}
+.t12-units{display:flex;gap:6px;flex-wrap:wrap}
+.unit-tag{font-size:11px;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:#94a3b8;border:1px solid rgba(255,255,255,.08)}
+.unit-tag.unit-matched{background:rgba(250,204,21,.16);color:#fde68a;border-color:rgba(250,204,21,.4);font-weight:900}
+.survey-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.survey-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="userModalTitle">参加者詳細</div>
+        <div class="modal-sub" id="userModalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closePortalUserDetail()">✕</button>
+    </div>
+    <div id="userModalBody"><div class="empty">読み込み中...</div></div>
+  </div>
+</div>
+
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const PORTAL_URL="/1648-portal/";
+const ADMIN_URL="/1648-portal/admin/";
+
+// Cloud Functions base URL (Firebase Functions v2, default region).
+// プロジェクト: yoyaku-4ec7c / リージョン指定なし(=us-central1)から算出。
+// もし実際のURLと異なる場合はここだけ書き換えれば動作します。
+const FN_BASE = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net";
+
+const NOTE_PRESET_OPTIONS = ["なし","移民済み","次回移民予定","Discordのみ参加","休止中","その他"];
+
+function sess(){
+  const r=localStorage.getItem("discord_user");
+  if(!r){location.replace(LOGIN_URL);return null}
+  try{
+    const d=JSON.parse(r);
+    if(!d.ok){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    if(d.status==="pending_profile"){location.replace("/1648-portal/profile-setup/");return null}
+    if(d.status!=="active"){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    return d
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    location.replace(LOGIN_URL);
+    return null
+  }
+}
+function roleKey(d){return String(d?.role||d?.user?.role||"member").toLowerCase()}
+function level(d){return {developer:3,manager:2,technical:1,member:0,limited:-1}[roleKey(d)]??0}
+function role(l){return l>=3?"HQディベロッパー":l>=2?"HQマネージャー":l>=1?"テクニカルマネージャー":"HQメンバー"}
+function roleLabel(r){return {developer:"HQディベロッパー",manager:"HQマネージャー",technical:"テクニカルマネージャー",member:"HQメンバー",limited:"利用制限中（コスト計算のみ）"}[r]||r}
+function getSessionDiscordId(d){return d?.user?.discordId || d?.discordId || d?.discord?.id || d?.user?.id || ""}
+
+function escapeHtml(str){
+  return String(str==null?"":str).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function callFn(name, body){
+  let res;
+  try{
+    res = await fetch(`${FN_BASE}/${name}`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body||{})
+    });
+  }catch(networkError){
+    throw new Error("network_error");
+  }
+  let data = null;
+  try{ data = await res.json(); }catch(parseError){ data = null; }
+  if(!res.ok || !data || !data.ok){
+    throw new Error((data && data.error) || `request_failed_${res.status}`);
+  }
+  return data;
+}
+
+let s = null;
+let allPortalUsers = [];
+let currentDetailId = null;
+
+function badgesHtml(u){
+  let b = "";
+  if(u.leader) b += "🛡";
+  if(u.staff) b += "👑";
+  if(u.negative) b += "⚠";
+  return b;
+}
+
+function userRowHtml(u){
+  return `<div class="row" data-id="${escapeHtml(u.discordId)}">
+    <div class="alliance">[${escapeHtml(u.alliance)}]</div>
+    <div class="name">${escapeHtml(u.playerName)}</div>
+    <div class="badges">${badgesHtml(u)}</div>
+  </div>`;
+}
+
+function renderPortalUserList(users){
+  const listEl = document.getElementById("userList");
+  if(!listEl) return;
+  if(!users.length){
+    listEl.className = "empty";
+    listEl.textContent = "該当する参加者がいません。";
+    return;
+  }
+  listEl.className = "";
+  listEl.innerHTML = users.map(userRowHtml).join("");
+  listEl.querySelectorAll(".row").forEach(row=>{
+    row.addEventListener("click", ()=>openPortalUserDetail(row.dataset.id));
+  });
+}
+
+async function loadPortalUsers(){
+  const listEl = document.getElementById("userList");
+  if(!listEl) return;
+  listEl.className = "empty";
+  listEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("listPortalUsers", {discordId: myId});
+    allPortalUsers = data.users || [];
+    renderPortalUserList(allPortalUsers);
+  }catch(e){
+    listEl.className = "empty";
+    listEl.textContent = "参加者一覧の取得に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function filterPortalUsers(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ renderPortalUserList(allPortalUsers); return; }
+  const filtered = allPortalUsers.filter(u=>
+    (u.playerName||"").toLowerCase().includes(q) ||
+    (u.gameId||"").toLowerCase().includes(q) ||
+    (u.alliance||"").toLowerCase().includes(q)
+  );
+  renderPortalUserList(filtered);
+}
+
+function fmtTimestamp(v){
+  let ms = 0;
+  if(!v){ ms = 0; }
+  else if(typeof v === "string"){ ms = Date.parse(v) || 0; }
+  else if(v._seconds){ ms = v._seconds*1000; }
+  else if(v.seconds){ ms = v.seconds*1000; }
+  if(!ms) return "―";
+  return new Date(ms).toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+async function openPortalUserDetail(discordId){
+  currentDetailId = discordId;
+  const modal = document.getElementById("userModal");
+  modal.style.display = "flex";
+  document.getElementById("userModalTitle").textContent = "参加者詳細";
+  document.getElementById("userModalSub").textContent = "";
+  document.getElementById("userModalBody").innerHTML = `<div class="empty">読み込み中...</div>`;
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getPortalUser", {discordId: myId, targetDiscordId: discordId});
+    renderPortalUserDetail(data.user, data.history || []);
+  }catch(e){
+    document.getElementById("userModalBody").innerHTML = `<div class="empty">詳細の取得に失敗しました。</div>`;
+  }
+}
+
+function closePortalUserDetail(){
+  document.getElementById("userModal").style.display = "none";
+  currentDetailId = null;
+}
+
+function renderPortalUserDetail(u, history){
+  document.getElementById("userModalTitle").textContent = u.playerName || u.discordId;
+  document.getElementById("userModalSub").textContent = `[${u.alliance}]　ゲームID: ${u.gameId || "―"}`;
+
+  const roleLocked = u.role === "developer";
+  const roleOptionsHtml = ["member","technical","manager","limited"].map(r=>
+    `<option value="${r}" ${u.role===r?"selected":""}>${roleLabel(r)}</option>`
+  ).join("");
+
+  const presetOptionsHtml = NOTE_PRESET_OPTIONS.map(p=>
+    `<option value="${p}" ${u.notePreset===p?"selected":""}>${p}</option>`
+  ).join("");
+
+  const historyHtml = history.length
+    ? history.map(h=>`<div class="history-item">${fmtTimestamp(h.changedAt)}　${roleLabel(h.fromRole)} → ${roleLabel(h.toRole)}</div>`).join("")
+    : `<div class="history-item" style="color:#64748b">変更履歴はありません</div>`;
+
+  document.getElementById("userModalBody").innerHTML = `
+    <div class="meta-grid">
+      <div class="meta-item"><div class="k">Discord</div><div class="v">${escapeHtml(u.discordName || u.globalName || "―")}</div></div>
+      <div class="meta-item"><div class="k">現在ロール</div><div class="v">${roleLabel(u.role)}</div></div>
+      <div class="meta-item"><div class="k">最終ログイン</div><div class="v">${fmtTimestamp(u.lastLoginAt)}</div></div>
+      <div class="meta-item"><div class="k">最終アンケート回答</div><div class="v">${fmtTimestamp(u.lastAnswerAt)}</div></div>
+    </div>
+
+    <div class="field-label">Portalロール</div>
+    ${roleLocked
+      ? `<div class="role-lock">🔒 Developerのロールはここから変更できません。</div>`
+      : `<select class="field-input" id="detailRole">${roleOptionsHtml}</select>
+         <div class="modal-sub" style="margin:-4px 0 0">「利用制限中」はコスト計算room以外の機能が使えなくなります。</div>`
+    }
+
+    <div class="field-label">タグ（カンマ区切りで入力）</div>
+    <input class="field-input" id="detailTags" value="${escapeHtml((u.tags||[]).join(", "))}" placeholder="例: 弓, 新人, VIP">
+
+    <div class="field-label">バッジ</div>
+    <label class="checkline"><input type="checkbox" id="detailLeader" ${u.leader?"checked":""}> 🛡 集結主</label>
+    <label class="checkline"><input type="checkbox" id="detailStaff" ${u.staff?"checked":""}> 👑 運営チーム</label>
+    <label class="checkline"><input type="checkbox" id="detailNegative" ${u.negative?"checked":""}> ⚠ ネガティブ</label>
+
+    <div class="field-label">定型備考</div>
+    <select class="field-input" id="detailPreset">${presetOptionsHtml}</select>
+
+    <div class="field-label">自由備考</div>
+    <textarea class="field-input" id="detailNote" placeholder="自由記入">${escapeHtml(u.note || "")}</textarea>
+
+    <div class="field-label">ロール変更履歴（直近5件）</div>
+    ${historyHtml}
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closePortalUserDetail()">閉じる</button>
+      <button class="btn btn-primary" id="detailSaveBtn" onclick="savePortalUserDetail()">保存</button>
+    </div>
+  `;
+}
+
+async function savePortalUserDetail(){
+  if(!currentDetailId) return;
+
+  const roleSelect = document.getElementById("detailRole");
+  const tagsInput = document.getElementById("detailTags");
+  const leaderCb = document.getElementById("detailLeader");
+  const staffCb = document.getElementById("detailStaff");
+  const negativeCb = document.getElementById("detailNegative");
+  const presetSelect = document.getElementById("detailPreset");
+  const noteInput = document.getElementById("detailNote");
+
+  const updates = {
+    tags: tagsInput.value.split(",").map(t=>t.trim()).filter(Boolean),
+    leader: leaderCb.checked,
+    staff: staffCb.checked,
+    negative: negativeCb.checked,
+    notePreset: presetSelect.value,
+    note: noteInput.value
+  };
+  if(roleSelect){
+    updates.role = roleSelect.value;
+  }
+
+  const saveBtn = document.getElementById("detailSaveBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "保存中...";
+
+  try{
+    const myId = getSessionDiscordId(s);
+    await callFn("updatePortalUser", {discordId: myId, targetDiscordId: currentDetailId, updates});
+
+    const idx = allPortalUsers.findIndex(u=>u.discordId===currentDetailId);
+    if(idx >= 0){
+      allPortalUsers[idx] = {
+        ...allPortalUsers[idx],
+        role: updates.role || allPortalUsers[idx].role,
+        leader: updates.leader,
+        staff: updates.staff,
+        negative: updates.negative
+      };
+      renderPortalUserList(allPortalUsers);
+    }
+    closePortalUserDetail();
+  }catch(e){
+    alert("保存に失敗しました。時間をおいて再度お試しください。");
+    saveBtn.disabled = false;
+    saveBtn.textContent = "保存";
+  }
+}
+
+// ----- データ検索（T12） -----
+
+const T12_STAGE_OPTIONS = [
+  {value:"locked", label:"未解放"},
+  {value:"unlocked", label:"T12解放済"},
+  {value:"skill_1", label:"スキル1まで解放済"},
+  {value:"skill_2", label:"スキル2まで解放済"},
+  {value:"skill_3", label:"スキル3まで解放済"},
+  {value:"capacity_1", label:"容量1まで解放済"},
+  {value:"capacity_2", label:"容量2まで解放済"},
+  {value:"capacity_3", label:"容量3まで解放済"},
+  {value:"max", label:"カンスト"}
+];
+const T12_UNIT_LABEL = {shield:"盾", spear:"槍", bow:"弓"};
+
+function onDataCategoryChange(e){
+  const cat = e.target.value;
+  const stageSel = document.getElementById("t12StageSelect");
+  const resultEl = document.getElementById("dataSearchResult");
+
+  if(cat === "t12"){
+    stageSel.style.display = "";
+    stageSel.innerHTML = `<option value="">条件を選択</option>` + T12_STAGE_OPTIONS.map(o=>`<option value="${o.value}">${o.label}</option>`).join("");
+    resultEl.className = "empty";
+    resultEl.textContent = "条件を選択してください。";
+  }else if(!cat){
+    stageSel.style.display = "none";
+    resultEl.className = "empty";
+    resultEl.textContent = "カテゴリを選択してください。";
+  }else{
+    stageSel.style.display = "none";
+    resultEl.className = "empty";
+    resultEl.textContent = "このカテゴリは準備中です。データの保存先確認後、今後のアップデートで対応します。";
+  }
+}
+
+async function onT12StageChange(e){
+  const stage = e.target.value;
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!stage){
+    resultEl.className = "empty";
+    resultEl.textContent = "条件を選択してください。";
+    return;
+  }
+  resultEl.className = "empty";
+  resultEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchT12Progress", {discordId: myId, minStage: stage});
+    renderT12SearchResult(data.results || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "検索に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function renderT12SearchResult(list){
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "該当するプレイヤーがいません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(p=>{
+    const unitsHtml = p.units.map(u=>
+      `<span class="unit-tag ${u.matched?"unit-matched":""}">${T12_UNIT_LABEL[u.unit]||u.unit}：${escapeHtml(u.label)}</span>`
+    ).join("");
+    return `<div class="t12-row">
+      <div class="t12-row-head"><span class="alliance">[${escapeHtml(p.alliance)}]</span><span class="name">${escapeHtml(p.playerName)}</span></div>
+      <div class="t12-units">${unitsHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+// ----- アンケート結果 -----
+
+let allSurveys = [];
+let currentSurveyDetail = null;
+let selectedQuestionId = "";
+
+async function loadSurveyList(){
+  const sel = document.getElementById("surveySelect");
+  if(!sel) return;
+  sel.innerHTML = `<option value="">読み込み中...</option>`;
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getSurveyResults", {discordId: myId});
+    allSurveys = data.surveys || [];
+    if(!allSurveys.length){
+      sel.innerHTML = `<option value="">アンケートがありません</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">アンケートを選択</option>` + allSurveys.map(sv=>
+      `<option value="${escapeHtml(sv.id)}">${escapeHtml(sv.title || sv.id)}${sv.openState==="open" ? "（受付中）" : sv.openState==="closed" ? "（終了）" : ""}</option>`
+    ).join("");
+  }catch(e){
+    sel.innerHTML = `<option value="">取得に失敗しました</option>`;
+  }
+}
+
+async function onSurveySelectChange(e){
+  const surveyId = e.target.value;
+  const qSel = document.getElementById("questionSelect");
+  const aSel = document.getElementById("answerSelect");
+  const resultEl = document.getElementById("surveyResultList");
+
+  selectedQuestionId = "";
+  aSel.innerHTML = `<option value="">質問を選択してください</option>`;
+  aSel.disabled = true;
+  resultEl.className = "empty";
+
+  if(!surveyId){
+    qSel.innerHTML = `<option value="">アンケートを選択してください</option>`;
+    qSel.disabled = true;
+    resultEl.textContent = "アンケートを選択してください。";
+    return;
+  }
+
+  qSel.innerHTML = `<option value="">読み込み中...</option>`;
+  qSel.disabled = true;
+  resultEl.textContent = "質問を選択してください。";
+
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getSurveyResults", {discordId: myId, surveyId});
+    currentSurveyDetail = data;
+    const questions = data.questions || [];
+    if(!questions.length){
+      qSel.innerHTML = `<option value="">このアンケートには質問がありません</option>`;
+      return;
+    }
+    qSel.innerHTML = `<option value="">質問を選択</option>` + questions.map(q=>
+      `<option value="${escapeHtml(q.id)}">${escapeHtml(q.title)}</option>`
+    ).join("");
+    qSel.disabled = false;
+  }catch(err){
+    qSel.innerHTML = `<option value="">取得に失敗しました</option>`;
+  }
+}
+
+function buildAnswerOptions(qid){
+  if(!currentSurveyDetail) return [];
+
+  if(qid === "heroes"){
+    return (currentSurveyDetail.heroSummary || []).map(h=>({value:h.id, label:h.name, count:h.count}));
+  }
+
+  const counts = {};
+  (currentSurveyDetail.answers || []).forEach(a=>{
+    const v = a.answers ? a.answers[qid] : undefined;
+    if(v === undefined || v === null || v === "") return;
+    const values = Array.isArray(v) ? v : [v];
+    values.forEach(val=>{
+      if(typeof val !== "string" || !val) return;
+      counts[val] = (counts[val] || 0) + 1;
+    });
+  });
+
+  return Object.keys(counts)
+    .map(v=>({value:v, label:v, count:counts[v]}))
+    .sort((a,b)=> b.count - a.count || a.label.localeCompare(b.label, "ja"));
+}
+
+function onQuestionSelectChange(e){
+  selectedQuestionId = e.target.value;
+  const aSel = document.getElementById("answerSelect");
+  const resultEl = document.getElementById("surveyResultList");
+  resultEl.className = "empty";
+
+  if(!selectedQuestionId){
+    aSel.innerHTML = `<option value="">質問を選択してください</option>`;
+    aSel.disabled = true;
+    resultEl.textContent = "質問を選択してください。";
+    return;
+  }
+
+  const options = buildAnswerOptions(selectedQuestionId);
+  if(!options.length){
+    aSel.innerHTML = `<option value="">回答データがありません</option>`;
+    aSel.disabled = true;
+    resultEl.textContent = "この質問にはまだ回答がありません。";
+    return;
+  }
+
+  aSel.innerHTML = `<option value="">回答を選択</option>` + options.map(o=>
+    `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}（${o.count}人）</option>`
+  ).join("");
+  aSel.disabled = false;
+  resultEl.textContent = "回答を選択してください。";
+}
+
+function onAnswerSelectChange(e){
+  const value = e.target.value;
+  const resultEl = document.getElementById("surveyResultList");
+
+  if(!value){
+    resultEl.className = "empty";
+    resultEl.textContent = "回答を選択してください。";
+    return;
+  }
+
+  let matched = [];
+  if(selectedQuestionId === "heroes"){
+    const heroEntry = (currentSurveyDetail.heroSummary || []).find(h=>h.id === value);
+    matched = heroEntry ? heroEntry.users.map(u=>({playerName:u.playerName, alliance:u.alliance})) : [];
+  }else{
+    matched = (currentSurveyDetail.answers || [])
+      .filter(a=>{
+        const v = a.answers ? a.answers[selectedQuestionId] : undefined;
+        if(Array.isArray(v)) return v.includes(value);
+        return v === value;
+      })
+      .map(a=>({playerName:a.playerName, alliance:a.alliance}));
+  }
+
+  renderSurveyResultList(matched);
+}
+
+function renderSurveyResultList(list){
+  const resultEl = document.getElementById("surveyResultList");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "該当者がいません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(u=>
+    `<div class="survey-row"><span class="alliance">[${escapeHtml(u.alliance || "―")}]</span><span class="name">${escapeHtml(u.playerName || "―")}</span></div>`
+  ).join("");
+}
+
+function renderShell(sessionData){
+  s = sessionData;
+  const l = level(s);
+  if(l < 2){
+    app.innerHTML = `<div class="lock">管理ダッシュボードはマネージャー以上のみ利用できます。<br><br><a href="${ADMIN_URL}">管理ページへ戻る</a></div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>管理ダッシュボード</h1>
+      <div class="sub">${role(l)}｜スマートフォン向け参照画面</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="users">👥 参加者</button>
+      <button class="tab" data-tab="data">📈 データ検索</button>
+      <button class="tab" data-tab="survey">📝 アンケート結果</button>
+      <button class="tab" data-tab="office">🏛 官職結果</button>
+    </div>
+
+    <section class="panel active" id="panel-users">
+      <div class="card">
+        <div class="title">Portal参加者一覧</div>
+        <div class="desc">認証済み参加者を、同盟名・プレイヤー名・管理バッジで確認します。行をタップすると詳細・ロール・タグ・備考編集へ進みます。</div>
+        <div class="legend">
+          <span>🛡 集結主</span>
+          <span>👑 運営チーム</span>
+          <span>⚠ ネガティブ</span>
+        </div>
+        <input class="search" id="userSearch" placeholder="プレイヤー名・ゲームID・同盟名で検索">
+        <div id="userList" class="empty">読み込み中...</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-data">
+      <div class="card">
+        <div class="title">データ検索</div>
+        <div class="desc">項目と条件を選択し、該当するプレイヤーを一覧表示します。</div>
+        <select class="select" id="dataCategorySelect">
+          <option value="">カテゴリを選択</option>
+          <option value="t12">T12</option>
+          <option value="tier">ティア</option>
+          <option value="hero">英雄</option>
+          <option value="power">戦力</option>
+          <option value="pet">ペット</option>
+        </select>
+        <select class="select" id="t12StageSelect" style="display:none"></select>
+        <div id="dataSearchResult" class="empty">カテゴリを選択してください。</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-survey">
+      <div class="card">
+        <div class="title">アンケート結果</div>
+        <div class="desc">アンケート・質問・回答を選び、該当者を人数だけでなく一覧で確認します。</div>
+        <select class="select" id="surveySelect"><option value="">読み込み中...</option></select>
+        <select class="select" id="questionSelect" disabled><option value="">アンケートを選択してください</option></select>
+        <select class="select" id="answerSelect" disabled><option value="">質問を選択してください</option></select>
+        <div id="surveyResultList" class="empty">アンケートを選択してください。</div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-office">
+      <div class="card">
+        <div class="title">官職確定結果</div>
+        <div class="desc">いつの官職アンケートか、教育部長または副執政官を選び、振り分け計算後の確定結果だけを表示します。</div>
+        <select class="select"><option>官職アンケートを選択</option></select>
+        <select class="select"><option>官職を選択</option><option>教育部長</option><option>副執政官</option></select>
+        <div class="empty">官職結果の保存フィールド確認後に確定結果を接続します。</div>
+      </div>
+    </section>
+
+    <div class="note">全項目のトータル一覧・詳細分析はスプレッドシートをPCでご利用ください。</div>
+  `;
+
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  document.getElementById("userSearch").addEventListener("input", e=>filterPortalUsers(e.target.value));
+  document.getElementById("dataCategorySelect").addEventListener("change", onDataCategoryChange);
+  document.getElementById("t12StageSelect").addEventListener("change", onT12StageChange);
+  document.getElementById("surveySelect").addEventListener("change", onSurveySelectChange);
+  document.getElementById("questionSelect").addEventListener("change", onQuestionSelectChange);
+  document.getElementById("answerSelect").addEventListener("change", onAnswerSelectChange);
+
+  loadPortalUsers();
+  loadSurveyList();
+}
+
+const initialSession = sess();
+if(initialSession) renderShell(initialSession);
+</script>
+</body>
+</html>
