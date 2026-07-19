@@ -297,6 +297,8 @@ const SS={
   members:[],cityAssign:{},active:[],pet:{},petStart:{},enemies:[],
   modal:null,selCity:null,now:Date.now(),
   adjust:{},     // {memberId: {march:0, petMarch:0}} 個人調整値
+  arrivalMode:'base30', // 'base30'(行軍30秒=カウント0) or 'shortest'(最短着弾)
+  enemyFace:'A',enemyPlacement:'6',enemySlotIdx:null, // 敵情報入力マップ用（一時的なUI状態、同期しない）
 };
 
 // ============================================================
@@ -398,7 +400,10 @@ function sFactionLabel(){
   if(SS.split==='lr')return SS.faction==='blue'?'左陣営（青）':'右陣営（赤）';
   return SS.faction==='blue'?'上陣営（青）':'下陣営（赤）';
 }
-function sGetMapImg(faceKey){
+function sGetMapImg(faceKey){return sGetMapImgFor(SS.faction,faceKey);}
+function sOppositeFaction(){return SS.faction==='blue'?'red':'blue';}
+function sEnemyMapImg(){return sGetMapImgFor(sOppositeFaction(),SS.enemyFace);}
+function sGetMapImgFor(faction,faceKey){
   const IMG={
     'lr_blue_A':'images/左右分け青左上.jpg',
     'lr_blue_B':'images/左右分け青左下.jpg',
@@ -409,16 +414,29 @@ function sGetMapImg(faceKey){
     'ud_red_A':'images/上下分け赤左下.jpg',
     'ud_red_B':'images/上下分け赤右下.jpg',
   };
-  return IMG[`${SS.split}_${SS.faction}_${faceKey}`]||'';
+  return IMG[`${SS.split}_${faction}_${faceKey}`]||'';
+}
+function sEnemyCityPos(){
+  return FIXED_POS[`${SS.split}_${sOppositeFaction()}_${SS.enemyFace}_${SS.enemyPlacement}`]||[];
+}
+function sSetEnemyFace(f){SS.enemyFace=f;SS.enemySlotIdx=null;render();}
+function sSetEnemyPlacement(p){SS.enemyPlacement=p;SS.enemySlotIdx=null;render();}
+function sSelectEnemySlot(idx){SS.enemySlotIdx=idx;render();}
+const ARRIVAL_BASE_SEC=30;
+function sArrivalBase(wm){
+  return SS.arrivalMode==='shortest'?Math.min(...wm.map(m=>m.march)):ARRIVAL_BASE_SEC;
 }
 function sCalcHits(mems){
   const wm=mems.map(m=>({...m,march:sGetMarch(m.id)})).filter(m=>m.march!==null);
   if(!wm.length)return[];
-  const base=Math.min(...wm.map(m=>m.march));
+  const base=sArrivalBase(wm);
   return wm.map(m=>{
     const diff=m.march-base;
     return{...m,wait:diff,countLabel:diff>0?String(diff):diff<0?`+${Math.abs(diff)}`:'0'};
   }).sort((a,b)=>b.wait-a.wait);
+}
+function sSetArrivalMode(v){
+  if(v!==SS.arrivalMode){SS.arrivalMode=v;markDirty('svs/arrivalMode');scheduleSave();render();}
 }
 
 // ============================================================
@@ -699,13 +717,19 @@ function rSvsCalc(el){
   const ac=SS.members.filter(m=>SS.active.includes(m.id));
   const all=sCalcHits(ac);
   const teams=[...new Set(ac.map(m=>m.team))].sort();
+  const modeLabel=SS.arrivalMode==='shortest'?'最短着弾':'行軍30秒基準';
+  const baseDisp=all.length?sArrivalBase(all):ARRIVAL_BASE_SEC;
   el.innerHTML=renderStickyClock('SVS 同着計算')+`
 <div class="card">
   <div class="sec">全体同時着弾</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="btn btn-xs" style="flex:1;background:${SS.arrivalMode==='base30'?'var(--accent)':'var(--bg3)'};color:${SS.arrivalMode==='base30'?'#04121f':'var(--text2)'}" onclick="sSetArrivalMode('base30')">行軍30秒基準</button>
+    <button class="btn btn-xs" style="flex:1;background:${SS.arrivalMode==='shortest'?'var(--accent)':'var(--bg3)'};color:${SS.arrivalMode==='shortest'?'#04121f':'var(--text2)'}" onclick="sSetArrivalMode('shortest')">最短着弾</button>
+  </div>
   ${all.length?`
   <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div style="font-size:11px;color:var(--text3)">基準（最短行軍）</div>
-    <div style="font-size:42px;font-weight:700;color:var(--accent);line-height:1">${Math.min(...all.map(r=>r.march))}<span style="font-size:16px">秒</span></div>
+    <div style="font-size:11px;color:var(--text3)">基準（${modeLabel}）</div>
+    <div style="font-size:42px;font-weight:700;color:var(--accent);line-height:1">${baseDisp}<span style="font-size:16px">秒</span></div>
     <div style="font-size:11px;color:var(--text2);margin-top:4px">${sFactionLabel()} — 参戦${ac.length}名</div>
   </div>
   ${all.map(r=>{
@@ -718,7 +742,7 @@ function rSvsCalc(el){
           <div style="font-size:11px;color:var(--text3)">${face?sFaceLabel(face):''} 都市${info?info.idx+1:'?'} — ${r.march}秒${hasPet?' 🟢':''}</div>
         </div>
         <div style="text-align:right;min-width:56px">
-          <div style="font-size:36px;font-weight:700;line-height:1;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.wait}</div>
+          <div style="font-size:36px;font-weight:700;line-height:1;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.countLabel}</div>
           <div style="font-size:10px;color:var(--text3)">秒後</div>
         </div>
       </div>
@@ -732,14 +756,18 @@ function rSvsCalc(el){
   }).join('')}`:`<div class="empty">② 当日参戦タブで参戦メンバーを確定してください</div>`}
 </div>
 ${all.length&&teams.length>1?`<div class="card"><div class="sec">チーム別同時着弾</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="btn btn-xs" style="flex:1;background:${SS.arrivalMode==='base30'?'var(--accent)':'var(--bg3)'};color:${SS.arrivalMode==='base30'?'#04121f':'var(--text2)'}" onclick="sSetArrivalMode('base30')">行軍30秒基準</button>
+    <button class="btn btn-xs" style="flex:1;background:${SS.arrivalMode==='shortest'?'var(--accent)':'var(--bg3)'};color:${SS.arrivalMode==='shortest'?'#04121f':'var(--text2)'}" onclick="sSetArrivalMode('shortest')">最短着弾</button>
+  </div>
   ${teams.map(t=>{
     const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return'';
     return`<div class="bsec" style="border-left-color:${tc(t)};margin-bottom:10px">
-      <div style="font-size:13px;font-weight:700;color:${tc(t)};margin-bottom:6px">チーム ${t} — 基準: ${Math.min(...tr.map(r=>r.march))}秒</div>
+      <div style="font-size:13px;font-weight:700;color:${tc(t)};margin-bottom:6px">チーム ${t} — 基準: ${sArrivalBase(tr)}秒（${modeLabel}）</div>
       ${tr.map(r=>`<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;font-size:13px;font-weight:600">${r.name}</div>
         <div style="font-size:11px;color:var(--text2);margin-right:10px">${r.march}秒</div>
-        <div style="font-size:26px;font-weight:700;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.wait}<span style="font-size:11px;color:var(--text3)">秒後</span></div>
+        <div style="font-size:26px;font-weight:700;color:${r.wait===0?'var(--green)':'var(--text)'}">${r.countLabel}<span style="font-size:11px;color:var(--text3)">秒後</span></div>
       </div>`).join('')}
     </div>`;
   }).join('')}
@@ -749,9 +777,9 @@ function rSvsCopy(el){
   const ac=SS.members.filter(m=>SS.active.includes(m.id));
   const all=sCalcHits(ac);
   const teams=[...new Set(ac.map(m=>m.team))].sort();
-  const at=all.map(r=>`${r.name} ${r.wait}`).join('\n');
+  const at=all.map(r=>`${r.name} ${r.countLabel}`).join('\n');
   const chunks=[];for(let i=0;i<teams.length;i+=2)chunks.push(teams.slice(i,i+2));
-  function makeTeamText(tList){return tList.map(t=>{const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`【${t}】${r.name} ${r.wait}`:`${r.name} ${r.wait}`).join('\n');}).filter(Boolean).join('\n');}
+  function makeTeamText(tList){return tList.map(t=>{const tr=sCalcHits(ac.filter(m=>m.team===t));if(!tr.length)return null;return tr.map((r,i)=>i===0?`【${t}】${r.name} ${r.countLabel}`:`${r.name} ${r.countLabel}`).join('\n');}).filter(Boolean).join('\n');}
   el.innerHTML=`
 <div class="card"><div class="sec">全員版</div>
   <div class="cpbox" id="cp-all">${at||'(参戦メンバー確定後に表示)'}</div>
@@ -799,25 +827,42 @@ function sEnemyCurrentMarch(e){
   return st.active?(e.petMarch??e.march):(e.normalMarch??e.march);
 }
 function rSvsEnemy(el){
-  const allOptions=[
-    ...M6.map((m,i)=>`<option value="${i}_6">6都市 都市${i+1}: ${m}秒 / ペット${P6[i]}秒</option>`),
-    ...M5.map((m,i)=>`<option value="${i}_5">5都市 都市${i+1}: ${m}秒 / ペット${P5[i]}秒</option>`),
-  ];
+  const oppo=sOppositeFaction();
+  const pos=sEnemyCityPos();
+  const img=sEnemyMapImg();
+  const ms=SS.enemyPlacement==='6'?M6:M5;
+  const ps=SS.enemyPlacement==='6'?P6:P5;
+  const selIdx=SS.enemySlotIdx;
+  const selMarch=selIdx!==null&&ms[selIdx]!==undefined?ms[selIdx]:null;
+  const selPet=selIdx!==null&&ps[selIdx]!==undefined?ps[selIdx]:null;
+
   el.innerHTML=`
-<div class="card"><div class="sec">敵情報入力</div>
-  <div class="row" style="margin-bottom:8px"><input class="inp fl1" id="en" placeholder="敵名"/></div>
-  <div class="row" style="margin-bottom:6px">
-    <select class="inp fl1" id="em" onchange="updateEnemyInfo()">
-      ${allOptions.join('')}
-    </select>
+<div class="card"><div class="sec">敵配置マップ（${oppo==='blue'?'青':'赤'}陣営）</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button class="btn btn-xs" style="flex:1;background:${SS.enemyFace==='A'?'var(--accent)':'var(--bg3)'};color:${SS.enemyFace==='A'?'#04121f':'var(--text2)'}" onclick="sSetEnemyFace('A')">${sFaceLabel('A')}</button>
+    <button class="btn btn-xs" style="flex:1;background:${SS.enemyFace==='B'?'var(--accent)':'var(--bg3)'};color:${SS.enemyFace==='B'?'#04121f':'var(--text2)'}" onclick="sSetEnemyFace('B')">${sFaceLabel('B')}</button>
   </div>
-  <div style="background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;gap:16px;align-items:center">
-    <div id="enemy-march-disp" style="font-size:13px;color:var(--text)">通常: 43秒</div>
-    <div id="enemy-pet-disp" style="font-size:13px;color:var(--green)">ペット: 37秒</div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="btn btn-xs" style="flex:1;background:${SS.enemyPlacement==='6'?'var(--accent)':'var(--bg3)'};color:${SS.enemyPlacement==='6'?'#04121f':'var(--text2)'}" onclick="sSetEnemyPlacement('6')">6都市配置</button>
+    <button class="btn btn-xs" style="flex:1;background:${SS.enemyPlacement==='5'?'var(--accent)':'var(--bg3)'};color:${SS.enemyPlacement==='5'?'#04121f':'var(--text2)'}" onclick="sSetEnemyPlacement('5')">5都市配置</button>
+  </div>
+  <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--bg3)">
+    ${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.opacity='0'"/>`:''}
+    ${pos.map((p,i)=>`<button onclick="sSelectEnemySlot(${i})" style="position:absolute;left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;border:2px solid ${selIdx===i?'var(--green)':'#fff'};background:${selIdx===i?'var(--green)':'rgba(0,0,0,.55)'};color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">${i+1}</button>`).join('')}
+  </div>
+  ${!pos.length?`<div class="empty">この配置の座標データがありません（split/faction/都市数の組み合わせを確認してください）。</div>`:''}
+</div>
+<div class="card" style="margin-top:10px"><div class="sec">敵情報入力</div>
+  <div class="row" style="margin-bottom:8px"><input class="inp fl1" id="en" placeholder="敵名"/></div>
+  <div style="background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    ${selIdx!==null?`
+    <div style="font-size:13px;color:var(--text)">都市${selIdx+1}：通常 ${selMarch}秒</div>
+    <div style="font-size:13px;color:var(--green)">ペット ${selPet}秒</div>
+    `:`<div style="font-size:12px;color:var(--text3)">上のマップで敵の位置をタップしてください</div>`}
     <label class="tgl" style="margin-left:auto"><input type="checkbox" id="ep"/><span class="tsl"></span></label>
     <span style="font-size:12px;color:var(--text2)">ペット</span>
   </div>
-  <button class="btn btn-primary btn-sm" onclick="sAddE()">追加</button>
+  <button class="btn btn-primary btn-sm" onclick="sAddE()" ${selIdx===null?'disabled':''}>追加</button>
 </div>
 <div class="card" style="margin-top:10px"><div class="sec">敵一覧 (${SS.enemies.length}件)</div>
   ${SS.enemies.length?SS.enemies.map((e,i)=>{
@@ -839,17 +884,6 @@ function rSvsEnemy(el){
     </div>`;
   }).join(''):'<div class="empty">敵情報なし</div>'}
 </div>`;
-  updateEnemyInfo();
-}
-function updateEnemyInfo(){
-  const sel=document.getElementById('em');if(!sel)return;
-  const[idxStr,placement]=sel.value.split('_');
-  const idx=parseInt(idxStr);
-  const ms=placement==='6'?M6:M5;const ps=placement==='6'?P6:P5;
-  const md=document.getElementById('enemy-march-disp');
-  const pd=document.getElementById('enemy-pet-disp');
-  if(md)md.textContent=`通常: ${ms[idx]}秒`;
-  if(pd)pd.textContent=`ペット: ${ps[idx]}秒`;
 }
 
 // ============================================================
@@ -1432,13 +1466,15 @@ function sSpetN(id){
 }
 function sAddE(){
   const n=document.getElementById('en')?.value?.trim();if(!n){toast('敵名を入力してください');return;}
-  const sel=document.getElementById('em');
-  const[idxStr,placement]=sel.value.split('_');const idx=parseInt(idxStr);
+  if(SS.enemySlotIdx===null||SS.enemySlotIdx===undefined){toast('マップで敵の位置を選択してください');return;}
+  const idx=SS.enemySlotIdx,placement=SS.enemyPlacement;
   const ms=placement==='6'?M6:M5;const ps=placement==='6'?P6:P5;
+  if(ms[idx]===undefined){toast('この位置の行軍時間データがありません');return;}
   const normalMarch=ms[idx],petMarch=ps[idx];
   const pet=document.getElementById('ep')?.checked||false;
   const enemy={_id:'e'+Date.now()+Math.random().toString(36).slice(2,7),name:n,normalMarch,petMarch,march:normalMarch,pet,petStart:pet?Date.now():null};
   SS.enemies.push(enemy);
+  SS.enemySlotIdx=null;
   markDirty('svs/enemies/'+enemy._id);scheduleSave();render();
 }
 function sToggleEnemyPet(i){
@@ -1553,7 +1589,7 @@ function getStatePayload(){
     svs:{
       split:SS.split,faction:SS.faction,placementA:SS.placementA,placementB:SS.placementB,
       members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,
-      enemies:enemiesToObj(SS.enemies),adjust:SS.adjust
+      enemies:enemiesToObj(SS.enemies),adjust:SS.adjust,arrivalMode:SS.arrivalMode
     },
     frost:{
       members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,
@@ -1582,6 +1618,7 @@ function applyStatePayload(d){
   if(s.petStart&&!isPathProtected('svs/petStart'))SS.petStart=s.petStart;
   if(s.enemies&&!isPathProtected('svs/enemies'))SS.enemies=enemiesFromObj(s.enemies);
   if(s.adjust&&!isPathProtected('svs/adjust'))SS.adjust=s.adjust;
+  if(s.arrivalMode&&!isPathProtected('svs/arrivalMode'))SS.arrivalMode=s.arrivalMode;
   const f=d.frost||d.FS||{};
   if(f.members&&!isPathProtected('frost/members'))FS.members=f.members;
   if(f.active&&!isPathProtected('frost/active'))FS.active=f.active;
@@ -1599,7 +1636,7 @@ function applyStatePayload(d){
 function saveLocal(){
   try{localStorage.setItem('app_svs',JSON.stringify({
     split:SS.split,faction:SS.faction,placementA:SS.placementA,placementB:SS.placementB,
-    members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,enemies:SS.enemies,adjust:SS.adjust
+    members:SS.members,cityAssign:SS.cityAssign,active:SS.active,pet:SS.pet,petStart:SS.petStart,enemies:SS.enemies,adjust:SS.adjust,arrivalMode:SS.arrivalMode
   }));
   localStorage.setItem('app_frost',JSON.stringify({
     members:FS.members,active:FS.active,pet:FS.pet,petStart:FS.petStart,enemies:FS.enemies,baseId:FS.baseId,calcMode:FS.calcMode,delaySource:FS.delaySource,delayOrder:FS.delayOrder,delayGaps:FS.delayGaps,delayAssign:FS.delayAssign,delayCopyMode:FS.delayCopyMode
@@ -1609,7 +1646,7 @@ function saveLocal(){
 // 残っていても、全フィールドdirty扱いにして従来通り動く（保険）。
 function saveAll(){
   markDirty('svs/split','svs/faction','svs/placementA','svs/placementB','svs/members','svs/cityAssign',
-    'svs/active','svs/pet','svs/petStart','svs/enemies','svs/adjust',
+    'svs/active','svs/pet','svs/petStart','svs/enemies','svs/adjust','svs/arrivalMode',
     'frost/members','frost/active','frost/pet','frost/petStart','frost/enemies','frost/baseId',
     'frost/calcMode','frost/delaySource','frost/delayOrder','frost/delayGaps','frost/delayAssign','frost/delayCopyMode');
   scheduleSave();
@@ -1638,7 +1675,7 @@ function loadAll(){
     if(s.placementA)SS.placementA=s.placementA;if(s.placementB)SS.placementB=s.placementB;
     if(s.members)SS.members=s.members;if(s.cityAssign)SS.cityAssign=s.cityAssign;
     if(s.active)SS.active=s.active;if(s.pet)SS.pet=s.pet;if(s.petStart)SS.petStart=s.petStart;
-    if(s.enemies)SS.enemies=enemiesFromObj(s.enemies);if(s.adjust)SS.adjust=s.adjust;
+    if(s.enemies)SS.enemies=enemiesFromObj(s.enemies);if(s.adjust)SS.adjust=s.adjust;if(s.arrivalMode)SS.arrivalMode=s.arrivalMode;
   }catch(e){}
   try{
     const f=JSON.parse(localStorage.getItem('app_frost')||'{}');
