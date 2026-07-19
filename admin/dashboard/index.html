@@ -54,6 +54,7 @@ textarea.field-input{min-height:70px;resize:vertical;line-height:1.6}
 .meta-item .k{font-size:10px;color:#64748b}
 .meta-item .v{font-size:12px;font-weight:800;margin-top:2px;word-break:break-all}
 .role-lock{font-size:11px;color:#fca5a5;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:10px;padding:9px 10px;margin-bottom:4px}
+.role-info{font-size:11px;color:#93c5fd;background:rgba(147,197,253,.08);border:1px solid rgba(147,197,253,.2);border-radius:10px;padding:9px 10px;margin-bottom:8px;line-height:1.7}
 .history-item{font-size:11px;color:#cbd5e1;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .history-item:last-child{border-bottom:none}
 .btn-row{display:flex;gap:8px;margin-top:16px}
@@ -72,6 +73,12 @@ textarea.field-input{min-height:70px;resize:vertical;line-height:1.6}
 .unit-tag.unit-matched{background:rgba(250,204,21,.16);color:#fde68a;border-color:rgba(250,204,21,.4);font-weight:900}
 .survey-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
 .survey-row:last-child{border-bottom:none}
+.status-section-label{font-size:11px;font-weight:900;padding:10px 2px 6px;display:flex;align-items:center;gap:6px}
+.status-answered .status-section-label{color:#4ade80}
+.status-unanswered .status-section-label{color:#f87171}
+.status-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:4px}
+.status-row.answered{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.18)}
+.status-row.unanswered{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.14);opacity:.85}
 </style>
 </head>
 <body>
@@ -265,10 +272,14 @@ function renderPortalUserDetail(u, history){
     </div>
 
     <div class="field-label">Portalロール</div>
+    <div class="role-info">
+      ・developer は変更不可<br>
+      ・管理者ページ（このダッシュボード含む）へのアクセスは technical 以上<br>
+      ・limited はコスト計算ページ以外は利用不可
+    </div>
     ${roleLocked
       ? `<div class="role-lock">🔒 Developerのロールはここから変更できません。</div>`
-      : `<select class="field-input" id="detailRole">${roleOptionsHtml}</select>
-         <div class="modal-sub" style="margin:-4px 0 0">「利用制限中」はコスト計算room以外の機能が使えなくなります。</div>`
+      : `<select class="field-input" id="detailRole">${roleOptionsHtml}</select>`
     }
 
     <div class="field-label">タグ（カンマ区切りで入力）</div>
@@ -626,6 +637,7 @@ async function onSurveySelectChange(e){
   const qSel = document.getElementById("questionSelect");
   const aSel = document.getElementById("answerSelect");
   const resultEl = document.getElementById("surveyResultList");
+  const statusEl = document.getElementById("surveyResponseStatus");
 
   selectedQuestionId = "";
   aSel.innerHTML = `<option value="">質問を選択してください</option>`;
@@ -636,17 +648,23 @@ async function onSurveySelectChange(e){
     qSel.innerHTML = `<option value="">アンケートを選択してください</option>`;
     qSel.disabled = true;
     resultEl.textContent = "アンケートを選択してください。";
+    statusEl.className = "empty";
+    statusEl.textContent = "アンケートを選択すると、回答済み・未回答の一覧が表示されます。";
     return;
   }
 
   qSel.innerHTML = `<option value="">読み込み中...</option>`;
   qSel.disabled = true;
   resultEl.textContent = "質問を選択してください。";
+  statusEl.className = "empty";
+  statusEl.textContent = "読み込み中...";
 
   try{
     const myId = getSessionDiscordId(s);
     const data = await callFn("getSurveyResults", {discordId: myId, surveyId});
     currentSurveyDetail = data;
+    renderSurveyResponseStatus(data.answers || []);
+
     const questions = data.questions || [];
     if(!questions.length){
       qSel.innerHTML = `<option value="">このアンケートには質問がありません</option>`;
@@ -658,7 +676,49 @@ async function onSurveySelectChange(e){
     qSel.disabled = false;
   }catch(err){
     qSel.innerHTML = `<option value="">取得に失敗しました</option>`;
+    statusEl.className = "empty";
+    statusEl.textContent = "取得に失敗しました。";
   }
+}
+
+function renderSurveyResponseStatus(answers){
+  const statusEl = document.getElementById("surveyResponseStatus");
+  if(!allPortalUsers.length){
+    statusEl.className = "empty";
+    statusEl.textContent = "参加者一覧の取得後に表示されます。参加者タブを一度開いてから、もう一度お試しください。";
+    return;
+  }
+
+  const answeredIds = new Set((answers || []).map(a => a.discordId).filter(Boolean));
+
+  const answeredUsers = [];
+  const unansweredUsers = [];
+  allPortalUsers.forEach(u=>{
+    if(answeredIds.has(u.discordId)) answeredUsers.push(u);
+    else unansweredUsers.push(u);
+  });
+
+  const sortFn = (a,b)=> a.alliance.localeCompare(b.alliance,"ja") || a.playerName.localeCompare(b.playerName,"ja");
+  answeredUsers.sort(sortFn);
+  unansweredUsers.sort(sortFn);
+
+  const rowHtml = (u, cls) => `
+    <div class="status-row ${cls}">
+      <span class="alliance">[${escapeHtml(u.alliance)}]</span>
+      <span class="name">${escapeHtml(u.playerName)}</span>
+    </div>`;
+
+  statusEl.className = "";
+  statusEl.innerHTML = `
+    <div class="status-section status-answered">
+      <div class="status-section-label">✅ 回答済み（${answeredUsers.length}人）</div>
+      ${answeredUsers.map(u=>rowHtml(u,"answered")).join("") || `<div class="empty" style="padding:10px">まだ回答者がいません。</div>`}
+    </div>
+    <div class="status-section status-unanswered">
+      <div class="status-section-label">⬜ 未回答（${unansweredUsers.length}人）</div>
+      ${unansweredUsers.map(u=>rowHtml(u,"unanswered")).join("") || `<div class="empty" style="padding:10px">全員回答済みです。</div>`}
+    </div>
+  `;
 }
 
 function buildAnswerOptions(qid){
@@ -903,6 +963,11 @@ function renderShell(sessionData){
         <div class="title">アンケート結果</div>
         <div class="desc">アンケート・質問・回答を選び、該当者を人数だけでなく一覧で確認します。</div>
         <select class="select" id="surveySelect"><option value="">読み込み中...</option></select>
+        <div id="surveyResponseStatus" class="empty">アンケートを選択すると、回答済み・未回答の一覧が表示されます。</div>
+      </div>
+
+      <div class="card">
+        <div class="title">回答内容で絞り込み</div>
         <select class="select" id="questionSelect" disabled><option value="">アンケートを選択してください</option></select>
         <select class="select" id="answerSelect" disabled><option value="">質問を選択してください</option></select>
         <div id="surveyResultList" class="empty">アンケートを選択してください。</div>
