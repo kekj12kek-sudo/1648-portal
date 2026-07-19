@@ -244,7 +244,7 @@ function renderPortalUserDetail(u, history){
   document.getElementById("userModalSub").textContent = `[${u.alliance}]　ゲームID: ${u.gameId || "―"}`;
 
   const roleLocked = u.role === "developer";
-  const roleOptionsHtml = ["member","technical","manager","limited"].map(r=>
+  const roleOptionsHtml = ["manager","technical","member","limited"].map(r=>
     `<option value="${r}" ${u.role===r?"selected":""}>${roleLabel(r)}</option>`
   ).join("");
 
@@ -397,7 +397,7 @@ function onDataCategoryChange(e){
   }else if(cat === "pet"){
     petRow.style.display = "flex";
     resultEl.className = "empty";
-    resultEl.textContent = "レベルを入力するか、「検索」で全員を表示します。";
+    resultEl.textContent = "雪猿の最低Lvを入力するか、「検索」で所持者全員を表示します。";
   }else{
     resultEl.className = "empty";
     resultEl.textContent = "カテゴリを選択してください。";
@@ -752,6 +752,93 @@ function renderSurveyResultList(list){
   ).join("");
 }
 
+// ----- 官職確定結果 -----
+
+let officeResultOptions = [];
+
+function fmtOfficeSavedAt(v){
+  return fmtTimestamp(v);
+}
+
+async function loadOfficeResultList(){
+  const sel = document.getElementById("officeResultSelect");
+  if(!sel) return;
+  sel.innerHTML = `<option value="">読み込み中...</option>`;
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getOfficeResults", {discordId: myId});
+    officeResultOptions = data.list || [];
+    if(!officeResultOptions.length){
+      sel.innerHTML = `<option value="">保存済みの確定結果がありません</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">確定結果を選択</option>` + officeResultOptions.map((o,i)=>
+      `<option value="${i}">${escapeHtml(o.surveyId)} / ${escapeHtml(o.officeName)}（${o.count}名・${fmtOfficeSavedAt(o.savedAt)}）</option>`
+    ).join("");
+  }catch(err){
+    sel.innerHTML = `<option value="">取得に失敗しました</option>`;
+  }
+}
+
+async function onOfficeResultSelectChange(e){
+  const idx = e.target.value;
+  const resultEl = document.getElementById("officeResultList");
+  if(idx === ""){
+    resultEl.className = "empty";
+    resultEl.textContent = "保存済みの確定結果を選択してください。";
+    return;
+  }
+
+  const picked = officeResultOptions[Number(idx)];
+  if(!picked){
+    resultEl.className = "empty";
+    resultEl.textContent = "取得に失敗しました。";
+    return;
+  }
+
+  resultEl.className = "empty";
+  resultEl.textContent = "読み込み中...";
+
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getOfficeResults", {discordId: myId, surveyId: picked.surveyId, officeName: picked.officeName});
+    renderOfficeResultDetail(data.results || [], data.bench || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "取得に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function renderOfficeResultDetail(results, bench){
+  const resultEl = document.getElementById("officeResultList");
+  if(!results.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "確定者がいません。";
+    return;
+  }
+  resultEl.className = "";
+
+  const prefLabel = p => p===0 ? "お任せ" : p===4 ? "自動割当" : (p ? `第${p}希望` : "―");
+
+  const rowsHtml = results.map(r=>`
+    <div class="t12-row">
+      <div class="t12-row-head"><span class="alliance">[${escapeHtml(r.alliance||"―")}]</span><span class="name">${escapeHtml(r.playerName)}</span></div>
+      <div class="t12-units">
+        <span class="unit-tag unit-matched">${escapeHtml(r.time||"")}</span>
+        <span class="unit-tag">${escapeHtml(prefLabel(r.pref))}</span>
+        ${r.totalPt !== null && r.totalPt !== undefined ? `<span class="unit-tag">${r.totalPt}pt</span>` : ""}
+      </div>
+    </div>
+  `).join("");
+
+  const benchHtml = bench.length ? `
+    <div class="field-label" style="margin-top:14px">補欠（${bench.length}名）</div>
+    ${bench.map(b=>`<div class="survey-row"><span class="alliance">補欠${b.rank||""}</span><span class="name">${escapeHtml(b.playerName)}</span></div>`).join("")}
+  ` : "";
+
+  resultEl.innerHTML = `<div class="result-count">${results.length}名確定</div>${rowsHtml}${benchHtml}`;
+}
+
 function renderShell(sessionData){
   s = sessionData;
   const l = level(s);
@@ -798,7 +885,7 @@ function renderShell(sessionData){
           <option value="tier">ティア</option>
           <option value="hero">英雄</option>
           <option value="power">戦力</option>
-          <option value="pet">ペット</option>
+          <option value="pet">雪猿</option>
         </select>
         <select class="select" id="t12StageSelect" style="display:none"></select>
         <select class="select" id="tierStageSelect" style="display:none"></select>
@@ -825,10 +912,9 @@ function renderShell(sessionData){
     <section class="panel" id="panel-office">
       <div class="card">
         <div class="title">官職確定結果</div>
-        <div class="desc">いつの官職アンケートか、教育部長または副執政官を選び、振り分け計算後の確定結果だけを表示します。</div>
-        <select class="select"><option>官職アンケートを選択</option></select>
-        <select class="select"><option>官職を選択</option><option>教育部長</option><option>副執政官</option></select>
-        <div class="empty">官職結果の保存フィールド確認後に確定結果を接続します。</div>
+        <div class="desc">PC管理画面（官職予約EXPRESS）で「確定結果を保存」した結果のみを表示します。計算はここでは行いません。</div>
+        <select class="select" id="officeResultSelect"><option value="">読み込み中...</option></select>
+        <div id="officeResultList" class="empty">保存済みの確定結果を選択してください。</div>
       </div>
     </section>
 
@@ -849,12 +935,14 @@ function renderShell(sessionData){
   document.getElementById("t12StageSelect").addEventListener("change", onT12StageChange);
   document.getElementById("tierStageSelect").addEventListener("change", onTierStageChange);
   document.getElementById("heroSelect").addEventListener("change", onHeroSelectChange);
+  document.getElementById("officeResultSelect").addEventListener("change", onOfficeResultSelectChange);
   document.getElementById("surveySelect").addEventListener("change", onSurveySelectChange);
   document.getElementById("questionSelect").addEventListener("change", onQuestionSelectChange);
   document.getElementById("answerSelect").addEventListener("change", onAnswerSelectChange);
 
   loadPortalUsers();
   loadSurveyList();
+  loadOfficeResultList();
 }
 
 const initialSession = sess();

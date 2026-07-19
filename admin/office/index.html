@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>1648 官職予約 管理</title>
+<title>1648 官職予約 回答</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -305,141 +305,100 @@ input:checked+.tsl:before{transform:translateX(22px);background:#fff;}
 </head>
 <body>
 
-<!-- 管理者全画面 -->
-<div id="adminScreen" class="open">
-  <!-- 管理者ヘッダー -->
-  <div class="admin-header">
-    <button class="btn-back" onclick="closeAdmin()">← 戻る</button>
-    <div>
-      <div class="admin-header-title">👑 管理者画面</div>
-      <div class="admin-header-sub" id="adminHeaderSub">受付中</div>
+<!-- 登録画面 -->
+<div class="register-overlay" id="registerOverlay">
+  <div class="register-box">
+    <h2>📝 アンケートに回答する</h2>
+    <div id="regCountdown" style="text-align:center;font-size:12px;font-weight:700;color:var(--gold);padding:6px 10px;background:rgba(247,215,116,.1);border:1px solid rgba(247,215,116,.3);border-radius:8px;margin-bottom:10px;display:none"></div>
+    <p>内容を確認して各項目を選択してください</p>
+    <div class="reg-section">
+      <label class="reg-label">回答者</label>
+      <div class="reg-input" id="portalUserDisplay" style="display:flex;align-items:center;background:var(--bg3);color:var(--gold);font-weight:900"></div>
+    </div>
+    <div id="questionsArea"></div>
+    <div class="reg-err" id="regErr"></div>
+    <button class="btn-start" onclick="startReservation()">✓ 希望時間選択へ進む</button>
+    <button onclick="goBackToSurveyList()" style="width:100%;height:36px;margin-top:6px;border-radius:10px;border:none;background:transparent;color:var(--text3);font-size:11px;cursor:pointer;">← 一覧に戻る</button>
+  </div>
+</div>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-title">🚄 1648 官職予約 EXPRESS</div>
+  <div class="role-tabs" id="roleTabs"></div>
+  <div class="user-bar">
+    <span class="user-name" id="userName">👤 認証確認中</span>
+    <span class="user-status" id="userStatus">未回答</span>
+    <button class="btn-sm" onclick="showRegister()">回答項目</button>
+  </div>
+</div>
+
+<!-- 凡例 -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1e2a3a;border:1px solid #2a3a50"></div>空き</div>
+  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(#92400e,#6b3008);border:1px solid #f59e0b"></div>第1希望</div>
+  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(#1e3a8a,#102060);border:1px solid #60a5fa"></div>第2希望</div>
+  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(#4c1d95,#2e0f60);border:1px solid #a78bfa"></div>第3希望</div>
+  <div class="legend-item" style="color:#ef4444;font-weight:900">満</div>
+</div>
+
+<!-- お任せバナー -->
+<div class="omakase-banner" id="omakaseBanner" onclick="toggleOmakase()">
+  <div class="omakase-check" id="omakaseCheck"></div>
+  <div class="omakase-text">
+    <div class="omakase-title">時間帯はお任せ</div>
+    <div class="omakase-sub">時間帯にこだわりがない場合はこちらを選択</div>
+  </div>
+</div>
+
+<!-- 座席表 -->
+<div class="seat-container" id="seatContainer"></div>
+
+<!-- 下部バー（サマリー＋決定） -->
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <div class="summary-title">📋 回答状況</div>
+    <div class="summary-items" id="summaryItems"></div>
+    <div class="action-buttons">
+      <button class="btn-reset" onclick="resetAll()">↩ やり直す</button>
+      <button class="btn-decide" id="btnDecide" onclick="showConfirm()">✓ 決定する</button>
     </div>
   </div>
-  <!-- タブバー -->
-  <div class="admin-tab-bar">
-    <div class="admin-tab active" data-atab="settings" onclick="switchAdminTab(this)">アンケート管理</div>
-  </div>
-  <!-- ボディ -->
-  <div class="admin-body">
+</div>
 
-    <!-- メインコンテンツ -->
-    <div class="admin-page active" id="apage-settings">
 
-      <!-- アンケート一覧（コンパクト） -->
-      <div class="admin-card">
-        <div class="admin-card-title">📋 アンケート一覧</div>
-        <div id="adminSurveyList"></div>
-        <button class="admin-btn green" style="width:100%;margin-top:8px;height:36px;font-size:12px" onclick="showNewSurveyPanel()">＋ 新しいアンケートを作成</button>
-      </div>
 
-      <!-- 選択中アンケートの操作エリア -->
-      <div id="adminEditPanel" style="display:none">
-
-        <!-- 選択中アンケートのタブバー -->
-        <div style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;">
-          <button class="edit-tab active" data-etab="edit-setup" onclick="switchEditTab(this)">設定</button>
-          <button class="edit-tab" data-etab="edit-priority" onclick="switchEditTab(this)">回答者加点</button>
-          <button class="edit-tab" data-etab="edit-result" onclick="switchEditTab(this)">時間別集計</button>
-          <button class="edit-tab" data-etab="edit-post" onclick="switchEditTab(this)">投稿文</button>
-        </div>
-
-        <!-- 設定タブ -->
-        <div class="edit-page active" id="edit-setup">
-          <div class="admin-card" style="border-color:rgba(247,215,116,.4)">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-              <div class="admin-card-title" style="color:var(--gold);margin-bottom:0;border:none;padding:0" id="editPanelTitle">📝 新規作成</div>
-              <span id="editStatusBadge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text2)"></span>
-            </div>
-            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">タイトル</label>
-            <input class="admin-input" id="editSurveyTitle" placeholder="第1回 副執政官予約" style="margin-bottom:10px">
-            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:6px">対象官職</label>
-            <div class="seg" style="margin-bottom:10px">
-              <div class="seg-btn on" id="roleBtn-副執政官" onclick="selectEditRole('副執政官')">⚔️ 副執政官</div>
-              <div class="seg-btn" id="roleBtn-教育部長" onclick="selectEditRole('教育部長')">📚 教育部長</div>
-            </div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:700">質問編集（4択固定）</div>
-            <div id="adminQuestionList"></div>
-            <button class="admin-btn green" style="margin-top:6px;width:100%;height:34px;font-size:12px" onclick="addAdminQuestion()">＋ 質問を追加</button>
-            <div class="admin-info" style="margin-top:6px;margin-bottom:10px">※ポイントは管理者のみ確認できます</div>
-            <button class="admin-btn blue" style="width:100%;height:40px;margin-bottom:10px" onclick="saveAdminSurveySettings()">💾 設定を保存する</button>
-          </div>
-
-          <!-- 加点項目プール管理 -->
-          <div class="admin-card">
-            <div class="admin-card-title">⭐ 加点項目プール（最大4つ有効化）</div>
-            <div class="admin-info" style="margin-bottom:8px">チェックした項目（最大4つ）が回答者加点タブに表示されます。</div>
-            <div id="bonusItemList"></div>
-            <button class="admin-btn green admin-btn sm" style="width:100%;margin-top:8px" onclick="addBonusItem()">＋ 項目を追加</button>
-          </div>
-          <div class="admin-card" style="border-color:rgba(247,215,116,.3)">
-            <div class="admin-card-title" style="color:var(--gold)">🚀 アンケートを出す</div>
-            <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px">
-              <div style="font-size:13px;font-weight:900;margin-bottom:8px">今すぐ出す</div>
-              <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">終了日時</label>
-              <input class="admin-input" type="datetime-local" id="endDateNow" style="margin-bottom:10px">
-              <button class="admin-btn gold" style="width:100%;height:44px" onclick="startSurveyNow()">▶ 今すぐ開始する</button>
-            </div>
-            <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px">
-              <div style="font-size:13px;font-weight:900;margin-bottom:8px">予約決定</div>
-              <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">開始日時</label>
-              <input class="admin-input" type="datetime-local" id="startDateReserve" style="margin-bottom:8px">
-              <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">終了日時</label>
-              <input class="admin-input" type="datetime-local" id="endDateReserve" style="margin-bottom:10px">
-              <button class="admin-btn blue" style="width:100%;height:44px" onclick="reserveSurvey()">📅 予約を確定する</button>
-            </div>
-            <button class="admin-btn red" style="width:100%;height:40px;margin-bottom:10px" id="btnManualClose" onclick="manualClose()">🔒 今すぐ締め切る</button>
-          </div>
-          <div class="admin-card">
-            <button class="admin-btn red" style="width:100%;height:40px" onclick="deleteEditSurvey()">🗑 このアンケートを削除する</button>
-          </div>
-        </div>
-
-        <!-- 回答者加点タブ -->
-        <div class="edit-page" id="edit-priority">
-          <div class="admin-card">
-            <div class="admin-card-title">📊 回答者加点</div>
-            <div class="admin-info" style="margin-bottom:8px">
-              <span style="color:var(--gold)">★代表集結主</span> +2　
-              <span style="color:#22c55e">●準集結主</span> +1　
-              <span style="color:#a78bfa">SVS</span> +1〜3（裁量）
-            </div>
-            <button class="admin-btn red admin-btn sm" style="width:100%;margin-bottom:8px" onclick="clearManualPoints()">加点を全クリア</button>
-            <div id="priorityList"></div>
-          </div>
-        </div>
-
-        <!-- 時間別集計タブ -->
-        <div class="edit-page" id="edit-result">
-          <div class="admin-card">
-            <div class="admin-card-title">⏱ 時間別集計</div>
-            <div class="admin-info" style="margin-bottom:8px">第1→第2→第3希望の順で割り当てます。</div>
-            <div class="seg" id="resultRoleSeg" style="margin-bottom:10px"></div>
-            <div style="display:flex;gap:8px;margin-bottom:10px">
-              <button class="admin-btn gold" style="flex:1;height:40px" onclick="buildResults()">▶ 割り振り実行</button>
-              <button class="admin-btn" style="height:40px" onclick="buildResults()">🔄 再実行</button>
-            </div>
-            <div id="resultList"></div>
-          </div>
-        </div>
-
-        <!-- 投稿文タブ -->
-        <div class="edit-page" id="edit-post">
-          <div class="admin-card">
-            <div class="admin-card-title">📢 投稿文</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">全員周知用</div>
-            <textarea class="post-box" id="postTextPublic" readonly></textarea>
-            <button class="admin-btn gold" style="width:100%;height:40px;margin-top:8px" onclick="copyPostText('public')">全員周知用をコピー</button>
-            <div style="font-size:12px;font-weight:700;color:var(--text2);margin:12px 0 6px">管理者用 詳細</div>
-            <textarea class="post-box" id="postTextAdmin" readonly></textarea>
-            <button class="admin-btn blue" style="width:100%;height:44px;margin-top:8px" onclick="copyPostText('admin')">管理者用をコピー</button>
-          </div>
-        </div>
-
-      </div><!-- /adminEditPanel -->
-
+<!-- 希望選択ポップアップ -->
+<div class="popup-overlay" id="popupOverlay" onclick="overlayClick(event)">
+  <div class="popup">
+    <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-sub" id="popupSub">希望順位を選択してください</div>
+    <div class="pref-buttons">
+      <div class="pref-btn" id="prefBtn1" onclick="selectPref(1)"><span class="pn">1</span><span class="pl">第1希望</span></div>
+      <div class="pref-btn" id="prefBtn2" onclick="selectPref(2)"><span class="pn">2</span><span class="pl">第2希望</span></div>
+      <div class="pref-btn" id="prefBtn3" onclick="selectPref(3)"><span class="pn">3</span><span class="pl">第3希望</span></div>
     </div>
-  </div><!-- /admin-body -->
-</div><!-- /adminScreen -->
+    <div class="popup-actions">
+      <button class="btn-cancel" onclick="closePopup()">キャンセル</button>
+      <button class="btn-remove" id="btnRemove" onclick="removePref()" style="display:none">取消</button>
+      <button class="btn-confirm" id="btnConfirm" onclick="confirmPref()">✓ 完了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 完了画面 -->
+<div class="complete-overlay" id="completeOverlay">
+  <div class="complete-box">
+    <div class="complete-icon">✅</div>
+    <div class="complete-title">受付完了！</div>
+    <div class="complete-sub">アンケートを受け付けました。<br>結果は管理者から通知されます。</div>
+    <div class="complete-detail" id="completeDetail"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+      <button class="btn-close-complete" onclick="goBackToSurveyList()" style="background:#1e3a8a;border-color:#3b82f6;color:#93c5fd;">📋 アンケートRoomへ戻る</button>
+      <button class="btn-close-complete" onclick="location.href='https://kekj12kek-sudo.github.io/1648-portal/home/'" style="background:#1c2537;border-color:#1e3050;color:#e8edf5;">🏠 ポータルへ戻る</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
@@ -606,87 +565,117 @@ let finalResults = [];
 // ===================================================
 // Firebase リアルタイム同期
 // ===================================================
-async function loadAdminOfficeRooms(){
-  const discordId = getPortalDiscordId();
-  if(!discordId){ showAccessError('Portalのログイン情報がありません。管理ページから入り直してください。'); return; }
+function dateToInputStringSafe(value){
+  if(!value) return '';
+  if(typeof value === 'string') return value;
   try{
-    const data = await callOfficeFunction('listOfficeRoomsAdmin', {discordId});
-    surveysMap = {};
-    (data.rooms || []).forEach(r=>{
-      const id = r.roomId || r.id;
-      const officeName = r.officeName || r.role || officeNameFromType(r.officeType);
-      surveysMap[id] = {
-        ...r, id, roomId:id, type:'office', role:officeName, officeName,
-        title: r.title || `${officeName}予約`,
-        deadline: r.deadline || r.closeAt || '',
-        reservedStart: r.reservedStart || r.openAt || ''
-      };
+    const d = value.toDate ? value.toDate() : (value.seconds ? new Date(value.seconds*1000) : new Date(value));
+    if(isNaN(d.getTime())) return '';
+    const pad=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }catch(e){ return ''; }
+}
+function normalizeOfficeRoomDoc(id, raw){
+  const d = raw || {};
+  const officeType = d.officeType || (d.role === '教育部長' ? 'education' : d.role === '副執政官' ? 'vice' : '');
+  const officeName = d.officeName || d.roleName || d.role || (officeType === 'education' ? '教育部長' : officeType === 'vice' ? '副執政官' : '官職');
+  const closeAt = dateToInputStringSafe(d.closeAt || d.deadline || '');
+  const openAt = dateToInputStringSafe(d.openAt || d.reservedStart || d.startedAt || '');
+  return {
+    ...d,
+    id: d.id || d.roomId || id,
+    roomId: d.roomId || d.id || id,
+    type: 'office',
+    officeType,
+    officeName,
+    role: officeName,
+    title: d.title || `${officeName}予約`,
+    status: d.status || 'draft',
+    openAt,
+    closeAt,
+    deadline: d.deadline || closeAt,
+    questions: Array.isArray(d.questions) ? d.questions : ADMIN_CONFIG.questions,
+    bonusItems: Array.isArray(d.bonusItems) ? d.bonusItems : ADMIN_CONFIG.bonusItems
+  };
+}
+
+// room情報取得とuser情報取得を並列実行するための共有Promise
+// （以前は loadPortalUser が bootPortalAnswer 内、room取得の後段で呼ばれており
+//   直列待ちになっていたため起動が遅かった。ここで同時に発火させて待ち時間を短縮する）
+let _portalUserPromise = null;
+function getPortalUserPromise(){
+  if(!_portalUserPromise) _portalUserPromise = loadPortalUser();
+  return _portalUserPromise;
+}
+
+async function loadOfficeRoomsViaFunctions(){
+  const discordId = getPortalDiscordId();
+  const q = new URLSearchParams(location.search);
+  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
+  if(!discordId){
+    console.warn('office room load skipped: no discordId');
+    return;
+  }
+  if(!sid){
+    showAccessError('公開中アンケートのIDが指定されていません。アンケートRoomから開いてください。');
+    return;
+  }
+  try{
+    // room取得とuser取得を同時に投げる（直列待ちをやめて起動を高速化）
+    const userPromise = getPortalUserPromise();
+    const res = await fetch(`${OFFICE_FUNCTION_BASE}/getOfficeRoomForAnswer`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({discordId, roomId:sid})
     });
-    renderAdminSurveyList();
-    startSurveyTimer();
+    const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
+    if(!res.ok || !data.ok) throw new Error(data.error || 'load_office_room_failed');
+    surveysMap = {};
+    const d = normalizeOfficeRoomDoc(data.room.roomId || data.room.id || sid, data.room);
+    d.status = 'open';
+    surveysMap[d.id] = d;
+    await userPromise; // user取得がまだなら待つ（通常はroom取得と並行してほぼ同時に終わる）
+    await bootPortalAnswer();
   }catch(e){
-    console.warn('listOfficeRoomsAdmin failed', e);
-    showAccessError('官職予約一覧を読み込めません。Functionsのデプロイ状態を確認してください。');
+    console.warn('office room function load failed', e);
+    showAccessError('官職予約データを読み込めません。Functionsのデプロイ状態を確認してください。');
   }
 }
 
 function initFirebase(){
-  if(!fbDb) return;
+  // office_rooms はFirestore直読みしない。Firestoreルールで弾かれるためFunctions経由で取得する。
+  loadOfficeRoomsViaFunctions();
 
-  // 設定を読み込み
-  // office_rooms はFirestore正本。管理ページではFunctions経由で取得する。
-  loadAdminOfficeRooms();
+  if(fbDb){
+    try{
+      fbDb.ref(DB_CONFIG).on('value', snap=>{
+        const d = snap.val();
+        if(!d) return;
+        if(d.questions) ADMIN_CONFIG.questions = d.questions;
+        buildQuestions();
+      });
+    }catch(e){ console.warn('config read skipped', e); }
+  }
 
-  fbDb.ref(DB_CONFIG).on('value', snap=>{
-    const d = snap.val();
-    if(!d) return;
-    if(d.activeRoles) ADMIN_CONFIG.activeRoles = d.activeRoles;
-    if(d.questions)   ADMIN_CONFIG.questions   = d.questions;
-    buildRoleTabs();
-    buildQuestions();
-  });
-
-  // アンケート状態はsurveysコレクションで管理
-
-  // アンケートIDに紐づく全データを読み込む
   let activeSubListener = null;
   let activePtListener  = null;
-
   function loadSurveyData(surveyId){
     if(!fbDb || !surveyId) return;
-    // 前のリスナーを解除
     if(activeSubListener) fbDb.ref(activeSubListener).off();
     if(activePtListener)  fbDb.ref(activePtListener).off();
-
     activeSubListener = `${DB_SUBMISSIONS}/${surveyId}`;
     activePtListener  = `${DB_MANUALPTS}/${surveyId}`;
-
     fbDb.ref(activeSubListener).on('value', snap=>{
       submissions = snap.val() ? Object.values(snap.val()) : [];
       rebuildSeatsFromSubmissions(submissions);
       renderSeats();
       updateDecideBtn();
-      // 管理者画面が開いていれば自動更新
-      if(adminLoggedIn){
-        renderPriorityList();
-        buildResults();
-        buildPostText();
-      }
     });
-
     fbDb.ref(activePtListener).on('value', snap=>{
       manualPoints = snap.val() || {};
-      if(adminLoggedIn) renderPriorityList();
     });
   }
-
   window._loadSurveyData = loadSurveyData;
-
-  // メンバーリストを読み込み
-  fbDb.ref(DB_MEMBERS).on('value', snap=>{
-    const d = snap.val();
-    if(d) adminMembers = Object.values(d);
-  });
 }
 
 // 座席データを初期化して空データを作る（全官職対応）
@@ -731,14 +720,17 @@ function ensureSeatExists(surveyId){
 // 回答データから座席データを完全再構築する
 // これにより、同じ名前・同じ端末の再回答時も古い座席が必ず消える
 function buildSeatDataFromSubmissions(list){
-  const data = makeEmptySeatData();
+  // 1つの官職予約(roomId)ごとに座席表を持つ。
+  // 旧版は role 名をキーにしていたため、教育部長/副執政官の切替時に
+  // seats[currentRole] を参照してタップ不能になる原因になっていた。
+  const data = {};
+  ALL_SLOTS.forEach(t=>{ data[t] = [0,0,0]; });
   (list || []).forEach(sub=>{
     if(!sub || sub.omakase || !sub.reservations) return;
     [1,2,3].forEach(pref=>{
       const r = sub.reservations[pref];
-      if(!r || !r.role || !r.time) return;
-      if(!data[r.role] || !data[r.role][r.time]) return;
-      const arr = data[r.role][r.time];
+      if(!r || !r.time || !data[r.time]) return;
+      const arr = data[r.time];
       const openIdx = arr.indexOf(0);
       if(openIdx >= 0) arr[openIdx] = Number(pref);
     });
@@ -758,14 +750,14 @@ function applySeatData(data){
   // 自分が選択中の希望は、表示上だけ my 扱いに戻す
   [1,2,3].forEach(pref=>{
     const r = myReservations[pref];
-    if(!r || !r.role || !r.time) return;
-    if(!isMe[r.role] || !isMe[r.role][r.time]) return;
-    const arr = seats[r.role][r.time] || [0,0,0];
+    if(!r || !r.time) return;
+    if(!isMe[sid] || !isMe[sid][r.time]) return;
+    const arr = seats[sid][r.time] || [0,0,0];
     let idx = arr.indexOf(Number(pref));
     if(idx < 0) idx = arr.indexOf(0);
     if(idx >= 0){
-      seats[r.role][r.time][idx] = Number(pref);
-      isMe[r.role][r.time][idx] = true;
+      seats[sid][r.time][idx] = Number(pref);
+      isMe[sid][r.time][idx] = true;
     }
   });
 }
@@ -819,12 +811,10 @@ function saveConfigToDB(){
 // 手動ポイントをDBに保存
 function saveManualPointsToDB(){
   const sid = adminEditSurveyId || currentSurveyId;
-  if(!sid) return;
-  const discordId = getPortalDiscordId();
-  callOfficeFunction('saveOfficeManualPoints', {discordId, roomId:sid, points:manualPoints})
-    .catch(e=>console.warn('manualPts save failed', e));
+  if(!fbDb || !sid) return;
+  fbDb.ref(`${DB_MANUALPTS}/${sid}`).set(manualPoints)
+    .catch(e=>console.warn("manualPts save failed",e));
 }
-
 
 // メンバーリストをDBに保存
 function saveMembersToDB(){
@@ -842,14 +832,15 @@ function calcBasePoint(answers){
   });
   return total;
 }
-function getPointRecord(key){
-  const raw = manualPoints[key];
+function getPointRecord(name){
+  const raw = manualPoints[name];
   if(!raw) return {};
   if(typeof raw === 'object') return raw;
+  // 旧形式互換
   return { b_rally_s: Number(raw||0) };
 }
-function getBonusPoint(key, itemId){
-  return Number(getPointRecord(key)[itemId] || 0);
+function getBonusPoint(name, itemId){
+  return Number(getPointRecord(name)[itemId] || 0);
 }
 
 function getBonusMax(itemId){
@@ -857,14 +848,14 @@ function getBonusMax(itemId){
   if(!item) return 5;
   return item.type === 'manual' ? (item.max||5) : (item.pt||1);
 }
-function getManualPoint(key){
-  const rec = getPointRecord(key);
+function getManualPoint(name){
+  const rec = getPointRecord(name);
   return ADMIN_CONFIG.bonusItems.reduce((sum, b) => sum + Number(rec[b.id]||0), 0);
 }
 // 後方互換
-function getMainPoint(key){ return getBonusPoint(key, 'b_rally_s') + getBonusPoint(key, 'b_rally_a'); }
-function getSvsPoint(key){ return getBonusPoint(key, 'b_svs'); }
-function calcTotalPoint(sub){ return calcBasePoint(sub.answers || {}) + getManualPoint(applicantKey(sub)); }
+function getMainPoint(name){ return getBonusPoint(name, 'b_rally_s') + getBonusPoint(name, 'b_rally_a'); }
+function getSvsPoint(name){ return getBonusPoint(name, 'b_svs'); }
+function calcTotalPoint(sub){ return calcBasePoint(sub.answers || {}) + getManualPoint(sub.name); }
 function choiceText(qid, answers){
   const q = ADMIN_CONFIG.questions.find(x=>x.id===qid);
   if(!q) return "";
@@ -900,23 +891,23 @@ function applyPublicSurveyState(){
 
 function buildRoleTabs(){
   const tabs = document.getElementById('roleTabs');
+  if(!tabs) return;
   tabs.innerHTML = '';
-  ADMIN_CONFIG.activeRoles.forEach((role, i) => {
-    const cfg = ROLE_CONFIG[role] || {icon:'⚔️', color:'blue'};
-    ensureRoleExists(role);
-    const tab = document.createElement('div');
-    tab.className = `role-tab${i===0?' active-'+cfg.color:''}`;
-    tab.dataset.role = role;
-    tab.textContent = `${cfg.icon} ${role}`;
-    // 回答者はタブ切り替え不可（見えるだけ）
-    tab.style.cursor = 'default';
-    tab.style.opacity = i===0 ? '1' : '0.4';
-    tabs.appendChild(tab);
-  });
-  // currentRoleがactiveRolesにない場合は先頭にリセット
   if(!ADMIN_CONFIG.activeRoles.includes(currentRole)){
     currentRole = ADMIN_CONFIG.activeRoles[0] || '副執政官';
   }
+  ADMIN_CONFIG.activeRoles.forEach((role) => {
+    const cfg = ROLE_CONFIG[role] || {icon:'⚔️', color:'blue'};
+    ensureRoleExists(role);
+    const isActive = role === currentRole;
+    const tab = document.createElement('div');
+    tab.className = `role-tab${isActive?' active-'+cfg.color:''}`;
+    tab.dataset.role = role;
+    tab.textContent = `${cfg.icon} ${role}`;
+    tab.style.cursor = 'default';
+    tab.style.opacity = isActive ? '1' : '0.4';
+    tabs.appendChild(tab);
+  });
 }
 
 function switchRole(role){
@@ -954,9 +945,117 @@ function selectChoice(el){
   userAnswers[qid] = parseInt(el.dataset.idx);
 }
 
-function startReservation(){ /* 管理者版では使用しない */ }
+function startReservation(){
+  const err = document.getElementById('regErr');
+  if(!hasPortalIdentity()){ err.textContent='Portalの認証情報を確認できません'; return; }
+  const unanswered = ADMIN_CONFIG.questions.length > 0
+    ? ADMIN_CONFIG.questions.find(q=>userAnswers[q.id]===undefined)
+    : null;
+  if(unanswered){ err.textContent=`「${unanswered.label}」を選択してください`; return; }
+  err.textContent='';
 
-function showRegister(){ /* 管理者版では使用しない */ }
+  const safeKey = userIdentityKey();
+  userName = displayNameFromUser(portalUser);
+  document.getElementById('userName').textContent = '👤 ' + userName;
+
+  function proceedWithReset(){
+    const sidReset = currentSurveyId;
+    if(sidReset && isMe[sidReset]){
+      ALL_SLOTS.forEach(t=>{
+        if(!isMe[sidReset][t]) return;
+        isMe[sidReset][t].forEach((mine, idx)=>{
+          if(mine){ seats[sidReset][t][idx]=0; isMe[sidReset][t][idx]=false; }
+        });
+      });
+    }
+    myReservations[1]=null; myReservations[2]=null; myReservations[3]=null;
+    isOmakase=false; submitted=false;
+    const banner=document.getElementById('omakaseBanner');
+    const check=document.getElementById('omakaseCheck');
+    if(banner) banner.classList.remove('selected');
+    if(check) check.textContent='';
+    document.getElementById('registerOverlay').style.display = 'none';
+    renderSeats(); renderSummary(); updateDecideBtn();
+  }
+
+  function proceedNormal(){
+    submitted = false;
+    document.getElementById('registerOverlay').style.display = 'none';
+    renderSeats();
+  }
+
+  if(fbDb){
+    fbDb.ref(`${DB_SUBMISSIONS}/${currentSurveyId}/${safeKey}`).once('value').then(snap=>{
+      if(snap.exists()){
+        const ok = confirm(`${userName} さんはすでに回答済みです。
+再回答すると前回の希望時間の選択は全て取り消されます。
+
+続けますか？`);
+        if(!ok) return;
+        fbDb.ref(`${DB_SUBMISSIONS}/${currentSurveyId}/${safeKey}`).remove().then(()=>{
+          return rebuildSeatsFromDBSubmissions(currentSurveyId);
+        }).then(()=>{ proceedWithReset(); });
+      } else {
+        proceedNormal();
+      }
+    }).catch(()=>{ proceedNormal(); });
+  } else {
+    const existing = submissions.find(s=>s.identityKey===safeKey);
+    if(existing){
+      const ok = confirm(`${userName} さんはすでに回答済みです。
+再回答すると前回の希望時間の選択は全て取り消されます。
+
+続けますか？`);
+      if(!ok) return;
+      proceedWithReset();
+    } else {
+      proceedNormal();
+    }
+  }
+}
+
+function showRegister(){
+  if(isLimitedPortalRole(portalUser.role)){
+    showLimitedAccess();
+    return false;
+  }
+  if(!hasPortalIdentity()){
+    showAccessError('Portalの認証情報を確認できません。');
+    return;
+  }
+  if(submitted && userName){
+    const ok = confirm(`${userName} さんの回答済みアンケートをリセットして再回答しますか？
+
+※ 前回の希望時間の選択は全て取り消されます。`);
+    if(!ok) return;
+  }
+  buildQuestions();
+  userAnswers = {};
+  document.getElementById('regErr').textContent = '';
+  const disp = document.getElementById('portalUserDisplay');
+  if(disp) disp.textContent = displayNameFromUser(portalUser);
+
+  const sidReset = currentSurveyId;
+  if(sidReset && isMe[sidReset]){
+    ALL_SLOTS.forEach(t=>{
+      if(!isMe[sidReset][t]) return;
+      isMe[sidReset][t].forEach((mine, idx)=>{
+        if(mine){ seats[sidReset][t][idx] = 0; isMe[sidReset][t][idx] = false; }
+      });
+    });
+  }
+  myReservations[1] = null;
+  myReservations[2] = null;
+  myReservations[3] = null;
+  isOmakase = false;
+  submitted = false;
+  const banner = document.getElementById('omakaseBanner');
+  const check  = document.getElementById('omakaseCheck');
+  if(banner) banner.classList.remove('selected');
+  if(check)  check.textContent = '';
+  renderSeats(); renderSummary(); updateDecideBtn();
+  document.getElementById('registerOverlay').style.display = 'flex';
+}
 
 // ===================================================
 // お任せ
@@ -981,14 +1080,15 @@ function toggleOmakase(){
 }
 
 function resetReservations(){
-  ADMIN_CONFIG.activeRoles.forEach(role => {
-    ALL_SLOTS.forEach(t => {
-      [0,1,2].forEach(i => {
-        if(isMe[role][t][i]){
-          seats[role][t][i] = 0;
-          isMe[role][t][i] = false;
-        }
-      });
+  const sid = currentSurveyId || currentRole;
+  if(!sid || !isMe[sid] || !seats[sid]) return;
+  ALL_SLOTS.forEach(t => {
+    if(!isMe[sid][t]) return;
+    [0,1,2].forEach(i => {
+      if(isMe[sid][t][i]){
+        seats[sid][t][i] = 0;
+        isMe[sid][t][i] = false;
+      }
     });
   });
   myReservations[1]=null; myReservations[2]=null; myReservations[3]=null;
@@ -1030,6 +1130,8 @@ function renderSeats(){
 }
 
 function makeRow(time){
+  const sidForRow = currentSurveyId || currentRole;
+  ensureSeatExists(sidForRow);
   const row = document.createElement('div');
   row.className = 'time-row';
 
@@ -1070,7 +1172,7 @@ function makeRow(time){
   } else if(mySlotIdx >= 0){
     const badge = document.createElement('div');
     badge.className = 'my-badge';
-    badge.textContent = `第${seats[currentRole][time][mySlotIdx]}希望`;
+    { const sid = currentSurveyId || currentRole; badge.textContent = `第${seats[sid][time][mySlotIdx]}希望`; }
     block.appendChild(badge);
   } else if(!full){
     const badge = document.createElement('div');
@@ -1097,7 +1199,8 @@ function openPopup(time, mySlotIdx){
 
   document.getElementById('popupTitle').textContent = `${currentRole}　${time}`;
 
-  const existingPref = mySlotIdx >= 0 ? seats[currentRole][time][mySlotIdx] : null;
+  const sid = currentSurveyId || currentRole; ensureSeatExists(sid);
+  const existingPref = mySlotIdx >= 0 ? seats[sid][time][mySlotIdx] : null;
 
   [1,2,3].forEach(p => {
     const btn = document.getElementById(`prefBtn${p}`);
@@ -1243,31 +1346,150 @@ function resetAll(){
   updateDecideBtn();
 }
 
+
+const OFFICE_FUNCTION_BASE = 'https://us-central1-yoyaku-4ec7c.cloudfunctions.net';
+async function saveOfficeEntryToFunctions(record){
+  const room = surveysMap[currentSurveyId] || {};
+  const payload = {
+    discordId: portalUser?.discordId || record.discordId || '',
+    roomId: currentSurveyId,
+    surveyId: currentSurveyId,
+    eventId: room.eventId || '',
+    officeType: room.officeType || '',
+    officeName: room.officeName || room.role || currentRole,
+    gameId: portalUser?.gameId || record.gameId || '',
+    playerName: portalUser?.playerName || record.userName || '',
+    alliance: portalUser?.alliance || record.alliance || '',
+    displayName: record.displayName || record.name || '',
+    identityKey: record.identityKey || userIdentityKey(),
+    answers: record.answers || {},
+    omakase: !!record.omakase,
+    reservations: record.reservations || {},
+    firstChoice: record.reservations?.[1]?.time || '',
+    secondChoice: record.reservations?.[2]?.time || '',
+    thirdChoice: record.reservations?.[3]?.time || ''
+  };
+  const res = await fetch(`${OFFICE_FUNCTION_BASE}/saveOfficeEntry`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
+  if(!res.ok || !data.ok) throw new Error(data.error || 'saveOfficeEntry_failed');
+  return data;
+}
+
 // ===================================================
 // 決定・完了
 // ===================================================
-function showConfirm(){ /* 管理者版では使用しない */ }
+function showConfirm(){
+  if(!isSurveyOpen()) return;
+  const filled = Object.values(myReservations).filter(v=>v).length;
+  const canDecide = isOmakase || filled===3;
+  if(!canDecide) return;
+
+  // 完了画面の内容を生成
+  const detail = document.getElementById('completeDetail');
+  detail.innerHTML = '';
+
+  if(isOmakase){
+    detail.innerHTML = `<div class="complete-detail-row"><span>回答</span><span style="color:#86efac">時間帯はお任せ</span></div>`;
+  } else {
+    [1,2,3].forEach(p => {
+      const r = myReservations[p];
+      if(r){
+        const row = document.createElement('div');
+        row.className = 'complete-detail-row';
+        row.innerHTML = `<span>第${p}希望</span><span style="color:${['','#fde68a','#93c5fd','#c4b5fd'][p]}">${r.role}　${r.time}</span>`;
+        detail.appendChild(row);
+      }
+    });
+  }
+
+  // 加速情報
+  ADMIN_CONFIG.questions.forEach(q => {
+    if(userAnswers[q.id] !== undefined){
+      const row = document.createElement('div');
+      row.className = 'complete-detail-row';
+      row.innerHTML = `<span>${q.label}</span><span>${q.choices[userAnswers[q.id]].text}</span>`;
+      detail.appendChild(row);
+    }
+  });
+
+  submitted = true;
+
+  // 回答をFirebaseに保存
+  const record = {
+    name: userName,
+    displayName: userName,
+    userName: portalUser?.playerName || userName,
+    alliance: portalUser?.alliance || "",
+    discordId: portalUser?.discordId || "",
+    gameId: portalUser?.gameId || "",
+    identityKey: userIdentityKey(),
+    clientId,
+    surveyId: currentSurveyId,
+    answers: JSON.parse(JSON.stringify(userAnswers)),
+    omakase: isOmakase,
+    reservations: JSON.parse(JSON.stringify(myReservations)),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  const safeKey = userIdentityKey();
+  if(fbDb){
+    // 同じ名前は同じキーに保存されるため、再回答は回答データ自体を上書きする。
+    // その後、全回答から座席表を再構築するので、古い時間シートは必ず消える。
+    const ref = fbDb.ref(`${DB_SUBMISSIONS}/${currentSurveyId}/${safeKey}`);
+    Promise.all([
+      ref.set(record),
+      saveOfficeEntryToFunctions(record)
+    ]).then(()=>{
+      console.log("office submission saved");
+      return rebuildSeatsFromDBSubmissions(currentSurveyId);
+    }).catch(e=>{
+      console.warn("office submission save failed", e);
+      alert('保存に失敗しました：' + (e.message || e));
+      submitted = false;
+    });
+  } else {
+    // オフライン：同じ名前なら上書きし、全回答から座席表を作り直す
+    const existingIdx = submissions.findIndex(s=>s.identityKey===safeKey);
+    if(existingIdx >= 0) submissions[existingIdx] = record;
+    else submissions.push(record);
+    rebuildSeatsFromSubmissions(submissions);
+    renderSeats();
+  }
+
+  // 他に実施中アンケートがあれば分岐ボタンを表示
+  const otherSurveys = getVisibleSurveys().filter(s => s.id !== currentSurveyId && s.status === 'open');
+  const btnOther = document.getElementById('btnGoSurveyList');
+  if(btnOther) btnOther.style.display = otherSurveys.length ? '' : 'none';
+  document.getElementById('completeOverlay').classList.add('open');
+}
 
 function closeComplete(){
   document.getElementById('completeOverlay').classList.remove('open');
 }
 
 // 一覧に戻る（完了画面・登録画面から）
-function goBackToSurveyList(){ /* 管理者版では使用しない */ }
+function goBackToSurveyList(){
+  location.href = '../survey/';
+}
 
 
 
 // 既存回答を同じ名前・同じ端末で上書きするとき、古い座席カウントを戻す
 function removeReservationCountsFromSeats(oldReservations){
   if(!oldReservations) return;
+  const sid = currentSurveyId || currentRole;
+  ensureSeatExists(sid);
   [1,2,3].forEach(p=>{
     const r = oldReservations[p];
-    if(!r || !r.role || !r.time) return;
-    if(!seats[r.role] || !seats[r.role][r.time]) return;
+    if(!r || !r.time || !seats[sid] || !seats[sid][r.time]) return;
     const pref = Number(p);
-    const idx = seats[r.role][r.time].indexOf(pref);
+    const idx = seats[sid][r.time].indexOf(pref);
     if(idx >= 0){
-      seats[r.role][r.time][idx] = 0;
+      seats[sid][r.time][idx] = 0;
     }
   });
   renderSeats();
@@ -1277,9 +1499,10 @@ function removeReservationCountsFromSeats(oldReservations){
 // ===================================================
 // 管理者：加点・集計・投稿文
 // ===================================================
-// 管理者認証はPortal側で実施済み。官職予約内パスワードは撤廃。
-function openAdmin(){ openAdminPanel(); }
-function loginAdmin(){ bootPortalAdmin(); }
+// 管理者入口はPortal管理ページへ分離済み（回答者版では使用しない）
+function openAdmin(){ location.href = "../admin/office/"; }
+function openAdminPanel(){}
+function loginAdmin(){}
 function closeAdminLogin(){}
 function adminLoginOverlayClick(e){}
 function closeAdmin(){
@@ -1481,40 +1704,21 @@ function setDeadlineMode(mode){
 }
 // アンケートをDBに保存（複数対応）
 function saveSurveyToDB(surveyId, data){
-  if(!surveyId) return;
-  const discordId = getPortalDiscordId();
-  const current = surveysMap[surveyId] || {};
-  const merged = {...current, ...(data||{}), id:surveyId, roomId:surveyId, type:'office'};
-  if(merged.role && !merged.officeName) merged.officeName = merged.role;
-  if(!merged.officeType) merged.officeType = officeTypeFromRole(merged.officeName || merged.role);
-  merged.officeName = merged.officeName || officeNameFromType(merged.officeType);
-  merged.role = merged.officeName;
-  surveysMap[surveyId] = merged;
-  callOfficeFunction('updateOfficeRoom', {discordId, roomId:surveyId, data:merged})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message||e)); });
+  if(!fbDb || !surveyId) return;
+  fbDb.ref(`office_rooms/${surveyId}`).update(data).catch(e=>console.warn("survey save failed",e));
 }
-
 
 // アンケートを新規作成してDBに保存
 function createSurveyInDB(surveyData){
-  const id = surveyData.id || surveyData.roomId;
-  const discordId = getPortalDiscordId();
-  surveysMap[id] = surveyData;
-  const event = {
-    eventId: surveyData.eventId,
-    eventName: surveyData.eventName || 'バフ予約',
-    eventDate: surveyData.eventDate || eventDateFromInput(surveyData.openAt || surveyData.closeAt || surveyData.deadline),
-    status: surveyData.status || 'open',
-    openAt: surveyData.openAt || surveyData.reservedStart || surveyData.startedAt || '',
-    closeAt: surveyData.closeAt || surveyData.deadline || ''
-  };
-  callOfficeFunction('upsertOfficeRoom', {discordId, event, room:surveyData})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message||e)); });
+  const id = surveyData.id;
+  surveysMap[id] = surveyData; // ローカルに即反映
+  if(fbDb){
+    fbDb.ref(`office_rooms/${id}`).set(surveyData).catch(e=>console.warn("survey create failed",e));
+  }
+  pruneOldSurveys();
+  // 管理者ボードを更新
   renderAdminSurveyList();
 }
-
 
 // 5件超の古いアンケートを自動削除
 function pruneOldSurveys(){
@@ -1530,19 +1734,17 @@ function pruneOldSurveys(){
 
 // アンケートを削除
 function deleteSurveyFromDB(surveyId){
-  if(!surveyId) return;
-  const discordId = getPortalDiscordId();
-  callOfficeFunction('deleteOfficeRoom', {discordId, roomId:surveyId})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message||e)); });
+  if(!fbDb || !surveyId) return;
+  fbDb.ref(`office_rooms/${surveyId}`).remove();
+  fbDb.ref(`${DB_SUBMISSIONS}/${surveyId}`).remove();
 }
-
 
 // 新アンケート開始時にseats・submissionsをリセット
 function resetSurveyData(newId){
   // ローカルリセット
   ADMIN_CONFIG.activeRoles.forEach(role=>{
     ALL_SLOTS.forEach(t=>{
+      ensureSeatExists(role);
       seats[role][t] = [0,0,0];
       isMe[role][t]  = [false,false,false];
     });
@@ -1552,7 +1754,7 @@ function resetSurveyData(newId){
   manualPoints = {};
   isOmakase = false;
   userName = '';
-  document.getElementById('userName').textContent = '👤 未登録';
+  document.getElementById('userName').textContent = '👤 認証確認中';
   renderSeats();
   renderSummary();
   updateDecideBtn();
@@ -1583,30 +1785,17 @@ function startSurveyNow(){
   if(!end){ alert('終了日時を入力してください'); return; }
   if(!confirm(`「${title}」を今すぐ開始しますか？`)) return;
 
-  const officeType = officeTypeFromRole(role);
-  const ymd = ymdFromInput(end);
-  const eventId = `buff_${ymd}`;
-  const newId = `buff_${ymd}_${officeType}_${Date.now()}`;
+  const newId = newSurveyId();
   const survey = {
     id        : newId,
-    roomId    : newId,
-    eventId,
-    eventName : 'バフ予約',
-    eventDate : eventDateFromInput(end),
-    type      : 'office',
     title     : title,
     role      : role,
-    officeName: role,
-    officeType,
     status    : 'open',
     startedAt : new Date().toISOString(),
-    openAt    : new Date().toISOString(),
-    closeAt   : end,
     deadline  : end,
     endedAt   : null,
     createdAt : new Date().toISOString(),
     questions : JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
-    bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems)),
   };
   surveysMap[newId] = survey;
   createSurveyInDB(survey);
@@ -1625,30 +1814,17 @@ function reserveSurvey(){
   if(new Date(start) >= new Date(end)){ alert('終了日時は開始日時より後にしてください'); return; }
   if(!confirm(`「${title}」を ${start.replace('T',' ')} に開始予約しますか？`)) return;
 
-  const officeType = officeTypeFromRole(role);
-  const ymd = ymdFromInput(start);
-  const eventId = `buff_${ymd}`;
-  const newId = `buff_${ymd}_${officeType}_${Date.now()}`;
+  const newId = newSurveyId();
   const survey = {
     id           : newId,
-    roomId       : newId,
-    eventId,
-    eventName    : 'バフ予約',
-    eventDate    : eventDateFromInput(start),
-    type         : 'office',
     title        : title,
     role         : role,
-    officeName   : role,
-    officeType,
     status       : 'reserved',
     reservedStart: start,
-    openAt       : start,
-    closeAt      : end,
     deadline     : end,
     endedAt      : null,
     createdAt    : new Date().toISOString(),
     questions    : JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
-    bonusItems   : JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems)),
   };
   surveysMap[newId] = survey;
   createSurveyInDB(survey);
@@ -1777,33 +1953,6 @@ function getTargetSurveyLabel(){
 }
 
 
-
-function applicantKey(sub){
-  if(!sub) return '';
-  if(sub.identityKey) return String(sub.identityKey);
-  if(sub.discordId && sub.gameId) return `${sub.discordId}_${sub.gameId}`.replace(/[.#$\[\]/]/g,'_');
-  return String(sub.name || sub.displayName || '');
-}
-function applicantDisplay(sub){
-  if(!sub) return '';
-  if(sub.displayName) return sub.displayName;
-  const ally = sub.alliance || sub.allianceName || '';
-  const nm = sub.playerName || sub.userName || sub.name || '';
-  return ally ? `[${ally}] ${nm}` : nm;
-}
-function getApplicantRows(){
-  const map = new Map();
-  getTargetSubmissions().forEach(s=>{
-    const key = applicantKey(s);
-    if(!key) return;
-    map.set(key, {key, name: applicantDisplay(s), sub:s});
-  });
-  Object.keys(manualPoints || {}).forEach(key=>{
-    if(!map.has(key)) map.set(key, {key, name:key, sub:null});
-  });
-  return Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
-}
-
 function getApplicantNames(){
   const set = new Set();
   getTargetSubmissions().forEach(s => { if(s.name) set.add(s.name); });
@@ -1817,28 +1966,29 @@ function renderPriorityList(){
   const box = document.getElementById('priorityList');
   if(!box) return;
   box.innerHTML = `<div class="poll-scope-note">対象：${escapeHtml(getTargetSurveyLabel())}</div>`;
-  const rows = getApplicantRows();
-  if(!rows.length){
+  const names = getApplicantNames();
+  if(!names.length){
     box.innerHTML += '<div class="empty-admin">回答者がいません</div>';
     return;
   }
 
   const activeBonus = ADMIN_CONFIG.activeBonusItems;
-  const sorted = [...rows].sort((a,b)=>{
-    const ptA = (a.sub ? calcBasePoint(a.sub.answers||{}) : 0) + getManualPoint(a.key);
-    const ptB = (b.sub ? calcBasePoint(b.sub.answers||{}) : 0) + getManualPoint(b.key);
+
+  const sorted = [...names].sort((a,b)=>{
+    const subA = getSubmissionByName(a), subB = getSubmissionByName(b);
+    const ptA = (subA ? calcBasePoint(subA.answers||{}) : 0) + getManualPoint(a);
+    const ptB = (subB ? calcBasePoint(subB.answers||{}) : 0) + getManualPoint(b);
     return ptB - ptA;
   });
 
-  sorted.forEach((row, idx)=>{
-    const key  = row.key;
-    const name = row.name;
-    const sub  = row.sub;
+  sorted.forEach((name, idx)=>{
+    const sub  = getSubmissionByName(name);
     const base = sub ? calcBasePoint(sub.answers||{}) : 0;
-    const total = base + getManualPoint(key);
+    const total = base + getManualPoint(name);
     const accel = sub ? choiceText('q1', sub.answers||{}) : '申請なし';
-    const safeKey = escapeAttr(key);
+    const safeName = escapeAttr(name);
 
+    // 希望タグ
     let prefTagsHtml = '';
     if(sub && sub.omakase){
       prefTagsHtml = `<span class="applicant-pref-tag omakase">時間帯はお任せ</span>`;
@@ -1849,8 +1999,9 @@ function renderPriorityList(){
       });
     }
 
+    // 加点項目行を生成（固定値はON/OFF、手動入力はステッパー）
     const bonusRows = activeBonus.map(item=>{
-      const val = getBonusPoint(key, item.id);
+      const val = getBonusPoint(name, item.id);
       const isFixed = item.type !== 'manual';
       if(isFixed){
         const checked = val > 0;
@@ -1859,7 +2010,7 @@ function renderPriorityList(){
             <div class="applicant-ctrl-label" style="min-width:80px">${escapeHtml(item.label)}</div>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1">
               <input type="checkbox" ${checked?'checked':''}
-                onchange="setBonusPoint('${safeKey}','${item.id}',this.checked?${item.pt||1}:0)"
+                onchange="setBonusPoint('${safeName}','${item.id}',this.checked?${item.pt||1}:0)"
                 style="width:18px;height:18px;cursor:pointer">
               <span style="font-size:12px;color:${checked?'var(--gold)':'var(--text2)'}">
                 ${checked?`+${item.pt||1}pt 付与中`:'なし'}
@@ -1871,17 +2022,18 @@ function renderPriorityList(){
           <div class="applicant-ctrl-row">
             <div class="applicant-ctrl-label" style="min-width:80px">${escapeHtml(item.label)}</div>
             <div class="applicant-svs">
-              <button class="step-btn" onclick="stepBonusPoint('${safeKey}','${item.id}',-1)">−</button>
+              <button class="step-btn" onclick="stepBonusPoint('${safeName}','${item.id}',-1)">−</button>
               <div class="applicant-svs-val">${val}</div>
-              <button class="step-btn" onclick="stepBonusPoint('${safeKey}','${item.id}',1)">＋</button>
+              <button class="step-btn" onclick="stepBonusPoint('${safeName}','${item.id}',1)">＋</button>
               <div style="font-size:11px;color:var(--text2);margin-left:4px">+${val}pt</div>
             </div>
           </div>`;
       }
     }).join('');
 
+    // ポイント内訳チップ
     const bonusChips = activeBonus.map(item=>{
-      const v = getBonusPoint(key, item.id);
+      const v = getBonusPoint(name, item.id);
       return v > 0 ? `<span class="applicant-pt-chip">${escapeHtml(item.label)} +${v}</span>` : '';
     }).join('');
 
@@ -1907,25 +2059,36 @@ function renderPriorityList(){
 }
 
 
-function stepSvsPoint(key, delta){ stepBonusPoint(key, 'b_svs', delta); }
-function setMainPoint(key, val){ setBonusPoint(key, 'b_rally_s', val); }
+function stepSvsPoint(name, delta){
+  stepBonusPoint(name, 'b_svs', delta);
+}
+function setMainPoint(name, val){
+  // 後方互換用（既存コードから呼ばれる場合）
+  setBonusPoint(name, 'b_rally_s', val);
+}
 
-function setBonusPoint(key, itemId, val){
-  const rec = getPointRecord(key);
+function setBonusPoint(name, itemId, val){
+  const rec = getPointRecord(name);
   const max = getBonusMax(itemId);
   rec[itemId] = Math.max(0, Math.min(max, Number(val||0)));
-  manualPoints[key] = rec;
+  manualPoints[name] = rec;
   saveManualPointsToDB();
   renderPriorityList();
   buildResults();
 }
 
-function stepBonusPoint(key, itemId, delta){
-  const cur = getBonusPoint(key, itemId);
-  setBonusPoint(key, itemId, cur + delta);
+function stepBonusPoint(name, itemId, delta){
+  const cur = getBonusPoint(name, itemId);
+  setBonusPoint(name, itemId, cur + delta);
 }
-function setSvsPoint(key, val){ setBonusPoint(key, 'b_svs', val); }
-function setManualPoint(key, val){ setMainPoint(key, val); }
+function setSvsPoint(name, val){
+  const p = getPointRecord(name);
+  p.svs = Number(val || 0);
+  manualPoints[name] = p;
+  renderPriorityList();
+  buildResults();
+}
+function setManualPoint(name, val){ setMainPoint(name, val); }
 function clearManualPoints(){
   manualPoints = {};
   renderPriorityList();
@@ -1939,13 +2102,12 @@ function candidateFromSubmission(sub, pref){
   if(!r) return null;
   return {
     id: sub.id || sub.name,
-    key: applicantKey(sub),
-    name: applicantDisplay(sub),
+    name: sub.name,
     role: r.role,
     time: r.time,
     pref,
     basePt:calcBasePoint(sub.answers||{}),
-    manualPt:getManualPoint(applicantKey(sub)),
+    manualPt:getManualPoint(sub.name),
     totalPt:calcTotalPoint(sub),
     accel:choiceText('q1', sub.answers||{}),
     createdAt:sub.createdAt || ''
@@ -1995,7 +2157,7 @@ function buildFinalAssignments(){
   const winners       = [];
   const candidateMap  = {}; // 管理確認用
 
-  function uid(sub){ return applicantKey(sub) || sub.id || sub.name; }
+  function uid(sub){ return sub.id || sub.name; }
 
   function addWinner(c, sub){
     const key = `${c.role}|${c.time}`;
@@ -2018,13 +2180,14 @@ function buildFinalAssignments(){
     const r = sub.reservations && sub.reservations[pref];
     if(!r) return null;
     return {
-      key      : applicantKey(sub),
-      name     : applicantDisplay(sub),
+      name     : sub.name,
       role     : r.role || preferredRole(sub),
       time     : r.time,
       pref,
+      alliance : sub.alliance || '',
+      discordId: sub.discordId || '',
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(applicantKey(sub)),
+      manualPt : getManualPoint(sub.name),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2106,12 +2269,13 @@ function buildFinalAssignments(){
       : ALL_SLOTS.find(t=>!filledSlots.has(`${role}|${t}`));
     if(!time) return;
     const c = {
-      key      : applicantKey(sub),
-      name     : applicantDisplay(sub),
+      name     : sub.name,
       role, time,
       pref     : 4, // 自動割当
+      alliance : sub.alliance || '',
+      discordId: sub.discordId || '',
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(applicantKey(sub)),
+      manualPt : getManualPoint(sub.name),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2140,12 +2304,13 @@ function buildFinalAssignments(){
     const time = emptySlots[i];
     if(!time) return;
     const c = {
-      key      : applicantKey(sub),
-      name     : applicantDisplay(sub),
+      name     : sub.name,
       role, time,
       pref     : 0, // お任せ
+      alliance : sub.alliance || '',
+      discordId: sub.discordId || '',
       basePt   : calcBasePoint(sub.answers||{}),
-      manualPt : getManualPoint(applicantKey(sub)),
+      manualPt : getManualPoint(sub.name),
       totalPt  : calcTotalPoint(sub),
       accel    : choiceText('q1', sub.answers||{}),
       createdAt: sub.createdAt || '',
@@ -2156,8 +2321,7 @@ function buildFinalAssignments(){
   // ⑤ 補欠リスト（48名超）
   const benchList = benchSubs.map((sub,i)=>({
     rank    : MAX_SLOTS + i + 1,
-    key     : applicantKey(sub),
-    name    : applicantDisplay(sub),
+    name    : sub.name,
     totalPt : calcTotalPoint(sub),
     accel   : choiceText('q1', sub.answers||{}),
   }));
@@ -2341,9 +2505,43 @@ function deleteEditSurvey(){
 }
 
 // ===== 回答者：アンケート一覧画面 =====
-function renderSurveyList(){ /* 管理者版では回答者一覧を表示しない */ }
+function renderSurveyList(){
+  // 回答者版では一覧を持たない。公開中表示はPortalのアンケートRoom側で制御する。
+  if(adminLoggedIn || surveySelected) return;
+  const q = new URLSearchParams(location.search);
+  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
+  if(!sid) return;
+  if(surveysMap && surveysMap[sid]) bootPortalAnswer();
+}
 // アンケートを選択して回答画面へ
-function selectSurvey(){ /* 管理者版では回答者導線を使用しない */ }
+function selectSurvey(surveyId){
+  const s = surveysMap[surveyId];
+  if(!s || s.status !== 'open') return;
+  surveySelected = true;
+  currentSurveyId = surveyId;
+
+  // 選択した官職予約の官職・質問を反映
+  const roleName = s.officeName || s.roleName || s.role || (s.officeType === 'education' ? '教育部長' : '副執政官');
+  ADMIN_CONFIG.activeRoles = [roleName];
+  if(s.questions) ADMIN_CONFIG.questions = JSON.parse(JSON.stringify(s.questions));
+  currentRole = roleName;
+  const titleEl = document.querySelector('.header-title');
+  if(titleEl) titleEl.textContent = '🚄 ' + roleName + ' 予約';
+  const statusEl = document.getElementById('userStatus');
+  if(statusEl) statusEl.textContent = '未回答';
+
+  // 座席データを初期化
+  ensureSeatExists(surveyId);
+  // このアンケートのデータを読み込み（回答・座席・ポイント）
+  if(window._loadSurveyData) window._loadSurveyData(surveyId);
+  buildRoleTabs();
+  buildQuestions();
+  renderSeats();
+  updateDecideBtn();
+
+  // 一覧を閉じて登録画面へ
+  document.getElementById('registerOverlay').style.display = 'flex';
+}
 
 function buildResults(){
   buildResultRoleSeg();
@@ -2419,6 +2617,68 @@ function renderResultList(){
     `;
     box.appendChild(benchBlock);
   }
+
+  const saveBtnWrap = document.createElement('div');
+  saveBtnWrap.style.cssText = 'margin-top:14px;';
+  saveBtnWrap.innerHTML = `
+    <button id="saveOfficeResultsBtn" onclick="saveOfficeResultsToFirestore()"
+      style="width:100%;height:46px;border:none;border-radius:12px;background:var(--gold);color:#111827;font-weight:900;font-size:14px;cursor:pointer">
+      確定結果を保存（スマホ管理ダッシュボード用）
+    </button>
+    <div id="saveOfficeResultsStatus" style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center"></div>
+  `;
+  box.appendChild(saveBtnWrap);
+}
+
+async function saveOfficeResultsToFirestore(){
+  const statusEl = document.getElementById('saveOfficeResultsStatus');
+  const btn = document.getElementById('saveOfficeResultsBtn');
+  if(!finalResults || !finalResults.length){
+    if(statusEl) statusEl.textContent = '保存する確定結果がありません。';
+    return;
+  }
+
+  const surveyId = adminEditSurveyId || currentSurveyId || '';
+  const officeName = adminResultRole || currentRole || '';
+  if(!surveyId || !officeName){
+    if(statusEl) statusEl.textContent = '対象アンケート・官職が特定できませんでした。';
+    return;
+  }
+
+  const results = finalResults.map(g => ({
+    playerName: g.winner.name || '',
+    alliance: g.winner.alliance || '',
+    discordId: g.winner.discordId || '',
+    role: g.role,
+    time: g.time,
+    pref: g.winner.pref,
+    totalPt: g.winner.totalPt
+  }));
+
+  const bench = (benchList || []).map(b => ({
+    playerName: b.name || '',
+    totalPt: b.totalPt,
+    rank: b.rank
+  }));
+
+  if(btn){ btn.disabled = true; btn.textContent = '保存中...'; }
+  if(statusEl) statusEl.textContent = '';
+
+  try{
+    const discordId = getPortalDiscordId();
+    const res = await fetch(`${OFFICE_FUNCTION_BASE}/saveOfficeResults`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({discordId, surveyId, officeName, results, bench})
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if(statusEl) statusEl.textContent = `✓ 保存しました（${results.length}名確定）`;
+  }catch(e){
+    if(statusEl) statusEl.textContent = '保存に失敗しました: ' + (e && e.message || e);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '確定結果を保存（スマホ管理ダッシュボード用）'; }
+  }
 }
 
 function buildPostText(){
@@ -2485,7 +2745,7 @@ function buildPostText(){
         adminLines.push(`${g.time} ${role}：${win.name}（${win.totalPt}pt / ${prefLabel}）`);
 
         const backups = (g.candidates || [])
-          .filter(c => (c.key || c.name) !== (win.key || win.name))
+          .filter(c => c.name !== win.name)
           .sort(compareCandidates)
           .slice(0,2);
         if(backups.length){
@@ -2536,7 +2796,6 @@ function copyPostText(type){
   el.select(); el.setSelectionRange(0, 99999);
   navigator.clipboard?.writeText(el.value);
 }
-function showAccessError(message){ document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">読み込みできません</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`; }
 function escapeHtml(str){ return String(str).replace(/[&<>"]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
 function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 
@@ -2544,611 +2803,142 @@ function escapeAttr(str){ return String(str).replace(/['\\]/g, '\\$&'); }
 
 
 // ===================================================
-// Portal連携（管理者版）
-// - 管理入口はPortal管理ページからのリンク
-// - 官職予約内の管理者パスワードは使用しない
-// - 権限確認: role_map/{discordId} または users/{discordId}.role
+// Portal連携（回答者版）
+// - Discord認証はPortal入口で1回のみ
+// - 正本DB: Firestore users/{discordId}
+// - 内部識別: discordId + gameId
+// - 表示: [alliance] playerName
 // ===================================================
-let portalAdmin = null;
+let portalUser = null;
+let portalBooting = false;
+let portalBootedSurveyId = '';
+
 function readJsonStorage(keys){
   for(const k of keys){
     for(const st of [localStorage, sessionStorage]){
-      try{ const raw=st.getItem(k); if(raw) return JSON.parse(raw); }catch(e){}
+      try{
+        const raw = st.getItem(k);
+        if(!raw) continue;
+        const obj = JSON.parse(raw);
+        if(obj && typeof obj === 'object') return obj;
+      }catch(e){}
     }
   }
   return null;
 }
-function getStoredPortalObject(){ return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {}; }
+function getStoredPortalObject(){
+  const discordSession = readJsonStorage(['discord_user']);
+  if(discordSession && typeof discordSession === 'object'){
+    const u = discordSession.user || {};
+    const d = discordSession.discord || {};
+    return {
+      discordId: u.discordId || d.id || discordSession.discordId || '',
+      gameId: u.gameId || '',
+      playerName: u.playerName || d.globalName || d.username || '',
+      alliance: u.alliance || '',
+      role: discordSession.role || u.role || 'member'
+    };
+  }
+  return readJsonStorage(['1648_portal_user','portalUser','currentUser','userProfile','authUser','user']) || {};
+}
 function getPortalDiscordId(){
   const q = new URLSearchParams(location.search);
   const u = getStoredPortalObject();
   return String(q.get('discordId') || u.discordId || u.id || u.uid || '').trim();
 }
-function showAdminAccessError(message){
-  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">管理権限が必要です</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">管理ページへ戻る</button></div></div>`;
-}
-async function loadPortalAdmin(){
+async function loadPortalUser(){
   const discordId = getPortalDiscordId();
   if(!discordId) return null;
-  let user = null, roleDoc = null;
+  let d = null;
   if(fbFs){
     try{
-      const us = await fbFs.collection('users').doc(discordId).get();
-      if(us.exists) user = us.data() || {};
-    }catch(e){ console.warn('users read failed', e); }
-    try{
-      const rs = await fbFs.collection('role_map').doc(discordId).get();
-      if(rs.exists) roleDoc = rs.data() || {};
-    }catch(e){ console.warn('role_map read failed', e); }
+      const doc = await fbFs.collection('users').doc(discordId).get();
+      if(doc.exists) d = doc.data() || {};
+    }catch(e){ console.warn('users/{discordId} read failed', e); }
   }
+  // Firestoreが読めない時だけ、Portal側の保存済み情報を暫定利用
   const st = getStoredPortalObject();
-  const role = String((roleDoc && (roleDoc.role || roleDoc.type)) || user?.role || st.role || st.portalRole || '').toLowerCase();
-  return {
-    discordId,
-    role,
-    gameId: String(user?.gameId || st.gameId || '').trim(),
-    playerName: String(user?.playerName || user?.globalName || st.playerName || st.userName || '').trim(),
-    alliance: String(user?.alliance || st.alliance || st.allianceName || '').trim()
+  d = d || st || {};
+  const user = {
+    discordId: String(d.discordId || discordId || '').trim(),
+    gameId: String(d.gameId || d.gameID || d.playerId || '').trim(),
+    playerName: String(d.playerName || d.userName || d.globalName || d.name || '').trim(),
+    alliance: String(d.alliance || d.allianceName || d.guild || '').trim(),
+    role: String(d.role || st.role || 'member').trim().toLowerCase()
   };
+  return user;
 }
-async function bootPortalAdmin(){
-  portalAdmin = await loadPortalAdmin();
-  if(!portalAdmin || !['admin','officer','manager'].includes(portalAdmin.role)){
-    showAdminAccessError('Portalで管理者ページから入り直してください。admin / officer / manager 権限が必要です。');
-    return;
+function displayNameFromUser(u){
+  const ally = (u?.alliance || '').trim();
+  const name = (u?.playerName || '').trim();
+  return ally ? `[${ally}] ${name}` : name;
+}
+function userIdentityKey(){
+  const did = portalUser?.discordId || '';
+  const gid = portalUser?.gameId || '';
+  return `${did}_${gid}`.replace(/[.#$\[\]/]/g,'_');
+}
+function hasPortalIdentity(){
+  return !!(portalUser && portalUser.discordId && portalUser.gameId && portalUser.playerName);
+}
+function showAccessError(message){
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid #1e3050;border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">Portalから開いてください</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">${message}</div><button onclick="location.href='../survey/'" style="width:100%;height:46px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">アンケートRoomへ戻る</button></div></div>`;
+}
+
+function isLimitedPortalRole(role){
+  return String(role || "member").trim().toLowerCase() === "limited";
+}
+function showLimitedAccess(){
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#0a0e1a;color:#e8edf5;font-family:'Noto Sans JP',sans-serif"><div style="max-width:360px;width:100%;background:#111827;border:1px solid rgba(247,215,116,.28);border-radius:16px;padding:24px;text-align:center"><div style="font-size:42px;margin-bottom:10px">🔒</div><div style="font-size:18px;font-weight:900;color:#f7d774;margin-bottom:8px">利用制限中</div><div style="font-size:13px;color:#7a9cc0;line-height:1.7;margin-bottom:18px">現在利用できる機能はコスト計算roomのみです。</div><button onclick="location.href='/1648-portal/cost/'" style="width:100%;height:46px;border-radius:10px;border:1px solid #7c3aed;background:#7c3aed;color:#fff;font-weight:900;margin-bottom:10px">コスト計算roomへ</button><button onclick="location.href='/1648-portal/'" style="width:100%;height:40px;border-radius:10px;border:1px solid #1e3050;background:#1c2537;color:#e8edf5;font-weight:900">ポータルへ戻る</button></div></div>`;
+}
+
+async function bootPortalAnswer(){
+  if(portalBooting) return false;
+  const q = new URLSearchParams(location.search);
+  const sid = q.get('surveyId') || q.get('officeSurveyId') || q.get('id');
+  if(!sid){
+    showAccessError('公開中アンケートのIDが指定されていません。アンケートRoomに表示されている官職予約から開いてください。');
+    return false;
   }
-  adminLoggedIn = true;
-  document.getElementById('adminScreen')?.classList.add('open');
-  setTimeout(()=>{
-    renderAdminSurveyList();
-    renderAdminQuestions();
-    renderPriorityList();
-    buildResultRoleSeg();
-    buildResults();
-    startSurveyTimer();
-  }, 80);
-}
-function openAdmin(){ openAdminPanel(); }
-function loginAdmin(){ bootPortalAdmin(); }
-function closeAdminLogin(){}
-function closeAdmin(){ location.href='../'; }
-
-
-// ===================================================
-// v9 修正：官職予約をFirestoreに自動生成・Portalローカル認証
-// - 管理画面で「今すぐ開始」「予約確定」を押すだけで office_events / office_rooms を作成
-// - アンケートRoom一覧Functionsが読む Firestore office_rooms に保存
-// - 官職予約内の手動Firestore入力は不要
-// ===================================================
-let adminLoggedIn = false;
-const OFFICE_TYPE_MAP = {
-  '教育部長': { type:'education', name:'教育部長' },
-  '副執政官': { type:'vice', name:'副執政官' }
-};
-const OFFICE_NAME_MAP = {
-  education:'教育部長',
-  vice:'副執政官'
-};
-
-const OFFICE_FUNCTION_BASE = 'https://us-central1-yoyaku-4ec7c.cloudfunctions.net';
-async function officeFunctionCall(name, payload){
-  const res = await fetch(`${OFFICE_FUNCTION_BASE}/${name}`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({discordId:localDiscordId(), ...payload})
-  });
-  const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
-  if(!res.ok || !data.ok){
-    throw new Error(data.error || `function_${name}_failed`);
+  if(portalBootedSurveyId === sid && surveySelected) return true;
+  portalBooting = true;
+  portalUser = await getPortalUserPromise();
+  portalBooting = false;
+  if(isLimitedPortalRole(portalUser.role)){
+    showLimitedAccess();
+    return false;
   }
-  return data;
-}
-
-function pad2(n){ return String(n).padStart(2,'0'); }
-function ymdFromDateValue(value){
-  const d = value ? new Date(value) : new Date();
-  return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`;
-}
-function isoDateOnly(value){
-  const d = value ? new Date(value) : new Date();
-  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-}
-function normalizeOfficeRoom(id, raw){
-  const d = raw || {};
-  const officeType = d.officeType || (d.role === '教育部長' ? 'education' : d.role === '副執政官' ? 'vice' : '');
-  const officeName = d.officeName || OFFICE_NAME_MAP[officeType] || d.role || '官職';
-  const closeAt = d.closeAt || d.deadline || '';
-  const openAt = d.openAt || d.reservedStart || d.startedAt || '';
-  return {
-    ...d,
-    id: d.id || d.roomId || id,
-    roomId: d.roomId || d.id || id,
-    type: 'office',
-    officeType,
-    officeName,
-    role: d.role || officeName,
-    title: d.title || `${officeName}予約`,
-    status: d.status || 'draft',
-    openAt,
-    closeAt,
-    deadline: d.deadline || closeAt,
-    reservedStart: d.reservedStart || openAt,
-    createdAt: d.createdAt || '',
-    updatedAt: d.updatedAt || ''
-  };
-}
-function buildOfficeIds(roleName, startValue, endValue){
-  const info = OFFICE_TYPE_MAP[roleName] || {type:'office', name:roleName || '官職'};
-  const baseDate = startValue || endValue || new Date().toISOString();
-  const ymd = ymdFromDateValue(baseDate);
-  const eventId = `buff_${ymd}`;
-  let roomId = `${eventId}_${info.type}`;
-  // 同一官職・同日で既存がある場合は _02, _03 を付ける
-  if(surveysMap && surveysMap[roomId]){
-    let n = 2;
-    while(surveysMap[`${roomId}_${pad2(n)}`]) n++;
-    roomId = `${roomId}_${pad2(n)}`;
+  if(!hasPortalIdentity()){
+    showAccessError('users/{discordId} の登録情報を確認できません。PortalでDiscord認証後、公開中のアンケートRoomから入り直してください。');
+    return false;
   }
-  return {eventId, roomId, officeType:info.type, officeName:info.name, eventDate:isoDateOnly(baseDate)};
-}
-function safeNowIso(){ return new Date().toISOString(); }
-function deriveTitle(officeName, dateValue, roundSuffix){
-  const d = dateValue ? new Date(dateValue) : new Date();
-  const base = `${officeName}予約 ${d.getMonth()+1}/${d.getDate()}`;
-  return roundSuffix ? `${base} ${roundSuffix}` : base;
-}
+  userName = displayNameFromUser(portalUser);
+  const userEl = document.getElementById('userName');
+  if(userEl) userEl.textContent = '👤 ' + userName;
+  const disp = document.getElementById('portalUserDisplay');
+  if(disp) disp.textContent = userName;
 
-// 管理画面には回答者用 roleTabs が無いため安全化
-function buildRoleTabs(){ /* admin/officeでは不要 */ }
-function buildQuestions(){ renderAdminQuestions && renderAdminQuestions(); }
-function renderSeats(){ /* admin/officeでは不要 */ }
-function renderSummary(){ /* admin/officeでは不要 */ }
-function updateDecideBtn(){ /* admin/officeでは不要 */ }
-
-// Firestore office_rooms を管理画面の正本にする
-function initFirebase(){
-  // Firestore直読みは禁止。管理画面もFunctions経由で office_rooms を読む。
-  loadAdminOfficeRooms();
-  try{
-    if(fbDb){
-      fbDb.ref(DB_CONFIG).on('value', snap=>{
-        const d = snap.val();
-        if(!d) return;
-        if(d.activeRoles) ADMIN_CONFIG.activeRoles = d.activeRoles;
-        if(d.questions) ADMIN_CONFIG.questions = d.questions;
-        renderAdminQuestions();
-      });
-    }
-  }catch(e){ console.warn('config read skipped', e); }
-
-  let activeSubRef = null;
-  window._loadSurveyData = function(surveyId){
-    if(!fbDb || !surveyId) return;
-    if(activeSubRef) fbDb.ref(activeSubRef).off();
-    activeSubRef = `${DB_SUBMISSIONS}/${surveyId}`;
-    fbDb.ref(activeSubRef).on('value', snap=>{
-      submissions = snap.val() ? Object.values(snap.val()) : [];
-      if(adminLoggedIn){ renderPriorityList(); buildResults(); buildPostText(); }
-    });
-    // manualPoints はFirestore保存を正とする。画面上はローカル状態を使う。
-  };
-}
-
-async function saveOfficeBundle(eventId, eventData, roomData){
-  return officeFunctionCall('upsertOfficeRoom', {
-    event:{...eventData, eventId},
-    room:roomData
-  });
-}
-
-function saveSurveyToDB(surveyId, data){
-  if(!surveyId) return;
-  const discordId = getPortalDiscordId();
-  const current = surveysMap[surveyId] || {};
-  const merged = {...current, ...(data||{}), id:surveyId, roomId:surveyId, type:'office'};
-  if(merged.role && !merged.officeName) merged.officeName = merged.role;
-  if(!merged.officeType) merged.officeType = officeTypeFromRole(merged.officeName || merged.role);
-  merged.officeName = merged.officeName || officeNameFromType(merged.officeType);
-  merged.role = merged.officeName;
-  surveysMap[surveyId] = merged;
-  callOfficeFunction('updateOfficeRoom', {discordId, roomId:surveyId, data:merged})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message||e)); });
-}
-
-function createSurveyInDB(surveyData){
-  const id = surveyData.id || surveyData.roomId;
-  const discordId = getPortalDiscordId();
-  surveysMap[id] = surveyData;
-  const event = {
-    eventId: surveyData.eventId,
-    eventName: surveyData.eventName || 'バフ予約',
-    eventDate: surveyData.eventDate || eventDateFromInput(surveyData.openAt || surveyData.closeAt || surveyData.deadline),
-    status: surveyData.status || 'open',
-    openAt: surveyData.openAt || surveyData.reservedStart || surveyData.startedAt || '',
-    closeAt: surveyData.closeAt || surveyData.deadline || ''
-  };
-  callOfficeFunction('upsertOfficeRoom', {discordId, event, room:surveyData})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message||e)); });
-  renderAdminSurveyList();
-}
-
-function deleteSurveyFromDB(surveyId){
-  if(!surveyId) return;
-  const discordId = getPortalDiscordId();
-  callOfficeFunction('deleteOfficeRoom', {discordId, roomId:surveyId})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message||e)); });
-}
-
-function getEditSurveyRole(){
-  const b2 = document.getElementById('roleBtn-教育部長');
-  return (b2 && b2.classList.contains('on')) ? '教育部長' : '副執政官';
-}
-
-async function startSurveyNow(){
-  const roleName = getEditSurveyRole();
-  const end = document.getElementById('endDateNow')?.value || '';
-  if(!end){ alert('終了日時を入力してください'); return; }
-  const ids = buildOfficeIds(roleName, new Date().toISOString(), end);
-  const titleInput = document.getElementById('editSurveyTitle')?.value.trim();
-  const title = titleInput || deriveTitle(ids.officeName, end, ids.roomId.includes('_02') ? '第2回' : '');
-  if(!confirm(`「${title}」を今すぐ開始しますか？`)) return;
-  const now = safeNowIso();
-  const eventPayload = {
-    eventId: ids.eventId,
-    eventName: 'バフ予約',
-    eventDate: ids.eventDate,
-    status: 'open',
-    openAt: now,
-    closeAt: end,
-    createdAt: now,
-    updatedAt: now
-  };
-  const roomPayload = {
-    id: ids.roomId,
-    roomId: ids.roomId,
-    eventId: ids.eventId,
-    type: 'office',
-    officeType: ids.officeType,
-    officeName: ids.officeName,
-    role: ids.officeName,
-    title,
-    status: 'open',
-    openAt: now,
-    closeAt: end,
-    deadline: end,
-    startedAt: now,
-    endedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    questions: JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
-    bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems))
-  };
-  try{
-    await saveOfficeBundle(ids.eventId, eventPayload, roomPayload);
-    createSurveyInDB(roomPayload);
-    adminEditSurveyId = ids.roomId;
-    showToast('✓ 官職予約を開始しました');
-    openEditPanel(ids.roomId);
-  }catch(e){
-    console.warn(e);
-    alert('保存に失敗しました');
+  if(!surveysMap || !surveysMap[sid]) return true; // surveys読込待ち
+  if(surveysMap[sid].status !== 'open'){
+    showAccessError('この官職予約は現在公開中ではありません。');
+    return false;
   }
+  portalBootedSurveyId = sid;
+  selectSurvey(sid);
+  return true;
 }
-
-async function reserveSurvey(){
-  const roleName = getEditSurveyRole();
-  const start = document.getElementById('startDateReserve')?.value || '';
-  const end = document.getElementById('endDateReserve')?.value || '';
-  if(!start || !end){ alert('開始・終了日時を入力してください'); return; }
-  if(new Date(start) >= new Date(end)){ alert('終了日時は開始日時より後にしてください'); return; }
-  const ids = buildOfficeIds(roleName, start, end);
-  const titleInput = document.getElementById('editSurveyTitle')?.value.trim();
-  const title = titleInput || deriveTitle(ids.officeName, start, ids.roomId.includes('_02') ? '第2回' : '');
-  if(!confirm(`「${title}」を ${start.replace('T',' ')} に開始予約しますか？`)) return;
-  const now = safeNowIso();
-  const eventPayload = {
-    eventId: ids.eventId,
-    eventName: 'バフ予約',
-    eventDate: ids.eventDate,
-    status: 'reserved',
-    openAt: start,
-    closeAt: end,
-    createdAt: now,
-    updatedAt: now
-  };
-  const roomPayload = {
-    id: ids.roomId,
-    roomId: ids.roomId,
-    eventId: ids.eventId,
-    type: 'office',
-    officeType: ids.officeType,
-    officeName: ids.officeName,
-    role: ids.officeName,
-    title,
-    status: 'reserved',
-    openAt: start,
-    closeAt: end,
-    reservedStart: start,
-    deadline: end,
-    endedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    questions: JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
-    bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems))
-  };
-  try{
-    await saveOfficeBundle(ids.eventId, eventPayload, roomPayload);
-    createSurveyInDB(roomPayload);
-    adminEditSurveyId = ids.roomId;
-    showToast('✓ 官職予約を予約しました');
-    openEditPanel(ids.roomId);
-  }catch(e){
-    console.warn(e);
-    alert('保存に失敗しました');
-  }
-}
-
-function saveAdminSurveySettings(){
-  const s = getEditSurvey();
-  if(!s){ alert('官職予約を選択してください'); return; }
-  const roleName = getEditSurveyRole();
-  const info = OFFICE_TYPE_MAP[roleName] || {type:s.officeType||'', name:roleName};
-  const title = document.getElementById('editSurveyTitle')?.value.trim() || s.title || `${roleName}予約`;
-  const payload = {
-    title,
-    role: info.name,
-    officeType: info.type,
-    officeName: info.name,
-    questions: JSON.parse(JSON.stringify(ADMIN_CONFIG.questions)),
-    bonusItems: JSON.parse(JSON.stringify(ADMIN_CONFIG.bonusItems)),
-    updatedAt: safeNowIso()
-  };
-  Object.assign(s, payload);
-  saveSurveyToDB(s.id || s.roomId, payload);
-  showToast('✓ 設定を保存しました');
-  renderAdminSurveyList();
-}
-
-function startSurveyTimer(){
-  if(surveyTimer) clearInterval(surveyTimer);
-  surveyTimer = setInterval(()=>{
-    const now = new Date();
-    Object.values(surveysMap).forEach(s=>{
-      if(s.status === 'reserved' && (s.openAt || s.reservedStart) && now >= new Date(s.openAt || s.reservedStart)){
-        s.status = 'open';
-        s.startedAt = safeNowIso();
-        saveSurveyToDB(s.id, {status:'open', startedAt:s.startedAt});
-      }
-      if(s.status === 'open' && (s.closeAt || s.deadline) && now >= new Date(s.closeAt || s.deadline)){
-        s.status = 'closed';
-        s.endedAt = safeNowIso();
-        saveSurveyToDB(s.id, {status:'closed', endedAt:s.endedAt});
-      }
-    });
-  }, 5000);
-}
-
-// Portalローカル情報だけで管理権限判定。Firestore直読みはルールで弾かれるため使わない。
-function getLocalPortalSession(){
-  try{return JSON.parse(localStorage.getItem('discord_user')||'{}');}catch(e){return {};}
-}
-function localDiscordId(){
-  const s = getLocalPortalSession();
-  return String(s?.user?.discordId || s?.discordId || s?.discord?.id || '').trim();
-}
-function localRole(){
-  const s = getLocalPortalSession();
-  return String(s?.user?.role || s?.role || '').toLowerCase().trim();
-}
-async function loadPortalAdmin(){
-  const discordId = localDiscordId();
-  const role = localRole();
-  return {
-    discordId,
-    role,
-    gameId:'',
-    playerName:'',
-    alliance:''
-  };
-}
-async function bootPortalAdmin(){
-  portalAdmin = await loadPortalAdmin();
-  const allowedRoles = ['developer','admin','officer','manager'];
-  const developerIds = ['795152243883114527'];
-  if(!portalAdmin || (!allowedRoles.includes(portalAdmin.role) && !developerIds.includes(portalAdmin.discordId))){
-    showAdminAccessError('Portalで管理者ページから入り直してください。developer / admin / officer / manager 権限が必要です。');
-    return;
-  }
-  adminLoggedIn = true;
-  document.getElementById('adminScreen')?.classList.add('open');
-  setTimeout(()=>{
-    renderAdminSurveyList();
-    renderAdminQuestions();
-    renderPriorityList();
-    buildResultRoleSeg();
-    buildResults();
-    startSurveyTimer();
-  }, 80);
-}
-function closeAdmin(){ location.href='../'; }
-// ===================================================
-// v15 final override: 管理画面はFunctions経由に統一
-// ===================================================
-function getLocalPortalSessionFinal(){
-  try{return JSON.parse(localStorage.getItem('discord_user')||'{}');}catch(e){return {};}
-}
-function getPortalDiscordId(){
-  const s = getLocalPortalSessionFinal();
-  return String(s?.user?.discordId || s?.discordId || s?.discord?.id || '').trim();
-}
-function getPortalRole(){
-  const s = getLocalPortalSessionFinal();
-  return String(s?.user?.role || s?.role || '').toLowerCase().trim();
-}
-function callOfficeFunction(name, payload){
-  const discordId = getPortalDiscordId();
-  return fetch(`${OFFICE_FUNCTION_BASE}/${name}`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({discordId, ...(payload || {})})
-  }).then(async res=>{
-    const data = await res.json().catch(()=>({ok:false,error:'invalid_json'}));
-    if(!res.ok || !data.ok) throw new Error(data.error || `${name}_failed`);
-    return data;
-  });
-}
-function officeTypeFromRole(role){
-  return role === '教育部長' ? 'education' : role === '副執政官' ? 'vice' : String(role || 'office');
-}
-function officeNameFromType(type){
-  return type === 'education' ? '教育部長' : type === 'vice' ? '副執政官' : '官職';
-}
-function eventDateFromInput(value){
-  const d = value ? new Date(value) : new Date();
-  if(isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function normalizeAdminRoom(id, r){
-  const officeType = r.officeType || officeTypeFromRole(r.role || r.officeName);
-  const officeName = r.officeName || r.role || officeNameFromType(officeType);
-  return {
-    ...r,
-    id: r.id || r.roomId || id,
-    roomId: r.roomId || r.id || id,
-    type:'office',
-    officeType,
-    officeName,
-    role: officeName,
-    title: r.title || `${officeName}予約`,
-    deadline: r.deadline || r.closeAt || '',
-    reservedStart: r.reservedStart || r.openAt || '',
-    status: r.status || 'draft'
-  };
-}
-async function loadAdminOfficeRooms(){
-  const discordId = getPortalDiscordId();
-  if(!discordId){ showAdminAccessError('Portalのログイン情報がありません。管理ページから入り直してください。'); return; }
-  try{
-    const data = await callOfficeFunction('listOfficeRoomsAdmin', {});
-    surveysMap = {};
-    (data.rooms || []).forEach(r=>{
-      const id = r.roomId || r.id;
-      surveysMap[id] = normalizeAdminRoom(id, r);
-    });
-    renderAdminSurveyList();
-    if(adminEditSurveyId && surveysMap[adminEditSurveyId]) openEditPanel(adminEditSurveyId);
-  }catch(e){
-    console.warn('listOfficeRoomsAdmin failed', e);
-    showAdminAccessError('官職予約一覧を読み込めません。Functionsのデプロイ状態を確認してください。エラー：' + (e.message || e));
-  }
-}
-function initFirebase(){
-  // office_roomsはFirestore直読みしない。管理もFunctions経由で取得する。
-  loadAdminOfficeRooms();
-  try{
-    if(fbDb){
-      fbDb.ref(DB_CONFIG).on('value', snap=>{
-        const d = snap.val();
-        if(!d) return;
-        if(d.questions) ADMIN_CONFIG.questions = d.questions;
-        renderAdminQuestions();
-      });
-    }
-  }catch(e){ console.warn('config read skipped', e); }
-
-  let activeSubRef = null;
-  window._loadSurveyData = function(surveyId){
-    if(!fbDb || !surveyId) return;
-    if(activeSubRef) fbDb.ref(activeSubRef).off();
-    activeSubRef = `${DB_SUBMISSIONS}/${surveyId}`;
-    fbDb.ref(activeSubRef).on('value', snap=>{
-      submissions = snap.val() ? Object.values(snap.val()) : [];
-      if(adminLoggedIn){ renderPriorityList(); buildResults(); buildPostText(); }
-    });
-  };
-}
-function saveSurveyToDB(surveyId, data){
-  if(!surveyId) return;
-  const current = surveysMap[surveyId] || {};
-  const merged = normalizeAdminRoom(surveyId, {...current, ...(data || {}), id:surveyId, roomId:surveyId});
-  surveysMap[surveyId] = merged;
-  callOfficeFunction('updateOfficeRoom', {roomId:surveyId, data:merged})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room save failed', e); alert('保存に失敗しました：' + (e.message || e)); });
-}
-function createSurveyInDB(surveyData){
-  const id = surveyData.id || surveyData.roomId;
-  const room = normalizeAdminRoom(id, surveyData);
-  surveysMap[id] = room;
-  const event = {
-    eventId: room.eventId,
-    eventName: room.eventName || 'バフ予約',
-    eventDate: room.eventDate || eventDateFromInput(room.openAt || room.closeAt || room.deadline),
-    status: room.status || 'open',
-    openAt: room.openAt || room.reservedStart || room.startedAt || '',
-    closeAt: room.closeAt || room.deadline || ''
-  };
-  callOfficeFunction('upsertOfficeRoom', {event, room})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office room create failed', e); alert('作成に失敗しました：' + (e.message || e)); });
-  renderAdminSurveyList();
-}
-function deleteSurveyFromDB(surveyId){
-  if(!surveyId) return;
-  callOfficeFunction('deleteOfficeRoom', {roomId:surveyId})
-    .then(()=>loadAdminOfficeRooms())
-    .catch(e=>{ console.warn('office delete failed', e); alert('削除に失敗しました：' + (e.message || e)); });
-}
-function saveManualPointsToDB(){
-  const sid = adminEditSurveyId || currentSurveyId;
-  if(!sid) return;
-  callOfficeFunction('saveOfficeManualPoints', {roomId:sid, points:manualPoints})
-    .catch(e=>{ console.warn('manual points save failed', e); alert('加点保存に失敗しました：' + (e.message || e)); });
-}
-function saveOfficeBundle(eventId, eventData, roomData){
-  return callOfficeFunction('upsertOfficeRoom', {event:{...eventData, eventId}, room:roomData});
-}
-function buildOfficeIds(roleName, startValue, endValue){
-  const info = OFFICE_TYPE_MAP[roleName] || {type:officeTypeFromRole(roleName), name:roleName || '官職'};
-  const baseDate = startValue || endValue || new Date().toISOString();
-  const d = new Date(baseDate);
-  const ymd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-  const eventId = `buff_${ymd}`;
-  let roomId = `${eventId}_${info.type}`;
-  if(surveysMap && surveysMap[roomId]){
-    let n = 2;
-    while(surveysMap[`${roomId}_${String(n).padStart(2,'0')}`]) n++;
-    roomId = `${roomId}_${String(n).padStart(2,'0')}`;
-  }
-  return {eventId, roomId, officeType:info.type, officeName:info.name, eventDate:eventDateFromInput(baseDate)};
-}
-function bootPortalAdmin(){
-  const discordId = getPortalDiscordId();
-  const role = getPortalRole();
-  const allowedRoles = ['developer','admin','officer','manager'];
-  const developerIds = ['795152243883114527'];
-  if(!discordId || (!allowedRoles.includes(role) && !developerIds.includes(discordId))){
-    showAdminAccessError('Portalで管理者ページから入り直してください。developer / admin / officer / manager 権限が必要です。');
-    return;
-  }
-  portalAdmin = {discordId, role};
-  adminLoggedIn = true;
-  document.getElementById('adminScreen')?.classList.add('open');
-  renderAdminQuestions();
-  renderAdminSurveyList();
-  loadAdminOfficeRooms();
-}
-function closeAdmin(){ location.href='../'; }
 // ===================================================
 // 初期化
 // ===================================================
-renderAdminQuestions();
+buildRoleTabs();
+buildQuestions();
+renderSeats();
+updateDecideBtn();
+// Firebase接続（読み込み完了後にrenderSurveyListが呼ばれて画面が更新される）
 initFirebase();
-bootPortalAdmin();
-// 管理者版では官職予約内パス入力を使用しない
+
+
+// 回答者版では管理者パス入力を使用しない
 
 </script>
 </body>
