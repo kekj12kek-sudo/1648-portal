@@ -119,8 +119,8 @@ function sess(){
 }
 function roleKey(d){return String(d?.role||d?.user?.role||"member").toLowerCase()}
 function level(d){return {developer:3,manager:2,technical:1,member:0,limited:-1}[roleKey(d)]??0}
-function role(l){return l>=3?"HQディベロッパー":l>=2?"HQマネージャー":l>=1?"テクニカルマネージャー":"HQメンバー"}
-function roleLabel(r){return {developer:"HQディベロッパー",manager:"HQマネージャー",technical:"テクニカルマネージャー",member:"HQメンバー",limited:"利用制限中（コスト計算のみ）"}[r]||r}
+function role(l){return l>=3?"developer":l>=2?"manager":l>=1?"technical":"member"}
+function roleLabel(r){return {developer:"developer",manager:"manager",technical:"technical",member:"member",limited:"limited"}[r]||r}
 function getSessionDiscordId(d){return d?.user?.discordId || d?.discordId || d?.discord?.id || d?.user?.id || ""}
 
 function escapeHtml(str){
