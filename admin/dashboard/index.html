@@ -359,25 +359,48 @@ const T12_STAGE_OPTIONS = [
   {value:"max", label:"カンスト"}
 ];
 const T12_UNIT_LABEL = {shield:"盾", spear:"槍", bow:"弓"};
+const TIER_OPTIONS = ["T9","T10","T11","T12"];
 
 function onDataCategoryChange(e){
   const cat = e.target.value;
   const stageSel = document.getElementById("t12StageSelect");
+  const tierSel = document.getElementById("tierStageSelect");
+  const heroSel = document.getElementById("heroSelect");
+  const petRow = document.getElementById("petSearchRow");
   const resultEl = document.getElementById("dataSearchResult");
+
+  stageSel.style.display = "none";
+  tierSel.style.display = "none";
+  heroSel.style.display = "none";
+  petRow.style.display = "none";
 
   if(cat === "t12"){
     stageSel.style.display = "";
     stageSel.innerHTML = `<option value="">条件を選択</option>` + T12_STAGE_OPTIONS.map(o=>`<option value="${o.value}">${o.label}</option>`).join("");
     resultEl.className = "empty";
     resultEl.textContent = "条件を選択してください。";
-  }else if(!cat){
-    stageSel.style.display = "none";
+  }else if(cat === "tier"){
+    tierSel.style.display = "";
+    tierSel.innerHTML = `<option value="">条件を選択</option>` + TIER_OPTIONS.map(t=>`<option value="${t}">${t}以上所持</option>`).join("");
+    resultEl.className = "empty";
+    resultEl.textContent = "条件を選択してください。";
+  }else if(cat === "hero"){
+    heroSel.style.display = "";
+    heroSel.innerHTML = `<option value="">読み込み中...</option>`;
+    resultEl.className = "empty";
+    resultEl.textContent = "英雄を選択してください。";
+    loadHeroOptions();
+  }else if(cat === "power"){
+    resultEl.className = "empty";
+    resultEl.textContent = "読み込み中...";
+    loadPowerRanking();
+  }else if(cat === "pet"){
+    petRow.style.display = "flex";
+    resultEl.className = "empty";
+    resultEl.textContent = "レベルを入力するか、「検索」で全員を表示します。";
+  }else{
     resultEl.className = "empty";
     resultEl.textContent = "カテゴリを選択してください。";
-  }else{
-    stageSel.style.display = "none";
-    resultEl.className = "empty";
-    resultEl.textContent = "このカテゴリは準備中です。データの保存先確認後、今後のアップデートで対応します。";
   }
 }
 
@@ -418,6 +441,158 @@ function renderT12SearchResult(list){
       <div class="t12-units">${unitsHtml}</div>
     </div>`;
   }).join("");
+}
+
+async function onTierStageChange(e){
+  const tier = e.target.value;
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!tier){
+    resultEl.className = "empty";
+    resultEl.textContent = "条件を選択してください。";
+    return;
+  }
+  resultEl.className = "empty";
+  resultEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchPlayerStats", {discordId: myId, category: "tier", condition: tier});
+    renderTierSearchResult(data.results || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "検索に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function renderTierSearchResult(list){
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "該当するプレイヤーがいません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(p=>{
+    const unitsHtml = p.units.map(u=>
+      `<span class="unit-tag ${u.matched?"unit-matched":""}">${T12_UNIT_LABEL[u.unit]||u.unit}：${escapeHtml(u.tier)}</span>`
+    ).join("");
+    return `<div class="t12-row">
+      <div class="t12-row-head"><span class="alliance">[${escapeHtml(p.alliance)}]</span><span class="name">${escapeHtml(p.playerName)}</span></div>
+      <div class="t12-units">${unitsHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+async function loadHeroOptions(){
+  const heroSel = document.getElementById("heroSelect");
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchPlayerStats", {discordId: myId, category: "hero_list"});
+    const heroes = data.heroes || [];
+    if(!heroes.length){
+      heroSel.innerHTML = `<option value="">登録された英雄がありません</option>`;
+      return;
+    }
+    heroSel.innerHTML = `<option value="">英雄を選択</option>` + heroes.map(h=>`<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join("");
+  }catch(err){
+    heroSel.innerHTML = `<option value="">取得に失敗しました</option>`;
+  }
+}
+
+async function onHeroSelectChange(e){
+  const hero = e.target.value;
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!hero){
+    resultEl.className = "empty";
+    resultEl.textContent = "英雄を選択してください。";
+    return;
+  }
+  resultEl.className = "empty";
+  resultEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchPlayerStats", {discordId: myId, category: "hero", condition: hero});
+    renderSimplePlayerList(data.results || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "検索に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+async function loadPowerRanking(){
+  const resultEl = document.getElementById("dataSearchResult");
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchPlayerStats", {discordId: myId, category: "power"});
+    renderPowerResult(data.results || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "検索に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function renderPowerResult(list){
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "戦力データがありません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(p=>`
+    <div class="t12-row">
+      <div class="t12-row-head"><span class="alliance">[${escapeHtml(p.alliance)}]</span><span class="name">${escapeHtml(p.playerName)}</span></div>
+      <div class="t12-units">
+        ${p.totalPower ? `<span class="unit-tag">総力：${escapeHtml(p.totalPower)}</span>` : ""}
+        ${p.power ? `<span class="unit-tag">戦力：${escapeHtml(p.power)}</span>` : ""}
+        ${p.rallyCapacity ? `<span class="unit-tag">集結容量：${escapeHtml(p.rallyCapacity)}</span>` : ""}
+        ${p.troopPower ? `<span class="unit-tag">出征数：${escapeHtml(p.troopPower)}</span>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+async function onPetSearchClick(){
+  const level = document.getElementById("petLevelInput").value;
+  const resultEl = document.getElementById("dataSearchResult");
+  resultEl.className = "empty";
+  resultEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchPlayerStats", {discordId: myId, category: "pet", condition: level});
+    renderPetResult(data.results || []);
+  }catch(err){
+    resultEl.className = "empty";
+    resultEl.textContent = "検索に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function renderPetResult(list){
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "該当するプレイヤーがいません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(p=>`
+    <div class="t12-row">
+      <div class="t12-row-head"><span class="alliance">[${escapeHtml(p.alliance)}]</span><span class="name">${escapeHtml(p.playerName)}</span></div>
+      <div class="t12-units"><span class="unit-tag unit-matched">${escapeHtml(p.pet)}</span></div>
+    </div>
+  `).join("");
+}
+
+function renderSimplePlayerList(list){
+  const resultEl = document.getElementById("dataSearchResult");
+  if(!list.length){
+    resultEl.className = "empty";
+    resultEl.textContent = "該当するプレイヤーがいません。";
+    return;
+  }
+  resultEl.className = "";
+  resultEl.innerHTML = `<div class="result-count">${list.length}人</div>` + list.map(p=>
+    `<div class="survey-row"><span class="alliance">[${escapeHtml(p.alliance)}]</span><span class="name">${escapeHtml(p.playerName)}</span></div>`
+  ).join("");
 }
 
 // ----- アンケート結果 -----
@@ -626,6 +801,12 @@ function renderShell(sessionData){
           <option value="pet">ペット</option>
         </select>
         <select class="select" id="t12StageSelect" style="display:none"></select>
+        <select class="select" id="tierStageSelect" style="display:none"></select>
+        <select class="select" id="heroSelect" style="display:none"></select>
+        <div id="petSearchRow" style="display:none;gap:8px;margin-bottom:10px">
+          <input class="field-input" id="petLevelInput" type="number" placeholder="最低Lv（空欄で全員）" style="flex:1">
+          <button class="btn btn-primary" style="flex:0 0 auto;height:44px;padding:0 16px" onclick="onPetSearchClick()">検索</button>
+        </div>
         <div id="dataSearchResult" class="empty">カテゴリを選択してください。</div>
       </div>
     </section>
@@ -666,6 +847,8 @@ function renderShell(sessionData){
   document.getElementById("userSearch").addEventListener("input", e=>filterPortalUsers(e.target.value));
   document.getElementById("dataCategorySelect").addEventListener("change", onDataCategoryChange);
   document.getElementById("t12StageSelect").addEventListener("change", onT12StageChange);
+  document.getElementById("tierStageSelect").addEventListener("change", onTierStageChange);
+  document.getElementById("heroSelect").addEventListener("change", onHeroSelectChange);
   document.getElementById("surveySelect").addEventListener("change", onSurveySelectChange);
   document.getElementById("questionSelect").addEventListener("change", onQuestionSelectChange);
   document.getElementById("answerSelect").addEventListener("change", onAnswerSelectChange);
