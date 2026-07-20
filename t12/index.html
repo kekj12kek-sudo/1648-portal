@@ -870,9 +870,9 @@ header > strong{display:none !important}
     <div style="margin-top:10px">
       <div style="font-size:13px;color:#f59e0b;font-weight:700;margin-bottom:4px">📦 手持ち素材を入力（不足数を自動計算）</div>
       <div class="stock-grid">
-        <div class="stock-card"><img class="material-icon" src="refined.png"><div style="flex:1"><div class="label">精錬火晶</div><input id="stock-refined" type="text" placeholder="例：120K / 1.6M"></div></div>
-        <div class="stock-card"><img class="material-icon" src="particle.png"><div style="flex:1"><div class="label">火晶微粒子</div><input id="stock-particle" type="text" placeholder="例：850K / 17.5M"></div></div>
-        <div class="stock-card time-card"><img class="material-icon" src="steel.png"><div style="flex:1"><div class="label">鋼材</div><input id="stock-steel" type="text" placeholder="例：850K / 1.6M"></div></div>
+        <div class="stock-card"><img class="material-icon" src="refined.png"><div style="flex:1"><div class="label">精錬火晶</div><input id="stock-refined" type="text" placeholder="例：1,234,567"></div></div>
+        <div class="stock-card"><img class="material-icon" src="particle.png"><div style="flex:1"><div class="label">火晶微粒子</div><input id="stock-particle" type="text" placeholder="例：850,000"></div></div>
+        <div class="stock-card time-card"><img class="material-icon" src="steel.png"><div style="flex:1"><div class="label">鋼材</div><input id="stock-steel" type="text" placeholder="例：850K / 20.5M"></div></div>
       </div>
       <button id="btnStockReset" style="width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1px solid #7c4a00;background:#2a1400;color:#c9a87c;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">↩ 手持ち素材をリセット</button>
     </div>
@@ -1156,9 +1156,9 @@ function applySavedData(data){
   if(data.troop) troop = data.troop;
   if(data.stock){
     const s = data.stock;
-    if(document.getElementById("stock-refined")) document.getElementById("stock-refined").value = formatGameInputValue(s.refined);
-    if(document.getElementById("stock-particle")) document.getElementById("stock-particle").value = formatGameInputValue(s.particle);
-    if(document.getElementById("stock-steel")) document.getElementById("stock-steel").value = formatGameInputValue(s.steel);
+    if(document.getElementById("stock-refined")) document.getElementById("stock-refined").value = formatPlainAmountInput(s.refined);
+    if(document.getElementById("stock-particle")) document.getElementById("stock-particle").value = formatPlainAmountInput(s.particle);
+    if(document.getElementById("stock-steel")) document.getElementById("stock-steel").value = formatSteelAmountInput(s.steel);
   }
   return true;
 }
@@ -1271,6 +1271,40 @@ function applyLoadedState(){
 // =========================================================
 // 手持ち素材
 // =========================================================
+// 精錬火晶・火晶微粒子: 単位なし、カンマ区切りの整数のみ
+function parsePlainAmount(v){
+  if(v === null || v === undefined) return 0;
+  const s = String(v).trim().replace(/,/g, "");
+  if(!s) return 0;
+  return Math.round(Number(s)) || 0;
+}
+function formatPlainAmountInput(v){
+  const n = Number(v) || 0;
+  if(!n) return "";
+  return Math.round(n).toLocaleString("ja-JP");
+}
+
+// 鋼材: K/M/B表記の入力を数値に変換
+function parseSteelAmount(v){
+  if(v === null || v === undefined) return 0;
+  let s = String(v).trim().toUpperCase().replace(/,/g, "");
+  if(!s || s === "0") return 0;
+  if(s.endsWith("B")) return (parseFloat(s) || 0) * 1000000000;
+  if(s.endsWith("M")) return (parseFloat(s) || 0) * 1000000;
+  if(s.endsWith("K")) return (parseFloat(s) || 0) * 1000;
+  return Number(s) || 0;
+}
+function formatSteelAmountInput(v){
+  const n = Number(v) || 0;
+  if(!n) return "";
+  const abs = Math.abs(n);
+  if(abs >= 1000000000) return trimTrailingZeros((n/1000000000).toFixed(2)) + "B";
+  if(abs >= 1000000) return trimTrailingZeros((n/1000000).toFixed(2)) + "M";
+  if(abs >= 1000) return trimTrailingZeros((n/1000).toFixed(2)) + "K";
+  return String(Math.round(n));
+}
+
+// 後方互換用（旧: 全素材共通だったパーサー。現在は未使用箇所のみ残置）
 function parseGameValue(v){
   if(v === null || v === undefined) return 0;
   let s = String(v).trim().toUpperCase().replace(/,/g, "");
@@ -1290,9 +1324,9 @@ function formatGameInputValue(v){
 
 function getStock(){
   return {
-    refined:parseGameValue(document.getElementById("stock-refined")?.value),
-    particle:parseGameValue(document.getElementById("stock-particle")?.value),
-    steel:parseGameValue(document.getElementById("stock-steel")?.value),
+    refined:parsePlainAmount(document.getElementById("stock-refined")?.value),
+    particle:parsePlainAmount(document.getElementById("stock-particle")?.value),
+    steel:parseSteelAmount(document.getElementById("stock-steel")?.value),
   };
 }
 
@@ -1353,9 +1387,9 @@ document.getElementById("btnExport")?.addEventListener("click", ()=>{
     const tName = {shield:"🛡 盾兵", bow:"🏹 弓兵", spear:"⚔️ 槍兵"}[t];
     lines.push(tName);
     const r = shortageForTroop(t);
-    lines.push("  精錬火晶: " + fmt(r.refined));
-    lines.push("  火晶微粒子: " + fmt(r.particle));
-    lines.push("  鋼材: " + fmt(r.steel));
+    lines.push("  精錬火晶: " + fmtPlain(r.refined));
+    lines.push("  火晶微粒子: " + fmtPlain(r.particle));
+    lines.push("  鋼材: " + fmtSteel(r.steel));
     if(r.time > 0) lines.push("  研究時間: " + fmtTime(r.time));
     lines.push("");
   });
@@ -1369,8 +1403,8 @@ document.getElementById("btnExport")?.addEventListener("click", ()=>{
     const have = stock[k] || 0;
     const diff = need - have;
     lines.push("  " + {refined:"精錬火晶",particle:"火晶微粒子",steel:"鋼材"}[k] +
-      ": 必要 " + fmt(need) + " / 手持ち " + fmt(have) +
-      " → " + (diff > 0 ? "不足 " + fmt(diff) : "充足 +" + fmt(-diff)));
+      ": 必要 " + fmtMat(k,need) + " / 手持ち " + fmtMat(k,have) +
+      " → " + (diff > 0 ? "不足 " + fmtMat(k,diff) : "充足 +" + fmtMat(k,-diff)));
   });
   if(total.time > 0) lines.push("  研究時間合計: " + fmtTime(total.time));
 
@@ -1399,7 +1433,7 @@ const ICONS = {
 function materialCard(key, label, value){
   return `<div class="material-card">
     <img class="material-icon" src="${ICONS[key]}" alt="${label}">
-    <div><div class="label">${label}</div><div class="value">${fmt(value)}</div></div>
+    <div><div class="label">${label}</div><div class="value">${fmtMat(key,value)}</div></div>
   </div>`;
 }
 
@@ -1426,14 +1460,14 @@ let resultTroopCount = 1;
 function materialCardWithStock(key, label, need, have){
   const diff = need - have;
   const diffText = diff > 0
-    ? `<span class="shortage">-${fmt(diff)}</span>`
-    : `<span class="surplus">+${fmt(-diff)}</span>`;
+    ? `<span class="shortage">-${fmtMat(key,diff)}</span>`
+    : `<span class="surplus">+${fmtMat(key,-diff)}</span>`;
   const showDiff = have > 0;
   return `<div class="material-card">
     <img class="material-icon" src="${ICONS[key]}" alt="${label}">
     <div style="flex:1;min-width:0">
       <div class="label">${label}</div>
-      <div class="value">${fmt(need)}</div>
+      <div class="value">${fmtMat(key,need)}</div>
       ${showDiff ? `<div style="font-size:11px;margin-top:2px">${t("shortage")}：${diffText}</div>` : ""}
     </div>
   </div>`;
@@ -1538,6 +1572,34 @@ function fmt(n){
   return Math.ceil(n).toLocaleString("ja-JP");
 }
 
+// 精錬火晶・火晶微粒子: 単位なし、カンマ区切りのみ（例: 1,234,567）
+function fmtPlain(n){
+  return Math.ceil(n).toLocaleString("ja-JP");
+}
+
+// 末尾の余分な0を削る（20.50 -> 20.5, 20.00 -> 20, 2.56 -> 2.56）
+function trimTrailingZeros(s){
+  if(s.indexOf(".") === -1) return s;
+  s = s.replace(/0+$/, "");
+  s = s.replace(/\.$/, "");
+  return s;
+}
+
+// 鋼材: K/M/B表記、小数点第2位まで（例: 20.5M, 2.56M）
+function fmtSteel(n){
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if(abs >= 1000000000) return sign + trimTrailingZeros((abs/1000000000).toFixed(2)) + "B";
+  if(abs >= 1000000) return sign + trimTrailingZeros((abs/1000000).toFixed(2)) + "M";
+  if(abs >= 1000) return sign + trimTrailingZeros((abs/1000).toFixed(2)) + "K";
+  return sign + Math.ceil(abs).toLocaleString("ja-JP");
+}
+
+// key（refined/particle/steel）に応じて適切な表示形式を選ぶディスパッチャ
+function fmtMat(key, n){
+  return key === "steel" ? fmtSteel(n) : fmtPlain(n);
+}
+
 function normalizePrereqFor(type){
   const s = state[troop];
   const ab2keys = ["ability2_atk","ability2_def","ability2_leth","ability2_hp"];
@@ -1624,16 +1686,16 @@ function renderTotalResult(){
     );
     const warnBadge = hasWarn ? `<span class="warn-badge">⚠</span>` : "";
     const timeCell = showTime ? `<td>${r.time > 0 ? fmtTime(r.time) : "<span style='color:#475569'>ー</span>"}</td>` : "";
-    return `<tr><td>${tn[tr]}${warnBadge}</td><td>${fmt(r.refined)}</td><td>${fmt(r.particle)}</td><td>${fmt(r.steel)}</td>${timeCell}</tr>`;
+    return `<tr><td>${tn[tr]}${warnBadge}</td><td>${fmtPlain(r.refined)}</td><td>${fmtPlain(r.particle)}</td><td>${fmtSteel(r.steel)}</td>${timeCell}</tr>`;
   }).join("");
 
   // 合計行：手持ち引いた不足数
-  function diffCell(need, have){
-    if(have <= 0) return fmt(need);
+  function diffCell(key, need, have){
+    if(have <= 0) return fmtMat(key,need);
     const diff = need - have;
     return diff > 0
-      ? `${fmt(need)}<br><span class="shortage" style="font-size:10px">-${fmt(diff)}</span>`
-      : `${fmt(need)}<br><span class="surplus" style="font-size:10px">+${fmt(-diff)}</span>`;
+      ? `${fmtMat(key,need)}<br><span class="shortage" style="font-size:10px">-${fmtMat(key,diff)}</span>`
+      : `${fmtMat(key,need)}<br><span class="surplus" style="font-size:10px">+${fmtMat(key,-diff)}</span>`;
   }
 
   const timeHead = showTime ? `<th>⏱時間</th>` : "";
@@ -1644,7 +1706,7 @@ function renderTotalResult(){
       <thead><tr><th>対象</th><th><img src="refined.png" class="th-icon">${t("refined")}</th><th><img src="particle.png" class="th-icon">${t("particle")}</th><th><img src="steel.png" class="th-icon">${t("steel")}</th>${timeHead}</tr></thead>
       <tbody>
         ${rows}
-        <tr style="font-weight:900;color:#86efac"><td>${t("total")}</td><td>${diffCell(total.refined,stock.refined)}</td><td>${diffCell(total.particle,stock.particle)}</td><td>${diffCell(total.steel,stock.steel)}</td>${timeFoot}</tr>
+        <tr style="font-weight:900;color:#86efac"><td>${t("total")}</td><td>${diffCell("refined",total.refined,stock.refined)}</td><td>${diffCell("particle",total.particle,stock.particle)}</td><td>${diffCell("steel",total.steel,stock.steel)}</td>${timeFoot}</tr>
       </tbody>
     </table>
   `;
