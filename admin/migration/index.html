@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>1648 Portal 移民管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:#070b12;color:#fff;font-family:'Hiragino Sans','Yu Gothic',system-ui,sans-serif}
+body{padding:14px}
+.header{position:sticky;top:0;z-index:30;margin:-14px -14px 12px;padding:13px 14px 10px;background:rgba(7,11,18,.97);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+h1{font-size:19px;color:#facc15}
+.sub{font-size:11px;color:#94a3b8;margin-top:4px}
+.back{display:inline-flex;margin-top:9px;color:#93c5fd;text-decoration:none;font-size:12px;font-weight:900}
+.stat-bar{display:flex;gap:8px;margin-top:10px}
+.stat-chip{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:9px 10px;text-align:center}
+.stat-chip.special{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3)}
+.stat-chip .num{font-size:18px;font-weight:900}
+.stat-chip.special .num{color:#c4b5fd}
+.stat-chip .lbl{font-size:10px;color:#94a3b8;margin-top:2px}
+.card{background:linear-gradient(135deg,rgba(30,41,59,.96),rgba(15,23,42,.96));border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:14px;margin-bottom:10px}
+.title{font-size:15px;font-weight:900;margin-bottom:7px}
+.desc{font-size:12px;line-height:1.65;color:#94a3b8;margin-bottom:10px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.legend span{font-size:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);padding:7px 9px;border-radius:999px}
+.empty{padding:24px 10px;text-align:center;color:#64748b;font-size:12px}
+.lock{padding:24px;text-align:center}
+.lock a{color:#bfdbfe}
+.field-input{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:10px 12px;font:inherit}
+textarea.field-input{min-height:70px;resize:vertical;line-height:1.6}
+.search-input{width:100%;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#fff;padding:0 14px;font:inherit;margin-bottom:10px}
+.btn{height:46px;border-radius:12px;border:none;font:inherit;font-weight:900;cursor:pointer}
+.btn-primary{background:#facc15;color:#111827}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.btn-secondary{background:rgba(255,255,255,.08);color:#e5e7eb}
+.btn-danger{background:rgba(248,113,113,.15);color:#fca5a5}
+.add-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.add-row .field-input{flex:1;min-width:90px}
+.add-row .btn{flex:0 0 auto;padding:0 16px}
+
+/* ----- server accordion ----- */
+.server-item{border:1px solid rgba(255,255,255,.1);border-radius:14px;margin-bottom:8px;overflow:hidden}
+.server-head{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer}
+.server-head:active{background:rgba(255,255,255,.04)}
+.server-head.open{background:rgba(250,204,21,.05)}
+.server-head .caret{font-size:11px;color:#64748b;transition:transform .15s;flex:0 0 auto}
+.server-head.open .caret{transform:rotate(90deg);color:#facc15}
+.server-no{font-size:15px;font-weight:900;flex:0 0 auto}
+.server-badges{display:flex;gap:6px;margin-left:auto;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end}
+.server-badges span{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:#94a3b8}
+.server-badges .b-leader{color:#fde68a;background:rgba(250,204,21,.12)}
+.server-badges .b-negative{color:#fca5a5;background:rgba(248,113,113,.12)}
+.server-badges .b-special{color:#c4b5fd;background:rgba(167,139,250,.15)}
+.server-body{display:none;border-top:1px solid rgba(255,255,255,.08);padding:8px 10px 12px}
+.server-body.open{display:block}
+.member-row{display:flex;align-items:center;gap:8px;padding:10px 8px;border-radius:10px;cursor:pointer}
+.member-row:active{background:rgba(255,255,255,.04)}
+.member-row.is-special{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2)}
+.member-row .dot{width:6px;height:6px;border-radius:50%;background:#475569;flex:0 0 auto}
+.member-row .name{font-size:13px;font-weight:700;flex:1}
+.member-row .server-tag{font-size:11px;color:#93c5fd;font-weight:900}
+.member-row .badges{font-size:14px;letter-spacing:2px}
+
+/* ----- detail modal ----- */
+.modal-overlay{position:fixed;inset:0;z-index:80;background:rgba(3,6,12,.72);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center}
+.modal-box{width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:#0b1120;border:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:16px 16px 20px}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.modal-title{font-size:16px;font-weight:900}
+.modal-sub{font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.6}
+.modal-close{border:none;background:rgba(255,255,255,.08);color:#fff;width:32px;height:32px;border-radius:999px;font-size:16px;cursor:pointer}
+.field-label{font-size:11px;color:#94a3b8;font-weight:900;margin:12px 0 6px}
+.checkline{display:flex;align-items:center;gap:8px;font-size:13px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.checkline:last-of-type{border-bottom:none}
+.checkline input{width:18px;height:18px}
+.checkline.special-line{color:#c4b5fd}
+.btn-row{display:flex;gap:8px;margin-top:16px}
+.btn-row .btn{flex:1}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="modal-overlay" id="memberModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="memberModalTitle">メンバー詳細</div>
+        <div class="modal-sub" id="memberModalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeMemberDetail()">✕</button>
+    </div>
+    <div id="memberModalBody"><div class="empty">読み込み中...</div></div>
+  </div>
+</div>
+
+<script>
+const LOGIN_URL="https://discord.com/oauth2/authorize?client_id=1514478819799470080&response_type=code&redirect_uri=https%3A%2F%2Fkekj12kek-sudo.github.io%2F1648-portal%2Fauth%2Fcallback%2F&scope=identify";
+const ADMIN_URL="/1648-portal/admin/";
+const FN_BASE = "https://us-central1-yoyaku-4ec7c.cloudfunctions.net";
+
+function sess(){
+  const r=localStorage.getItem("discord_user");
+  if(!r){location.replace(LOGIN_URL);return null}
+  try{
+    const d=JSON.parse(r);
+    if(!d.ok){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    if(d.status==="pending_profile"){location.replace("/1648-portal/profile-setup/");return null}
+    if(d.status!=="active"){localStorage.removeItem("discord_user");location.replace(LOGIN_URL);return null}
+    return d
+  }catch(e){
+    localStorage.removeItem("discord_user");
+    location.replace(LOGIN_URL);
+    return null
+  }
+}
+function roleKey(d){return String(d?.role||d?.user?.role||"member").toLowerCase()}
+function level(d){return {developer:3,manager:2,technical:1,member:0,limited:-1}[roleKey(d)]??0}
+function role(l){return l>=3?"developer":l>=2?"manager":l>=1?"technical":"member"}
+function getSessionDiscordId(d){return d?.user?.discordId || d?.discordId || d?.discord?.id || d?.user?.id || ""}
+
+function escapeHtml(str){
+  return String(str==null?"":str).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function callFn(name, body){
+  let res;
+  try{
+    res = await fetch(`${FN_BASE}/${name}`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body||{})
+    });
+  }catch(networkError){
+    throw new Error("network_error");
+  }
+  let data = null;
+  try{ data = await res.json(); }catch(parseError){ data = null; }
+  if(!res.ok || !data || !data.ok){
+    throw new Error((data && data.error) || `request_failed_${res.status}`);
+  }
+  return data;
+}
+
+let s = null;
+let servers = [];
+let totalSpecial = 0;
+let openServerNo = null;        // 現在アコーディオンを開いているサーバー番号
+let membersByServer = {};       // {server: [members]}
+let currentDetailId = null;
+let searchTimer = null;
+
+function badgesHtml(m){
+  let b = "";
+  if(m.leader) b += "🛡";
+  if(m.negative) b += "⚠";
+  if(m.special) b += "⭐";
+  return b;
+}
+
+function cssId(server){
+  return String(server).replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function loadServers(){
+  const listEl = document.getElementById("serverList");
+  if(!listEl) return;
+  listEl.className = "empty";
+  listEl.textContent = "読み込み中...";
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("listMigrationServers", {discordId: myId});
+    servers = data.servers || [];
+    totalSpecial = data.totalSpecial || 0;
+    updateStatBar();
+    renderServerList();
+  }catch(e){
+    listEl.className = "empty";
+    listEl.textContent = "サーバー一覧の取得に失敗しました。";
+  }
+}
+
+function updateStatBar(){
+  const el = document.getElementById("specialCount");
+  if(el) el.textContent = totalSpecial;
+  const totalEl = document.getElementById("totalMemberCount");
+  if(totalEl) totalEl.textContent = servers.reduce((sum,sv)=>sum+sv.count, 0);
+}
+
+function renderServerList(){
+  const listEl = document.getElementById("serverList");
+  if(!servers.length){
+    listEl.className = "empty";
+    listEl.textContent = "まだ登録がありません。下の「+ 新規登録」から追加してください。";
+    return;
+  }
+  listEl.className = "";
+  listEl.innerHTML = servers.map(sv => serverItemHtml(sv)).join("");
+}
+
+function serverItemHtml(sv){
+  const isOpen = openServerNo === sv.server;
+  const members = membersByServer[sv.server];
+  return `<div class="server-item">
+    <div class="server-head ${isOpen?"open":""}" onclick="toggleServer('${escapeHtml(sv.server)}')">
+      <span class="caret">▶</span>
+      <span class="server-no">${escapeHtml(sv.server)}</span>
+      <div class="server-badges">
+        <span>${sv.count}人</span>
+        ${sv.leaderCount ? `<span class="b-leader">🛡${sv.leaderCount}</span>` : ""}
+        ${sv.negativeCount ? `<span class="b-negative">⚠${sv.negativeCount}</span>` : ""}
+        ${sv.specialCount ? `<span class="b-special">⭐${sv.specialCount}</span>` : ""}
+      </div>
+    </div>
+    <div class="server-body ${isOpen?"open":""}">
+      ${isOpen ? serverBodyHtml(sv.server, members) : ""}
+    </div>
+  </div>`;
+}
+
+function serverBodyHtml(server, members){
+  if(!members){
+    return `<div class="empty">読み込み中...</div>`;
+  }
+  const rows = members.length
+    ? members.map(m => `
+        <div class="member-row ${m.special?"is-special":""}" onclick="openMemberDetail('${m.id}')">
+          <span class="dot"></span>
+          <span class="name">${escapeHtml(m.playerName)}</span>
+          <span class="badges">${badgesHtml(m)}</span>
+        </div>`).join("")
+    : `<div class="empty">まだメンバーが登録されていません。</div>`;
+
+  return rows;
+}
+
+async function toggleServer(server){
+  if(openServerNo === server){
+    openServerNo = null;
+    renderServerList();
+    return;
+  }
+  openServerNo = server;
+  renderServerList();
+
+  if(!membersByServer[server]){
+    await refreshMembers(server);
+    renderServerList();
+  }
+}
+
+async function refreshMembers(server){
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("listMigrationMembers", {discordId: myId, server});
+    membersByServer[server] = data.members || [];
+  }catch(e){
+    membersByServer[server] = [];
+  }
+}
+
+async function addMember(){
+  const serverInput = document.getElementById("newMemberServer");
+  const nameInput = document.getElementById("newMemberName");
+  const gameIdInput = document.getElementById("newMemberGameId");
+
+  const server = serverInput.value.trim();
+  const playerName = nameInput.value.trim();
+  const gameId = gameIdInput.value.trim();
+
+  if(!server){ alert("サーバー番号を入力してください。"); return; }
+  if(!playerName){ alert("プレイヤー名を入力してください。"); return; }
+
+  try{
+    const myId = getSessionDiscordId(s);
+    await callFn("addMigrationMember", {discordId: myId, server, playerName, gameId});
+    nameInput.value = "";
+    gameIdInput.value = "";
+    delete membersByServer[server];
+    openServerNo = server;
+    await refreshMembers(server);
+    await loadServers();
+  }catch(e){
+    alert("追加に失敗しました。");
+  }
+}
+
+function fmtTimestamp(v){
+  let ms = 0;
+  if(!v){ ms = 0; }
+  else if(typeof v === "string"){ ms = Date.parse(v) || 0; }
+  else if(v._seconds){ ms = v._seconds*1000; }
+  else if(v.seconds){ ms = v.seconds*1000; }
+  if(!ms) return "―";
+  return new Date(ms).toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+// ----- 検索 -----
+
+function onSearchInput(e){
+  const q = e.target.value;
+  clearTimeout(searchTimer);
+  if(!q.trim()){
+    document.getElementById("searchResultArea").style.display = "none";
+    document.getElementById("browseArea").style.display = "";
+    return;
+  }
+  searchTimer = setTimeout(()=>runSearch(q), 300);
+}
+
+async function runSearch(query){
+  document.getElementById("browseArea").style.display = "none";
+  const area = document.getElementById("searchResultArea");
+  area.style.display = "";
+  area.innerHTML = `<div class="empty">検索中...</div>`;
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("searchMigrationMembers", {discordId: myId, query});
+    renderSearchResults(data.results || []);
+  }catch(e){
+    area.innerHTML = `<div class="empty">検索に失敗しました。</div>`;
+  }
+}
+
+function renderSearchResults(results){
+  const area = document.getElementById("searchResultArea");
+  if(!results.length){
+    area.innerHTML = `<div class="empty">該当する人が見つかりません。</div>`;
+    return;
+  }
+  area.innerHTML = results.map(m => `
+    <div class="member-row ${m.special?"is-special":""}" onclick="openMemberDetail('${m.id}')">
+      <span class="server-tag">[${escapeHtml(m.server)}]</span>
+      <span class="name">${escapeHtml(m.playerName)}${m.gameId ? " ("+escapeHtml(m.gameId)+")" : ""}</span>
+      <span class="badges">${badgesHtml(m)}</span>
+    </div>
+  `).join("");
+}
+
+// ----- 詳細モーダル -----
+
+async function openMemberDetail(id){
+  currentDetailId = id;
+  const modal = document.getElementById("memberModal");
+  modal.style.display = "flex";
+  document.getElementById("memberModalTitle").textContent = "メンバー詳細";
+  document.getElementById("memberModalSub").textContent = "";
+  document.getElementById("memberModalBody").innerHTML = `<div class="empty">読み込み中...</div>`;
+  try{
+    const myId = getSessionDiscordId(s);
+    const data = await callFn("getMigrationMember", {discordId: myId, id});
+    renderMemberDetail(data.member);
+  }catch(e){
+    document.getElementById("memberModalBody").innerHTML = `<div class="empty">詳細の取得に失敗しました。</div>`;
+  }
+}
+
+function closeMemberDetail(){
+  document.getElementById("memberModal").style.display = "none";
+  currentDetailId = null;
+}
+
+function renderMemberDetail(m){
+  document.getElementById("memberModalTitle").textContent = m.playerName || "(名称未設定)";
+  document.getElementById("memberModalSub").textContent = `サーバー ${m.server}${m.gameId ? "　ゲームID: "+m.gameId : ""}`;
+
+  document.getElementById("memberModalBody").innerHTML = `
+    <div class="field-label">サーバー</div>
+    <input class="field-input" id="detailServer" value="${escapeHtml(m.server)}">
+
+    <div class="field-label">プレイヤー名</div>
+    <input class="field-input" id="detailPlayerName" value="${escapeHtml(m.playerName)}">
+
+    <div class="field-label">ゲームID</div>
+    <input class="field-input" id="detailGameId" value="${escapeHtml(m.gameId)}" placeholder="任意">
+
+    <div class="field-label">勧誘担当</div>
+    <input class="field-input" id="detailRecruiter" value="${escapeHtml(m.recruiter)}" placeholder="担当者名">
+
+    <div class="field-label">移民予定</div>
+    <input class="field-input" id="detailMigrationPlan" value="${escapeHtml(m.migrationPlan)}" placeholder="例: SVS後 / 8月上旬など">
+
+    <div class="field-label">状況</div>
+    <label class="checkline"><input type="checkbox" id="detailPortalRegistered" ${m.portalRegistered?"checked":""}> Portal登録済み</label>
+    <label class="checkline"><input type="checkbox" id="detailDiscordJoined" ${m.discordJoined?"checked":""}> Discord参加済み</label>
+    <label class="checkline"><input type="checkbox" id="detailLeader" ${m.leader?"checked":""}> 🛡 集結主クラス</label>
+    <label class="checkline"><input type="checkbox" id="detailNegative" ${m.negative?"checked":""}> ⚠ 要注意</label>
+    <label class="checkline special-line"><input type="checkbox" id="detailSpecial" ${m.special?"checked":""}> ⭐ 特別枠</label>
+
+    <div class="field-label">備考</div>
+    <textarea class="field-input" id="detailNote" placeholder="自由記入">${escapeHtml(m.note || "")}</textarea>
+
+    <div class="modal-sub" style="margin-top:10px">最終更新: ${fmtTimestamp(m.updatedAt)}</div>
+
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="deleteMemberDetail()">削除</button>
+      <button class="btn btn-secondary" onclick="closeMemberDetail()">閉じる</button>
+      <button class="btn btn-primary" id="detailSaveBtn" onclick="saveMemberDetail()">保存</button>
+    </div>
+  `;
+}
+
+async function saveMemberDetail(){
+  if(!currentDetailId) return;
+
+  const updates = {
+    server: document.getElementById("detailServer").value.trim(),
+    playerName: document.getElementById("detailPlayerName").value.trim(),
+    gameId: document.getElementById("detailGameId").value.trim(),
+    recruiter: document.getElementById("detailRecruiter").value.trim(),
+    migrationPlan: document.getElementById("detailMigrationPlan").value.trim(),
+    portalRegistered: document.getElementById("detailPortalRegistered").checked,
+    discordJoined: document.getElementById("detailDiscordJoined").checked,
+    leader: document.getElementById("detailLeader").checked,
+    negative: document.getElementById("detailNegative").checked,
+    special: document.getElementById("detailSpecial").checked,
+    note: document.getElementById("detailNote").value
+  };
+
+  if(!updates.server || !updates.playerName){
+    alert("サーバーとプレイヤー名は必須です。");
+    return;
+  }
+
+  const saveBtn = document.getElementById("detailSaveBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "保存中...";
+
+  try{
+    const myId = getSessionDiscordId(s);
+    await callFn("updateMigrationMember", {discordId: myId, id: currentDetailId, updates});
+    closeMemberDetail();
+    membersByServer = {};
+    await loadServers();
+    if(openServerNo){ await refreshMembers(openServerNo); renderServerList(); }
+  }catch(e){
+    alert("保存に失敗しました。時間をおいて再度お試しください。");
+    saveBtn.disabled = false;
+    saveBtn.textContent = "保存";
+  }
+}
+
+async function deleteMemberDetail(){
+  if(!currentDetailId) return;
+  if(!confirm("このメンバーを削除しますか？（移民完了・キャンセルなどの場合はここから削除してください）")) return;
+
+  try{
+    const myId = getSessionDiscordId(s);
+    await callFn("deleteMigrationMember", {discordId: myId, id: currentDetailId});
+    const server = openServerNo;
+    closeMemberDetail();
+    membersByServer = {};
+    await loadServers();
+    if(server){ await refreshMembers(server); renderServerList(); }
+  }catch(e){
+    alert("削除に失敗しました。");
+  }
+}
+
+function renderShell(sessionData){
+  s = sessionData;
+  const l = level(s);
+  if(l < 2){
+    app.innerHTML = `<div class="lock">移民管理はマネージャー以上のみ利用できます。<br><br><a href="${ADMIN_URL}">管理ページへ戻る</a></div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>移民管理</h1>
+      <div class="sub">${role(l)}｜勧誘・移民アポイントの管理台帳</div>
+      <a class="back" href="${ADMIN_URL}">← 管理ページへ戻る</a>
+      <div class="stat-bar">
+        <div class="stat-chip"><div class="num" id="totalMemberCount">0</div><div class="lbl">登録人数</div></div>
+        <div class="stat-chip special"><div class="num" id="specialCount">0</div><div class="lbl">⭐ 特別枠</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <input class="search-input" id="searchInput" placeholder="プレイヤー名・ゲームIDで検索" oninput="onSearchInput(event)">
+      <div id="searchResultArea" style="display:none"></div>
+
+      <div id="browseArea">
+        <div class="title">サーバー一覧</div>
+        <div class="desc">サーバーをタップすると、その下にプレイヤー一覧が展開されます。</div>
+        <div class="legend">
+          <span>🛡 集結主クラス</span>
+          <span>⚠ 要注意</span>
+          <span>⭐ 特別枠</span>
+        </div>
+        <div id="serverList" class="empty">読み込み中...</div>
+      </div>
+
+      <div class="field-label" style="margin-top:16px">+ 新規登録</div>
+      <div class="add-row">
+        <input class="field-input" id="newMemberServer" placeholder="サーバー" style="max-width:100px">
+        <input class="field-input" id="newMemberName" placeholder="プレイヤー名">
+        <input class="field-input" id="newMemberGameId" placeholder="ゲームID（任意）" style="max-width:130px">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="addMember()">追加</button>
+    </div>
+  `;
+
+  loadServers();
+}
+
+const initialSession = sess();
+if(initialSession) renderShell(initialSession);
+</script>
+</body>
+</html>
