@@ -721,6 +721,20 @@ function renderSurveyResponseStatus(answers){
   `;
 }
 
+function getQuestionTitleById(qid){
+  const q = (currentSurveyDetail && currentSurveyDetail.questions || []).find(qq=>qq.id===qid);
+  return q ? q.title : "";
+}
+
+// 質問のID・タイトル文字列のどちらでキーが保存されていても拾えるようにする
+function getAnswerValueForQuestion(a, qid){
+  if(!a || !a.answers) return undefined;
+  if(a.answers[qid] !== undefined) return a.answers[qid];
+  const title = getQuestionTitleById(qid);
+  if(title && a.answers[title] !== undefined) return a.answers[title];
+  return undefined;
+}
+
 function buildAnswerOptions(qid){
   if(!currentSurveyDetail) return [];
 
@@ -728,9 +742,18 @@ function buildAnswerOptions(qid){
     return (currentSurveyDetail.heroSummary || []).map(h=>({value:h.id, label:h.name, count:h.count}));
   }
 
+  // 「各兵のティアについて」のような、盾/槍/弓など複数項目セットの回答は
+  // 単純な一覧選択には対応していない（データ検索タブで検索可能）。
+  const sampleValue = (currentSurveyDetail.answers || [])
+    .map(a => getAnswerValueForQuestion(a, qid))
+    .find(v => v !== undefined && v !== null && v !== "");
+  if(sampleValue && typeof sampleValue === "object" && !Array.isArray(sampleValue)){
+    return "structured";
+  }
+
   const counts = {};
   (currentSurveyDetail.answers || []).forEach(a=>{
-    const v = a.answers ? a.answers[qid] : undefined;
+    const v = getAnswerValueForQuestion(a, qid);
     if(v === undefined || v === null || v === "") return;
     const values = Array.isArray(v) ? v : [v];
     values.forEach(val=>{
@@ -758,6 +781,14 @@ function onQuestionSelectChange(e){
   }
 
   const options = buildAnswerOptions(selectedQuestionId);
+
+  if(options === "structured"){
+    aSel.innerHTML = `<option value="">この質問は一覧選択に非対応</option>`;
+    aSel.disabled = true;
+    resultEl.textContent = "この質問（ティアなど複数項目セットの回答）は一覧での絞り込みに対応していません。「データ検索」タブのティア・戦力・英雄・雪猿から検索してください。";
+    return;
+  }
+
   if(!options.length){
     aSel.innerHTML = `<option value="">回答データがありません</option>`;
     aSel.disabled = true;
@@ -789,7 +820,7 @@ function onAnswerSelectChange(e){
   }else{
     matched = (currentSurveyDetail.answers || [])
       .filter(a=>{
-        const v = a.answers ? a.answers[selectedQuestionId] : undefined;
+        const v = getAnswerValueForQuestion(a, selectedQuestionId);
         if(Array.isArray(v)) return v.includes(value);
         return v === value;
       })
