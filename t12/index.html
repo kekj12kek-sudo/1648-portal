@@ -1450,7 +1450,7 @@ function fmtTime(sec){
 
 const GOAL_COSTS = {
   unlock:   { label:"T12解放まで",   steel:1620000,  refined:440,  particle:3080,  time:0 },
-  skill:    { label:"スキル3解放まで", steel:4263000,  refined:898,  particle:6235,  time:10087200 },
+  skill:    { label:"スキル3解放まで", steel:3543000,  refined:786,  particle:5463,  time:8359200 },
   capacity: { label:"容量3解放まで",   steel:10274250, refined:2456, particle:30504, time:24110640 },
   max:      { label:"カンストまで",   steel:17774250, refined:3895, particle:67944, time:76814640 }
 };
@@ -1605,17 +1605,19 @@ function normalizePrereqFor(type){
   const ab2keys = ["ability2_atk","ability2_def","ability2_leth","ability2_hp"];
   const ab3keys = ["ability3_atk","ability3_def","ability3_leth","ability3_hp"];
 
-  // 能力Ⅱ以上 → 解放 + 能力Ⅰ4種MAX + スキルMAX
+  // 能力Ⅱ以上 → 解放 + 能力Ⅰ4種15まで + スキルMAX
+  // （スキル3解放の条件は能力Ⅰ4項目が15まで。16〜20は任意のボーナスレベルで、
+  //   スキルや後続ツリーの解放条件には一切関与しない）
   if(hasAny(type, [...ab2keys,"capacity",...ab3keys])){
     s.unlock[type] = Math.max(s.unlock[type], 1);
-    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 20));
+    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 15));
     s.skill[type] = Math.max(s.skill[type], 3);
   }
 
-  // スキルのみ → 解放 + 能力Ⅰ4種MAX
+  // スキルのみ → 解放 + 能力Ⅰ4種15まで
   if(s.skill[type] > 0){
     s.unlock[type] = Math.max(s.unlock[type], 1);
-    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 20));
+    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 15));
   }
 
   // 容量の上限は能力Ⅱに連動
@@ -1727,6 +1729,18 @@ const T12_STAGE_LABELS = {
   capacity_1:"容量Lv1",
   capacity_2:"容量Lv2",
   capacity_3:"容量Lv3",
+  capacity_4:"容量Lv4",
+  capacity_5:"容量Lv5",
+  capacity_6:"容量Lv6",
+  capacity_7:"容量Lv7",
+  capacity_8:"容量Lv8",
+  capacity_9:"容量Lv9",
+  capacity_10:"容量Lv10",
+  capacity_11:"容量Lv11",
+  capacity_12:"容量Lv12",
+  capacity_13:"容量Lv13",
+  capacity_14:"容量Lv14",
+  capacity_15:"容量Lv15",
   max:"カンスト"
 };
 
@@ -1738,9 +1752,7 @@ function getT12Stage(t){
   if(ab3Keys.every(k => (s[k]?.current || 0) >= maxLv[k])) return "max";
 
   const capLv = s.capacity?.current || 0;
-  if(capLv >= 11) return "capacity_3";
-  if(capLv >= 6) return "capacity_2";
-  if(capLv >= 1) return "capacity_1";
+  if(capLv >= 1) return `capacity_${Math.min(capLv, 15)}`;
 
   const skillLv = s.skill?.current || 0;
   if(skillLv >= 3) return "skill_3";
@@ -1837,7 +1849,7 @@ const goalPreset = {
   },
   skill: {
     unlock:1,
-    ability1_atk:20, ability1_def:20, ability1_leth:20, ability1_hp:20,
+    ability1_atk:15, ability1_def:15, ability1_leth:15, ability1_hp:15,
     skill:3,
     ability2_atk:0, ability2_def:0, ability2_leth:0, ability2_hp:0,
     capacity:0,
@@ -2304,6 +2316,18 @@ function t12StageLabel(stage){
     capacity_1:"容量Lv1",
     capacity_2:"容量Lv2",
     capacity_3:"容量Lv3",
+    capacity_4:"容量Lv4",
+    capacity_5:"容量Lv5",
+    capacity_6:"容量Lv6",
+    capacity_7:"容量Lv7",
+    capacity_8:"容量Lv8",
+    capacity_9:"容量Lv9",
+    capacity_10:"容量Lv10",
+    capacity_11:"容量Lv11",
+    capacity_12:"容量Lv12",
+    capacity_13:"容量Lv13",
+    capacity_14:"容量Lv14",
+    capacity_15:"容量Lv15",
     max:"カンスト"
   }[stage] || "未解放";
 }
@@ -2520,6 +2544,18 @@ function t12StageLabelV7(stage){
     capacity_1:"容量Lv1",
     capacity_2:"容量Lv2",
     capacity_3:"容量Lv3",
+    capacity_4:"容量Lv4",
+    capacity_5:"容量Lv5",
+    capacity_6:"容量Lv6",
+    capacity_7:"容量Lv7",
+    capacity_8:"容量Lv8",
+    capacity_9:"容量Lv9",
+    capacity_10:"容量Lv10",
+    capacity_11:"容量Lv11",
+    capacity_12:"容量Lv12",
+    capacity_13:"容量Lv13",
+    capacity_14:"容量Lv14",
+    capacity_15:"容量Lv15",
     max:"カンスト"
   }[stage] || "未解放";
 }
