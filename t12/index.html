@@ -1605,20 +1605,22 @@ function normalizePrereqFor(type){
   const ab2keys = ["ability2_atk","ability2_def","ability2_leth","ability2_hp"];
   const ab3keys = ["ability3_atk","ability3_def","ability3_leth","ability3_hp"];
 
-  // 能力Ⅱ以上 → 解放 + 能力Ⅰ4種15まで + スキルMAX
-  // （スキル3解放の条件は能力Ⅰ4項目が15まで。16〜20は任意のボーナスレベルで、
-  //   スキルや後続ツリーの解放条件には一切関与しない）
+  // 能力Ⅱ以上 → 解放 + 能力Ⅰ4種15まで（スキル3解放条件）+ スキルMAX
+  // （16〜20は任意のボーナスレベルで、解放条件には一切関与しない）
   if(hasAny(type, [...ab2keys,"capacity",...ab3keys])){
     s.unlock[type] = Math.max(s.unlock[type], 1);
     ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 15));
     s.skill[type] = Math.max(s.skill[type], 3);
   }
 
-  // スキルのみ → 解放 + 能力Ⅰ4種15まで
+  // スキル → 解放 + スキルレベルに応じた能力Ⅰ必要レベル
+  // 能力Ⅰ4項目が5でスキル1、10でスキル2、15でスキル3が研究可能になる
   if(s.skill[type] > 0){
     s.unlock[type] = Math.max(s.unlock[type], 1);
-    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], 15));
+    const requiredAb1 = s.skill[type] >= 3 ? 15 : s.skill[type] >= 2 ? 10 : 5;
+    ["ability1_atk","ability1_def","ability1_leth","ability1_hp"].forEach(k => s[k][type] = Math.max(s[k][type], requiredAb1));
   }
+
 
   // 容量の上限は能力Ⅱに連動
   // 能力Ⅱの最大値から容量の上限を決定
