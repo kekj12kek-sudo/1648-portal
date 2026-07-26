@@ -766,9 +766,7 @@ function normalizeT12Label(value){
     skill_1:"スキル1済",
     skill_2:"スキル2済",
     skill_3:"スキル3済",
-    capacity_1:"容量1済",
-    capacity_2:"容量2済",
-    capacity_3:"容量3済",
+    ...Object.fromEntries(Array.from({length:15}, (_,i)=>[`capacity_${i+1}`, `容量${i+1}済`])),
     max:"カンスト"
   };
   return map[value] || value || "未保存";
