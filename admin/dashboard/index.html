@@ -364,9 +364,7 @@ const T12_STAGE_OPTIONS = [
   {value:"skill_1", label:"スキル1まで解放済"},
   {value:"skill_2", label:"スキル2まで解放済"},
   {value:"skill_3", label:"スキル3まで解放済"},
-  {value:"capacity_1", label:"容量1まで解放済"},
-  {value:"capacity_2", label:"容量2まで解放済"},
-  {value:"capacity_3", label:"容量3まで解放済"},
+  ...Array.from({length:15}, (_,i)=>({value:`capacity_${i+1}`, label:`容量${i+1}まで解放済`})),
   {value:"max", label:"カンスト"}
 ];
 const T12_UNIT_LABEL = {shield:"盾", spear:"槍", bow:"弓"};
