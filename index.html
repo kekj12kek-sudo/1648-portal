@@ -499,6 +499,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
   }
 }
 
+/* ===== SVS予定 ===== */
+#svsSchedule{
+  position:fixed;
+  left:14px;
+  bottom:14px;
+  z-index:60;
+  max-width:min(240px, calc(58% - 16px));
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(8px);
+  color:#fff;
+  font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+  font-size:11px;
+  line-height:1.55;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);
+}
+#svsSchedule .svs-title{font-size:10px;font-weight:900;color:#93c5fd;margin-bottom:5px;letter-spacing:.5px;}
+#svsSchedule .svs-entry{margin-bottom:6px;}
+#svsSchedule .svs-entry:last-child{margin-bottom:0;}
+#svsSchedule .svs-entry.next .svs-label{color:#fde68a;}
+#svsSchedule .svs-label{font-weight:900;font-size:11px;}
+#svsSchedule .svs-phase{color:#e2e8f0;font-size:10px;}
+#svsSchedule .svs-note{color:#86efac;font-size:9.5px;margin-top:1px;}
+@media(max-width:480px){
+  #svsSchedule{
+    left:10px;
+    bottom:10px;
+    font-size:10px;
+    padding:8px 10px;
+    max-width:min(200px, calc(60% - 12px));
+  }
+}
+
 </style>
 </head>
 <body>
@@ -545,6 +580,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 
 <!-- 管理者ページリンク -->
 <a id="adminFuture" href="/1648-portal/admin/">管理者ページ</a>
+<div id="svsSchedule"></div>
 
 
 <!-- オープニング（初回起動時のみ。3秒 or 動画終了で切り替え） -->
@@ -1009,11 +1045,85 @@ function initAdminLink(){
   adminLink.style.display = level >= 1 ? "block" : "none";
 }
 
+// ===== SVS予定（28日周期の準備フェーズ＋王城決戦、84日周期の世代切り替え） =====
+// 基準日: 2026/7/13(月)準備開始・7/18(土)王城決戦 = s9世代 3回目
+// 世代切り替え基準日: 2026/7/20(月) → s10世代解放（以後84日ごと）
+const SVS_BASE_PREP_DATE = new Date(2026, 6, 13); // 2026-07-13 (月)
+const SVS_BASE_GENERATION = 9; // このプレップ回が属する世代 (s9)
+const SVS_CYCLE_DAYS = 28;
+const SVS_GEN_CYCLE_ROUNDS = 3; // 3回に1回、世代が切り替わる
+const SVS_GEN_SWITCH_OFFSET_DAYS = 7; // 3回目の準備開始から7日後に次世代解放
+
+function addDaysToDate(date, days){
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function formatSvsDate(date){
+  const w = ["日","月","火","水","木","金","土"][date.getDay()];
+  return `${date.getMonth()+1}/${date.getDate()}(${w})`;
+}
+
+// n回目（0始まり、0が基準日=SVS_BASE_PREP_DATE）の準備フェーズ情報を計算
+function getSvsRoundInfo(n){
+  const prepDate = addDaysToDate(SVS_BASE_PREP_DATE, SVS_CYCLE_DAYS * n);
+  const battleDate = addDaysToDate(prepDate, 5); // 月→土 = +5日
+  const generationOffset = Math.floor((n + (SVS_GEN_CYCLE_ROUNDS - 1)) / SVS_GEN_CYCLE_ROUNDS);
+  const roundInGeneration = ((n + (SVS_GEN_CYCLE_ROUNDS - 1)) % SVS_GEN_CYCLE_ROUNDS) + 1;
+  const generation = SVS_BASE_GENERATION + generationOffset;
+
+  let generationSwitchDate = null;
+  if(roundInGeneration === SVS_GEN_CYCLE_ROUNDS){
+    generationSwitchDate = addDaysToDate(prepDate, SVS_GEN_SWITCH_OFFSET_DAYS);
+  }
+
+  return {n, prepDate, battleDate, generation, roundInGeneration, generationSwitchDate};
+}
+
+function renderSvsSchedule(){
+  const el = document.getElementById("svsSchedule");
+  if(!el) return;
+
+  const now = new Date();
+  now.setHours(0,0,0,0);
+
+  // 今日以降で直近の回を探す（王城決戦がまだ来ていない回を「次回」とする）
+  let startN = Math.floor((now - SVS_BASE_PREP_DATE) / (SVS_CYCLE_DAYS * 86400000));
+  if(startN < 0) startN = 0;
+
+  let info = null;
+  for(let n = startN; n <= startN + 10; n++){
+    const candidate = getSvsRoundInfo(n);
+    if(candidate.battleDate >= now){
+      info = candidate;
+      break;
+    }
+  }
+
+  if(!info){ el.style.display = "none"; return; }
+
+  const label = `s${info.generation}世代 ${info.roundInGeneration}回目`;
+  const phase = `準備 ${formatSvsDate(info.prepDate)}〜 / 王城決戦 ${formatSvsDate(info.battleDate)}`;
+  const note = info.generationSwitchDate
+    ? `${formatSvsDate(info.generationSwitchDate)}からs${info.generation+1}世代解放`
+    : "";
+
+  el.style.display = "";
+  el.innerHTML = `<div class="svs-title">📅 次回SVS</div>
+    <div class="svs-entry next">
+      <div class="svs-label">${label}</div>
+      <div class="svs-phase">${phase}</div>
+      ${note ? `<div class="svs-note">${note}</div>` : ""}
+    </div>`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initUserBadge();
   initAdminLink();
   if(!isLimitedPortalUser()) loadMyPageData();
   applyLimitedHomeView();
+  renderSvsSchedule();
 });
 
 </script>
